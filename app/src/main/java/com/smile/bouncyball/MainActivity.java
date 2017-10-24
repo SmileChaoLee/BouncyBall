@@ -51,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("onCreate()\n");
 
         autoRotate = android.provider.Settings.System.getInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
-        // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         try {
@@ -90,23 +89,6 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        if (android.os.Build.VERSION.SDK_INT >=23) {
-            if (!Settings.System.canWrite(MainActivity.this)) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
-                intent.setData(Uri.parse("package:" + MainActivity.this.getPackageName()));
-                startActivity(intent);
-            }
-        }
-
-        try {
-            android.provider.Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, autoRotate);
-            System.out.println("onResume --> Succeeded to set screen rotation setting.");
-        } catch (Exception e) {
-            System.out.println("onResume --> Failed to set screen rotation setting.");
-            e.printStackTrace();
-        }
-
         synchronized (gameHandler) {
             gamePause = false;
             gameHandler.notifyAll();
@@ -117,14 +99,6 @@ public class MainActivity extends AppCompatActivity {
     public void onPause() {
         super.onPause();
 
-        try {
-            android.provider.Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, autoRotate);
-            System.out.println("onPause --> Succeeded to set screen rotation setting.");
-        } catch (Exception e) {
-            System.out.println("onPause --> Failed to set screen rotation setting.");
-            e.printStackTrace();
-        }
-
         synchronized (gameHandler) {
             gamePause = true;
         }
@@ -133,13 +107,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onStop() {
-        try {
-            android.provider.Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, autoRotate);
-            System.out.println("onStop --> Succeeded to set screen rotation setting.");
-        } catch (Exception e) {
-            System.out.println("onStop --> Failed to set screen rotation setting.");
-            e.printStackTrace();
-        }
         super.onStop();
     }
 
@@ -150,15 +117,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onDestroy() {
-        try {
-            android.provider.Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, autoRotate);
-            System.out.println("onDestroy --> Succeeded to set screen rotation setting.");
-
-        } catch (Exception e) {
-            System.out.println("onDestroy --> Failed to set screen rotation setting.");
-            e.printStackTrace();
-        }
         super.onDestroy();
+        System.out.println("onDestroy --> Setting Screen orientation to User");
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
     }
 
 
