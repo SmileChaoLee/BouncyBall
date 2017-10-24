@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
         gamePause = false;
         gameHandler = new Handler();
         gameView = new GameView(this);   // create a gameView
-        // setContentView(gameView);
+        setContentView(gameView);
     }
 
     @Override
