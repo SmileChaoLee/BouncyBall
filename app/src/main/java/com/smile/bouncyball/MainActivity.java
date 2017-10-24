@@ -101,9 +101,9 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             android.provider.Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, autoRotate);
-            System.out.println("onResume --> Succeeded to set screen rotation setting.");
+            System.out.println("onResume--> Succeeded to set screen rotation setting.");
         } catch (Exception e) {
-            System.out.println("onResume --> Failed to set screen rotation setting.");
+            System.out.println("onResume--> Failed to set screen rotation setting.");
             e.printStackTrace();
         }
 
