@@ -2,12 +2,18 @@ package com.smile.bouncyball;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.Typeface;
+import android.provider.CalendarContract;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import java.util.Random;
+import java.util.Vector;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
@@ -26,8 +32,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private int gameoverHeight = 20;
     private int winWidth = 100;
     private int winHeight = 20;
-    private float hintWidthRatio   = 1.0f/2.5f;
-    private float hintHeightRatio = 1.0f/12.0f;
+    private float hintWidthRatio   = 1.0f/1.5f;
+    private float hintHeightRatio = 1.0f/8.0f;
     private int replayWidth = 100;
     private int replayHeight = 20;
     private int startWidth = 100;
@@ -35,12 +41,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private int quitWidth = 100;
     private int quitHeight = 20;
     private float buttonWidthRatio = 1.0f/4.0f;
-    private float buttonHeightRatio = 1.0f/15.0f;
+    private float buttonHeightRatio = 1.0f/12.0f;
     private int scoreWidth = 32;
     private int scoreHeight = 32;
     private float scoreWidthRatio  = 1.0f/12.0f;
     private float scoreHeightRatio = 1.0f/20.0f;
 
+    private Rect ibeginRect = new Rect(0,0,0,0);   // rectangle area for hint to start
+    private Rect igameoverRect = new Rect(0,0,0,0);   // rectangle area for message for game over
+    private Rect iwinRect = new Rect(0,0,0,0);   // rectangle area for message for winning
     private Rect startRect  = new Rect(0,0,0,0);   // rectangle area for start game
     private Rect quitRect   = new Rect(0,0,0,0);   // rectangle area for quit game
     private Rect replayRect = new Rect(0,0,0,0);   // rectangle area for replay game
@@ -55,6 +64,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private Bitmap ireplay;  // replay picture
     private Bitmap istart;   // start picture
     private Bitmap iquit;    // quit picture
+    private float bannerWidthRatio  = 1.0f/5.0f;
+    private float bannerHeightRatio = 1.0f/15.0f;
 
     // default access controller
     private Random random = new Random(System.currentTimeMillis());
@@ -75,8 +86,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     int bannerY;     //  the coordinate (y-axis) of the banner
     int bannerWidth=40;       // width of the banner
     int bannerHeight=6;       // height of the banner
-    private float bannerWidthRatio  = 1.0f/5.0f;
-    private float bannerHeightRatio = 1.0f/15.0f;
     int ballSpan=8;           // speed of the ball
     int ballRadius=ballSize/2;
     int bottomY=0;            // the coordinate of Y-axis hitting the banner;
@@ -121,10 +130,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 		igameover = BitmapFactory.decodeResource(getResources(), R.drawable.gameover);
 		iwin = BitmapFactory.decodeResource(getResources(), R.drawable.win);
 
-		ireplay = BitmapFactory.decodeResource(getResources(), R.drawable.replay);
-        istart = BitmapFactory.decodeResource(getResources(), R.drawable.start);
-        iquit = BitmapFactory.decodeResource(getResources(), R.drawable.quit);
-
         bannerWidth = (int)((float)screenWidth   * bannerWidthRatio);         // width of the banner
         bannerHeight = (int)((float)screenHeight * bannerHeightRatio);      // height of the banner
         ballSize   = (int)((float)screenHeight * ballSizeRatio);            // size of the ball
@@ -144,21 +149,36 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         scoreWidth = (int)((float)screenWidth   * scoreWidthRatio);
         scoreHeight = (int)((float)screenHeight * scoreHeightRatio);
 
+
+        ireplay = getBitmapFromResourceWithText(R.drawable.replay, activity.replayStr,Color.BLUE);
+        istart = getBitmapFromResourceWithText(R.drawable.start, activity.startStr,Color.BLUE);
+        iquit = getBitmapFromResourceWithText(R.drawable.quit, activity.quitStr,Color.RED);
+
+        ibegin = getBitmapFromResourceWithText(R.drawable.begin, activity.beginStr,Color.BLUE);
+        igameover = getBitmapFromResourceWithText(R.drawable.gameover, activity.gameoverStr,Color.BLUE);
+        iwin = getBitmapFromResourceWithText(R.drawable.win, activity.winStr,Color.BLUE);
+
         int biasX = 10;
+        int biasY = 05;
 
-        Point sPoint = new Point(biasX,screenHeight-replayHeight);
+        Point sPoint = new Point(biasX,screenHeight - replayHeight - biasY);
         replayRect.set(sPoint.x, sPoint.y, sPoint.x + replayWidth, sPoint.y + replayHeight);
-
-        sPoint.set((screenWidth-startWidth)/2,screenHeight-startHeight);
-        startRect.set(sPoint.x, sPoint.y, sPoint.x + quitWidth, sPoint.y + quitHeight);
-
-        sPoint.set(screenWidth - quitWidth - biasX, screenHeight - quitHeight);
+        sPoint.set((screenWidth-startWidth)/2,screenHeight - startHeight - biasY);
+        startRect.set(sPoint.x, sPoint.y, sPoint.x + startWidth, sPoint.y + startHeight);
+        sPoint.set(screenWidth - quitWidth - biasX, screenHeight - quitHeight - biasY);
         quitRect.set(sPoint.x, sPoint.y, sPoint.x + quitWidth, sPoint.y + quitHeight);
 
         bottomY = screenHeight - bannerHeight - quitHeight - screenHeight/20;
 
         int numB = (int)(bottomY/ballSize);
         bottomY = numB * ballSize;
+
+        sPoint.set((screenWidth - beginWidth)/2,(bottomY - beginHeight)/2);
+        ibeginRect.set(sPoint.x,sPoint.y,sPoint.x + beginWidth,sPoint.y + beginHeight);
+        sPoint.set((screenWidth - gameoverWidth)/2,(bottomY - gameoverHeight)/2);
+        igameoverRect.set(sPoint.x,sPoint.y,sPoint.x + gameoverWidth,sPoint.y + gameoverHeight);
+        sPoint.set((screenWidth - winWidth)/2,(bottomY - winHeight)/2);
+        iwinRect.set(sPoint.x,sPoint.y,sPoint.x + winWidth,sPoint.y + winHeight);
 
         backCols = screenWidth/backSize;   // number of columns
         if (screenWidth%backSize!=0) {
@@ -216,10 +236,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
 
         // rect2.set(0,0,screenWidth,screenHeight);
-        canvas.drawBitmap(iback, null, rect2, null);
+        // canvas.drawBitmap(iback, null, rect2, null); // removed on 2017-10-31
     	
     	// draw the score
-    	String scoreStr = score+"";
+    	String scoreStr = score + "";
     	int loop = 3 - scoreStr.length();
     	for(int i=0;i<loop;i++){
     		scoreStr = "0" + scoreStr;
@@ -275,32 +295,50 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     	
     	// draw the hint of beginning
     	if(status==0){
-            sPoint.set((screenWidth-beginWidth)/2,(bottomY-beginHeight)/2);
-            rect2.set(sPoint.x,sPoint.y,sPoint.x+beginWidth,sPoint.y+beginHeight);
-    		canvas.drawBitmap(ibegin, null, rect2, null);
+            // sPoint.set((screenWidth-beginWidth)/2,(bottomY-beginHeight)/2);
+            // rect2.set(sPoint.x,sPoint.y,sPoint.x+beginWidth,sPoint.y+beginHeight);
+    		canvas.drawBitmap(ibegin, null, ibeginRect, null);
     	}
 
      	// draw the hint of fail
     	if(status==2){
-            sPoint.set((screenWidth-gameoverWidth)/2,(bottomY-gameoverHeight)/2);
+            // sPoint.set((screenWidth-gameoverWidth)/2,(bottomY-gameoverHeight)/2);
             rect2.set(sPoint.x,sPoint.y,sPoint.x+gameoverWidth,sPoint.y+gameoverHeight);
-    		canvas.drawBitmap(igameover, null, rect2, null);
+    		canvas.drawBitmap(igameover, null, igameoverRect, null);
     	}  
     	
     	// draw the picture of winning
      	if(status==3){
-            sPoint.set((screenWidth-winWidth)/2,(bottomY-winHeight)/2);
-            rect2.set(sPoint.x,sPoint.y,sPoint.x+winWidth,sPoint.y+winHeight);
-            canvas.drawBitmap(iwin, null, rect2, null);
+            // sPoint.set((screenWidth-winWidth)/2,(bottomY-winHeight)/2);
+            // rect2.set(sPoint.x,sPoint.y,sPoint.x+winWidth,sPoint.y+winHeight);
+            canvas.drawBitmap(iwin, null, iwinRect, null);
     	}
 
-        // draw the replay picture
+        // draw replay button
         canvas.drawBitmap(ireplay ,null ,replayRect ,null);
 
-        // draw the button of start button
+        // draw start button
+        /*
+        String cap = "Start";
+        Paint paint = new Paint();
+        paint.setColor(Color.GREEN);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setAntiAlias(true);
+        float fontSize = 40.0f;
+        paint.setTextSize(fontSize);
+        Rect bounds = new Rect();
+        paint.getTextBounds(cap,0,cap.length(),bounds);
+        fontSize = fontSize * (startRect.right - startRect.left - fontSize) / bounds.width();
+        paint.setTextSize(fontSize);
+
+        Paint.FontMetrics fm = new Paint.FontMetrics();
+        paint.getFontMetrics(fm);
+        canvas.drawBitmap(istart,null,startRect, paint);
+        canvas.drawText(cap, startRect.left + (startRect.right - startRect.left)/2, startRect.top + (startRect.bottom - startRect.top)/2 - (fm.ascent+fm.descent)/2, paint);
+        */
         canvas.drawBitmap(istart, null, startRect,null);
 
-        // draw the quit picture
+        // draw quit button
      	canvas.drawBitmap(iquit, null, quitRect,null);
 	}
 
@@ -441,4 +479,60 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         }
         */
 	}
+
+	private Bitmap getBitmapFromResourceWithText(int resultId, String caption, int textColor) {
+
+        Vector<String> textVector = new Vector<String>();
+        int indexBegin = 0;
+        int indexEnd = 0;
+        while (indexEnd >= 0) {
+            indexEnd = caption.indexOf('\n',indexBegin);
+            if (indexEnd >= 0 ) {
+                String temp = caption.substring(indexBegin, indexEnd);
+                textVector.addElement(temp);
+                indexBegin = indexEnd + 1;  // skip char '\n'
+            } else {
+                // indexEnd = -1
+                textVector.addElement(caption.substring(indexBegin));
+            }
+            System.out.println(caption + " of indexEnd = " + indexEnd);
+        }
+
+	    Bitmap bm = null;
+	    BitmapFactory.Options options = new BitmapFactory.Options();
+	    options.inMutable = true;
+        bm = BitmapFactory.decodeResource(getResources(), resultId, options);
+        Canvas canvas = new Canvas(bm);
+        // draw start button
+        Paint paint = new Paint();
+        paint.setColor(textColor);
+        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setAntiAlias(true);
+        float fontSize = 40.0f;
+        paint.setTextSize(fontSize);
+        Rect bounds = new Rect();
+        paint.getTextBounds(caption,0,caption.length(),bounds);
+        float realTextWidth = canvas.getWidth() - fontSize;
+        fontSize = fontSize * realTextWidth / bounds.width();
+        paint.setTextSize(fontSize);
+
+        // for align.CENTER
+        Paint.FontMetrics fm = new Paint.FontMetrics();
+        paint.getFontMetrics(fm);
+        // canvas.drawText(caption, canvas.getWidth()/2, canvas.getHeight()/2 - (fm.ascent+fm.descent)/2, paint);
+
+        int lenVector = textVector.size();
+        float areaWidthPerRow = (canvas.getHeight() - (fm.ascent+fm.descent)) / (float)lenVector;
+        float centerPos = areaWidthPerRow/2.0f;
+
+        for (int i=0; i<lenVector; i++) {
+            String temp = textVector.elementAt(i);
+            // canvas.drawText(temp, leftPos, topPos, paint);
+            canvas.drawText(temp, canvas.getWidth()/2, centerPos, paint);
+            centerPos += areaWidthPerRow;
+        }
+
+	    return bm;
+    }
 }

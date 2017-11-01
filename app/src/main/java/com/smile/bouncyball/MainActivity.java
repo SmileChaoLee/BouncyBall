@@ -24,11 +24,20 @@ import static android.content.DialogInterface.BUTTON_NEUTRAL;
 
 public class MainActivity extends AppCompatActivity {
 
+    String replayStr = "";
+    String startStr = "";
+    String quitStr = "";
+
+    String beginStr = "";
+    String gameoverStr = "";
+    String winStr = "";
+
     int screenWidth = 0;
     int screenHeight = 0;
+
     GameView gameView=null;
 
-    private int autoRotate = 1;
+    // private int autoRotate = 1;
     private boolean firstRun = true;
 
     public boolean gamePause = false;
@@ -50,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         // setContentView(R.layout.activity_main);
         System.out.println("onCreate()\n");
 
-        autoRotate = android.provider.Settings.System.getInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
+        // autoRotate = android.provider.Settings.System.getInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         try {
@@ -64,6 +73,13 @@ public class MainActivity extends AppCompatActivity {
             // Ignore
         }
 
+        replayStr = getResources().getString(R.string.replay_string);
+        startStr = getResources().getString(R.string.start_string);
+        quitStr = getResources().getString(R.string.quit_string);
+
+        beginStr = getResources().getString(R.string.begin_string);
+        gameoverStr = getResources().getString(R.string.gameover_string);
+        winStr = getResources().getString(R.string.win_string);
 
         // Display d = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         Display display = getWindowManager().getDefaultDisplay();
@@ -71,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         display.getSize(size);
 
         screenWidth  = size.x;
-        screenHeight = size.y-100;
+        screenHeight = size.y - 100;
 
         gamePause = false;
         gameHandler = new Handler();
