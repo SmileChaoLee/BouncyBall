@@ -68,13 +68,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private Bitmap iquit;    // quit picture
     private float bannerWidthRatio  = 1.0f/5.0f;
     private float bannerHeightRatio = 1.0f/15.0f;
-
     private String stageName = "";
-
     // default access controller
     private Random random = new Random(System.currentTimeMillis());
+    private SurfaceHolder surfaceHolder=null;
 
-    TimeThread timeThread = null;				//TimeThread
+    // TimeThread timeThread = null;				//TimeThread
     BallGoThread ballGoThread = null;			//BallGoThread
     GameViewDrawThread gameViewDrawThread = null;
     Bitmap[] iscore = new Bitmap[10];// score pictures (pictures for numbers)
@@ -94,8 +93,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     int ballSpan=8;           // speed of the ball
     int ballRadius=ballSize/2;
     int bottomY=0;            // the coordinate of Y-axis hitting the banner;
-
-    SurfaceHolder surfaceHolder=null;
 
 	public GameView(MainActivity activity) {
 		super(activity);
@@ -118,6 +115,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
         System.out.println("GameView-->Constructor\n");
 	}
+
+	public SurfaceHolder getSurfaceHolder() {
+	    return this.surfaceHolder;
+    }
 
 	public void initBitmap(){
 
@@ -312,7 +313,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     	if(status == 2){
             // draw the hint of fail
     		canvas.drawBitmap(igameover, null, igameoverRect, null);
-            timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
+            // timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
             ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
             gameViewDrawThread.setFlag(false);  // added on 2017-11-07
     	}  
@@ -320,7 +321,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
      	if(status == 3){
             // draw the picture of winning
             canvas.drawBitmap(iwin, null, iwinRect, null);
-            timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
+            // timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
             ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
             gameViewDrawThread.setFlag(false);  // added on 2017-11-07
     	}
@@ -381,6 +382,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 }
             }
 
+            /*
             if (timeThread != null) {
                 retry = true;
                 // this.timeThread.flag = false; // removed on 2017-11-07
@@ -394,6 +396,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                     }// continue processing until the thread ends
                 }
             }
+            */
 
             // System.exit(0);
             activity.finish();
@@ -410,10 +413,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 direction = random.nextInt(2)*3;  //   0 or 1  multiple 3 ------>0 or 3
 
                 gameViewDrawThread = new GameViewDrawThread(this);
-                timeThread   = new TimeThread(this);
+                // timeThread   = new TimeThread(this);
                 ballGoThread = new BallGoThread(this);
                 gameViewDrawThread.start();
-                timeThread.start();
+                // timeThread.start();
                 ballGoThread.start();
             }
 		} else if(status == 1) {

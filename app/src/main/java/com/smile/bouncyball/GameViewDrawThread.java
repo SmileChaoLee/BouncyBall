@@ -13,13 +13,14 @@ public class GameViewDrawThread extends Thread {
     private int sleepSpan = 100;
     private MainActivity activity = null;
     private GameView gView = null;
-
     private boolean flag = true;
+    private SurfaceHolder surfaceHolder = null;
 
     public GameViewDrawThread(GameView gView) {
         this.gView = gView;
         this.activity = gView.getActivity();
         this.sleepSpan = gView.synchronizeTime / 2;
+        this.surfaceHolder = gView.getSurfaceHolder();
     }
 
     public void run() {
@@ -37,10 +38,10 @@ public class GameViewDrawThread extends Thread {
             c = null;
             // lock the whole canvas. high requirement on memory, do not use null advised
             try {
-                c = gView.surfaceHolder.lockCanvas(null);
+                c = surfaceHolder.lockCanvas(null);
                 if (c != null) {
                     // synchronized (gView.surfaceHolder) {
-                    synchronized (gView.surfaceHolder) {
+                    synchronized (surfaceHolder) {
                         gView.doDraw(c); // draw
                         // System.out.println("Drawing .............");
                     }
@@ -50,7 +51,7 @@ public class GameViewDrawThread extends Thread {
             } finally {
                 if (c != null) {
                     // fresh the screen
-                    gView.surfaceHolder.unlockCanvasAndPost(c);
+                    surfaceHolder.unlockCanvasAndPost(c);
                 }
             }
             try {
