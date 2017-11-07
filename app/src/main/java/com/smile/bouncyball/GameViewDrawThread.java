@@ -15,7 +15,6 @@ public class GameViewDrawThread extends Thread {
     private GameView gView = null;
 
     private boolean flag = true;
-    private boolean pause = false;
 
     public GameViewDrawThread(GameView gView) {
         this.gView = gView;
@@ -68,13 +67,5 @@ public class GameViewDrawThread extends Thread {
 
     public void setFlag(boolean flag) {
         this.flag = flag;
-    }
-
-    public boolean getPause() {
-       return this.pause;
-    }
-
-    public void setPause(boolean pause) {
-        this.pause = pause;
     }
 }

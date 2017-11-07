@@ -77,7 +77,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     TimeThread timeThread = null;				//TimeThread
     BallGoThread ballGoThread = null;			//BallGoThread
     GameViewDrawThread gameViewDrawThread = null;
-    Bitmap[] iscore=new Bitmap[10];// score pictures (pictures for numbers)
+    Bitmap[] iscore = new Bitmap[10];// score pictures (pictures for numbers)
 
     int synchronizeTime = 80;
     int screenWidth  = 640;    // width of the screen, 320px
@@ -102,16 +102,19 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
         surfaceHolder = getHolder();
 		surfaceHolder.addCallback(this); // register the interface
-		this.activity = activity;
 
-        // screenWidth  = size.x;
-        // screenHeight = size.y - 100;
+		this.activity = activity;
         this.screenWidth  = activity.screenWidth;
         this.screenHeight = activity.screenHeight;
 
         stageName = activity.stageName.getText().toString();
 
         initBitmap();
+
+        // setWillNotDraw(false);  // added on 2017-11-07 to activate onDraw() of SurfaceView
+        // if set it to false, then the drawing might have to go through by onDraw() all the time
+
+        setWillNotDraw(true);   // added on 2017-11-07 for just in case, the default is false
 
         System.out.println("GameView-->Constructor\n");
 	}
@@ -204,22 +207,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 	public void initBallAndBanner(){
 		// initialize the coordinates of the ball
         // (ballX,ballY) is the center of the circle
-        ballX = screenWidth/2;
+        ballX = screenWidth / 2;
 		ballY = bottomY - ballRadius;
 
 		// initialize the coordinates of the banner
         // (bannerX,bannerY) is the center of banner
-		bannerX = screenWidth/2;
+		bannerX = screenWidth / 2;
 		bannerY = bottomY + (bannerHeight/2);
-	}
-
-	public void replay(){
-		if(status==2||status==3){	
-	    	// initialize the coordinates of the ball and the banner
-			initBallAndBanner();
-			score=0;
-			status=0;
-		}	
 	}
 
     @Override
@@ -228,129 +222,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     }
 
 	public void doDraw(Canvas canvas) {
-    	// clear the background
 
-        Point sPoint = new Point(0,0);
-        Rect rect2 = new Rect(0,0,0,0);
-
-        for(int i=0;i<backRows;i++){
-    		for(int j=0;j<backCols;j++) {
-                rect2.set(backSize*j,backSize*i,backSize*(j+1),backSize*(i+1));
-    			canvas.drawBitmap(iback, null, rect2, null);
-    		}
-    	}
-
-
-        // rect2.set(0,0,screenWidth,screenHeight);
-        // canvas.drawBitmap(iback, null, rect2, null); // removed on 2017-10-31
-    	
-    	// draw the score
-    	String scoreStr = score + "";
-    	int loop = 3 - scoreStr.length();
-    	for(int i=0;i<loop;i++){
-    		scoreStr = "0" + scoreStr;
-    	}
-
-    	/*
-        int scoreGap = 20;
-    	int startX = screenWidth-(scoreWidth+scoreGap)*3-10;
-        int startY = scoreHeight;
-        int tempScore = 0;
-        int sX = 0;
-
-    	for(int i=0;i<3;i++){
-    		tempScore=scoreStr.charAt(i)-'0';
-            sX = startX+i*(scoreWidth+scoreGap);
-            rect2.set(sX,startY,sX+scoreWidth,startY+scoreHeight);
-    		canvas.drawBitmap(iscore[tempScore], null, rect2, null);
-    	}
-    	*/
-
-    	// draw the ball
-        int tempX = ballX - ballRadius;
-        if (tempX<0) {
-            tempX = 0;
-            ballX = tempX + ballRadius;
-        }
-        int tempY = ballY - ballRadius;
-        if (tempY<0) {
-            tempY = 0;
-            ballY = tempY + ballRadius;
-        }
-        sPoint.set(tempX,tempY);
-
-        tempX = sPoint.x + ballSize;
-        if (tempX>screenWidth) {
-            tempX = screenWidth;
-            sPoint.x = tempX - ballSize;
-            ballX = tempX - ballRadius;
-        }
-
-        tempY = sPoint.y + ballSize;
-        if (tempY>bottomY) {
-            tempY = bottomY;
-            sPoint.y = tempY - ballSize;
-            ballY = tempY - ballRadius;
-        }
-
-        rect2.set(sPoint.x,sPoint.y,tempX,tempY);
-    	canvas.drawBitmap(iball, null ,rect2, null);
-    	
-    	// draw the banner
-        sPoint.set(bannerX-bannerWidth/2,bannerY-bannerHeight/2);
-        rect2.set(sPoint.x,sPoint.y,sPoint.x+bannerWidth,sPoint.y+bannerHeight);
-    	canvas.drawBitmap(ibanner, null ,rect2, null);
-    	
-    	// draw the hint of beginning
-    	if(status == 0){
-            // sPoint.set((screenWidth-beginWidth)/2,(bottomY-beginHeight)/2);
-            // rect2.set(sPoint.x,sPoint.y,sPoint.x+beginWidth,sPoint.y+beginHeight);
-    		canvas.drawBitmap(ibegin, null, ibeginRect, null);
-    	}
-
-     	// draw the hint of fail
-    	if(status == 2){
-            // sPoint.set((screenWidth-gameoverWidth)/2,(bottomY-gameoverHeight)/2);
-            rect2.set(sPoint.x,sPoint.y,sPoint.x+gameoverWidth,sPoint.y+gameoverHeight);
-    		canvas.drawBitmap(igameover, null, igameoverRect, null);
-    	}  
-    	
-    	// draw the picture of winning
-     	if(status == 3){
-            // sPoint.set((screenWidth-winWidth)/2,(bottomY-winHeight)/2);
-            // rect2.set(sPoint.x,sPoint.y,sPoint.x+winWidth,sPoint.y+winHeight);
-            canvas.drawBitmap(iwin, null, iwinRect, null);
-    	}
-
-        // draw replay button
-        canvas.drawBitmap(ireplay ,null ,replayRect ,null);
-
-        // draw start button
-        /*
-        String cap = "Start";
-        Paint paint = new Paint();
-        paint.setColor(Color.GREEN);
-        paint.setTextAlign(Paint.Align.CENTER);
-        paint.setAntiAlias(true);
-        float fontSize = 40.0f;
-        paint.setTextSize(fontSize);
-        Rect bounds = new Rect();
-        paint.getTextBounds(cap,0,cap.length(),bounds);
-        fontSize = fontSize * (startRect.right - startRect.left - fontSize) / bounds.width();
-        paint.setTextSize(fontSize);
-
-        Paint.FontMetrics fm = new Paint.FontMetrics();
-        paint.getFontMetrics(fm);
-        canvas.drawBitmap(istart,null,startRect, paint);
-        canvas.drawText(cap, startRect.left + (startRect.right - startRect.left)/2, startRect.top + (startRect.bottom - startRect.top)/2 - (fm.ascent+fm.descent)/2, paint);
-        */
-        canvas.drawBitmap(istart, null, startRect,null);
-
-        // draw quit button
-     	canvas.drawBitmap(iquit, null, quitRect,null);
-
-     	// draw score
-     	activity.runOnUiThread(new Runnable() {
+        // draw score, action bar is on the main UI thread
+        activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
@@ -369,6 +243,87 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 activity.scoreImage2.setImageBitmap(iscore[tempScore]);
             }
         });
+        //
+
+
+    	// clear the background
+        Point sPoint = new Point(0,0);
+        Rect rect2 = new Rect(0,0,0,0);
+        for(int i=0;i<backRows;i++){
+    		for(int j=0;j<backCols;j++) {
+                rect2.set(backSize*j,backSize*i,backSize*(j+1),backSize*(i+1));
+    			canvas.drawBitmap(iback, null, rect2, null);
+    		}
+    	}
+    	//
+
+    	// draw the ball
+        int tempX = ballX - ballRadius;
+        if (tempX<0) {
+            tempX = 0;
+            ballX = tempX + ballRadius;
+        }
+        int tempY = ballY - ballRadius;
+        if (tempY<0) {
+            tempY = 0;
+            ballY = tempY + ballRadius;
+        }
+        sPoint.set(tempX,tempY);
+        tempX = sPoint.x + ballSize;
+        if (tempX>screenWidth) {
+            tempX = screenWidth;
+            sPoint.x = tempX - ballSize;
+            ballX = tempX - ballRadius;
+        }
+        tempY = sPoint.y + ballSize;
+        if (tempY>bottomY) {
+            tempY = bottomY;
+            sPoint.y = tempY - ballSize;
+            ballY = tempY - ballRadius;
+        }
+        // draw the bouncy ball
+        rect2.set(sPoint.x,sPoint.y,tempX,tempY);
+    	canvas.drawBitmap(iball, null ,rect2, null);
+    	//
+
+    	// draw the banner
+        sPoint.set(bannerX-bannerWidth/2,bannerY-bannerHeight/2);
+        rect2.set(sPoint.x,sPoint.y,sPoint.x+bannerWidth,sPoint.y+bannerHeight);
+    	canvas.drawBitmap(ibanner, null ,rect2, null);
+    	//
+
+        // draw replay button
+        canvas.drawBitmap(ireplay ,null ,replayRect ,null);
+        //
+    	// draw start button
+        canvas.drawBitmap(istart, null, startRect,null);
+        //
+        // draw quit button
+        canvas.drawBitmap(iquit, null, quitRect,null);
+        //
+
+    	// draw the hint of beginning
+    	if(status == 0){
+            // sPoint.set((screenWidth-beginWidth)/2,(bottomY-beginHeight)/2);
+            // rect2.set(sPoint.x,sPoint.y,sPoint.x+beginWidth,sPoint.y+beginHeight);
+    		canvas.drawBitmap(ibegin, null, ibeginRect, null);
+    	}
+
+    	if(status == 2){
+            // draw the hint of fail
+    		canvas.drawBitmap(igameover, null, igameoverRect, null);
+            timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
+            ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
+            gameViewDrawThread.setFlag(false);  // added on 2017-11-07
+    	}  
+
+     	if(status == 3){
+            // draw the picture of winning
+            canvas.drawBitmap(iwin, null, iwinRect, null);
+            timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
+            ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
+            gameViewDrawThread.setFlag(false);  // added on 2017-11-07
+    	}
 	}
 
 	@Override
@@ -428,7 +383,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
             if (timeThread != null) {
                 retry = true;
-                this.timeThread.flag = false;
+                // this.timeThread.flag = false; // removed on 2017-11-07
+                timeThread.setFlag(false);
                 while (retry) {
                     try {
                         timeThread.join();
@@ -453,8 +409,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 // Random random = new Random(now.toMillis(false));
                 direction = random.nextInt(2)*3;  //   0 or 1  multiple 3 ------>0 or 3
 
+                gameViewDrawThread = new GameViewDrawThread(this);
                 timeThread   = new TimeThread(this);
                 ballGoThread = new BallGoThread(this);
+                gameViewDrawThread.start();
                 timeThread.start();
                 ballGoThread.start();
             }
@@ -481,19 +439,24 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
 
 	public void surfaceCreated(SurfaceHolder holder) {
-        if (gameViewDrawThread == null) {
-            gameViewDrawThread = new GameViewDrawThread(this);
-            gameViewDrawThread.setFlag(true);
-            gameViewDrawThread.start();
-        } else {
-            gameViewDrawThread.setFlag(true);
-        }
-	}
+        // Draw the first screen when surface view has been created
+        drawBeginGameScreen();
+    }
 
 	public void surfaceDestroyed(SurfaceHolder holder) {
 	    // destroy and release the process
         System.out.println("SurfaceView being destroyed");
 	}
+
+    private void replay(){
+        if(status==2||status==3){
+            // initialize the coordinates of the ball and the banner
+            initBallAndBanner();
+            score = 0;
+            status = 0;
+        }
+        drawBeginGameScreen();
+    }
 
 	private Bitmap getBitmapFromResourceWithText(int resultId, String caption, int textColor) {
 
@@ -549,5 +512,21 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         }
 
 	    return bm;
+    }
+
+    private void drawBeginGameScreen() {
+
+        // Draw the first screen of the game view
+        Canvas canvas = null;
+        try {
+            canvas = surfaceHolder.lockCanvas(null);
+            doDraw(canvas);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (canvas != null) {
+                surfaceHolder.unlockCanvasAndPost(canvas);
+            }
+        }
     }
 }

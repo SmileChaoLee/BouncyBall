@@ -3,11 +3,11 @@ package com.smile.bouncyball;
 import java.nio.charset.MalformedInputException;
 
 public class BallGoThread extends Thread{
-    private MainActivity activity=null;
-	private GameView gView=null;
-    private int ballRadius=0;
-    private int sleepSpan=80;
-    private boolean flag=true;
+    private MainActivity activity = null;
+	private GameView gView = null;
+    private int ballRadius = 0;
+    private int sleepSpan = 80;
+    private boolean flag = true;
 
 	public BallGoThread(GameView gView) {
 		this.gView = gView;
@@ -17,8 +17,8 @@ public class BallGoThread extends Thread{
 	}
     
 	public void run(){
-        int tempX=0;
-        int tempY=0;
+        int tempX = 0;
+        int tempY = 0;
 		while(flag) {
 
             synchronized (activity.gameHandler) {
@@ -138,10 +138,11 @@ public class BallGoThread extends Thread{
                     break;
 	  		}
 	  	} else {
-	  	    // do not hit the banner
-	  	    // fail
-	  		gView.timeThread.flag   = false;
-	  		gView.ballGoThread.flag = false;
+	  	    // did not hit the banner, means failed
+	  		// gView.timeThread.flag   = false; // removed on 2017-11-07
+	  		// gView.ballGoThread.flag = false; // removed on 2017-11-07
+            // gView.timeThread.setFlag(false);    // added on 2017-11-07 and removed 2017-11-07
+            // flag = false;   // added on 2017-11-07 and removed on 2017-11-07
 	  		gView.status = 2;
 	  	}		
 	}
