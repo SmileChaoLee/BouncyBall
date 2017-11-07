@@ -3,6 +3,8 @@ package com.smile.bouncyball;
 import android.graphics.Canvas;
 import android.util.Log;
 import android.view.SurfaceHolder;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.io.InterruptedIOException;
 
@@ -38,6 +40,7 @@ public class GameViewDrawThread extends Thread {
             try {
                 c = gView.surfaceHolder.lockCanvas(null);
                 if (c != null) {
+                    // synchronized (gView.surfaceHolder) {
                     synchronized (gView.surfaceHolder) {
                         gView.doDraw(c); // draw
                         // System.out.println("Drawing .............");
@@ -57,7 +60,6 @@ public class GameViewDrawThread extends Thread {
                 e.printStackTrace(); // error message
             }
         }
-
     }
 
     public boolean getFlag() {

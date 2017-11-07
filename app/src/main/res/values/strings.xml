@@ -3,6 +3,11 @@
 
     <string name="app_name">BouncyBall</string>
     <string name="action_settings">Settings</string>
+    <string-array name="stageLevels">
+        <item>Stage 1</item>
+        <item>Stage 2</item>
+        <item>Stage 3</item>
+    </string-array>
     <string name="start_string">Start</string>
     <string name="replay_string">Replay</string>
     <string name="quit_string">Quit</string>

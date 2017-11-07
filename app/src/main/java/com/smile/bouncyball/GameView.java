@@ -12,6 +12,9 @@ import android.provider.CalendarContract;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.ImageView;
+import android.widget.TextView;
+
 import java.util.Random;
 import java.util.Vector;
 
@@ -55,7 +58,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private Rect replayRect = new Rect(0,0,0,0);   // rectangle area for replay game
     
     private Bitmap iback;// background picture
-    private Bitmap[] iscore=new Bitmap[10];// score pictures (pictures for numbers)
     private Bitmap iball;// ball picture
     private Bitmap ibanner;// banner picture
     private Bitmap ibegin;//  begin picture
@@ -67,12 +69,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private float bannerWidthRatio  = 1.0f/5.0f;
     private float bannerHeightRatio = 1.0f/15.0f;
 
+    private String stageName = "";
+
     // default access controller
     private Random random = new Random(System.currentTimeMillis());
 
-    TimeThread timeThread=null;				//TimeThread
-    BallGoThread ballGoThread=null;			//BallGoThread
-    GameViewDrawThread gameViewDrawThread=null;
+    TimeThread timeThread = null;				//TimeThread
+    BallGoThread ballGoThread = null;			//BallGoThread
+    GameViewDrawThread gameViewDrawThread = null;
+    Bitmap[] iscore=new Bitmap[10];// score pictures (pictures for numbers)
 
     int synchronizeTime = 80;
     int screenWidth  = 640;    // width of the screen, 320px
@@ -104,9 +109,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         this.screenWidth  = activity.screenWidth;
         this.screenHeight = activity.screenHeight;
 
+        stageName = activity.stageName.getText().toString();
+
         initBitmap();
 
-		// gameViewDrawThread = new GameViewDrawThread(this);
         System.out.println("GameView-->Constructor\n");
 	}
 
@@ -159,7 +165,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         iwin = getBitmapFromResourceWithText(R.drawable.win, activity.winStr,Color.BLUE);
 
         int biasX = 10;
-        int biasY = 05;
+        int biasY = 10;
 
         Point sPoint = new Point(biasX,screenHeight - replayHeight - biasY);
         replayRect.set(sPoint.x, sPoint.y, sPoint.x + replayWidth, sPoint.y + replayHeight);
@@ -245,6 +251,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     		scoreStr = "0" + scoreStr;
     	}
 
+    	/*
         int scoreGap = 20;
     	int startX = screenWidth-(scoreWidth+scoreGap)*3-10;
         int startY = scoreHeight;
@@ -257,7 +264,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
             rect2.set(sX,startY,sX+scoreWidth,startY+scoreHeight);
     		canvas.drawBitmap(iscore[tempScore], null, rect2, null);
     	}
-    	
+    	*/
+
     	// draw the ball
         int tempX = ballX - ballRadius;
         if (tempX<0) {
@@ -294,21 +302,21 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     	canvas.drawBitmap(ibanner, null ,rect2, null);
     	
     	// draw the hint of beginning
-    	if(status==0){
+    	if(status == 0){
             // sPoint.set((screenWidth-beginWidth)/2,(bottomY-beginHeight)/2);
             // rect2.set(sPoint.x,sPoint.y,sPoint.x+beginWidth,sPoint.y+beginHeight);
     		canvas.drawBitmap(ibegin, null, ibeginRect, null);
     	}
 
      	// draw the hint of fail
-    	if(status==2){
+    	if(status == 2){
             // sPoint.set((screenWidth-gameoverWidth)/2,(bottomY-gameoverHeight)/2);
             rect2.set(sPoint.x,sPoint.y,sPoint.x+gameoverWidth,sPoint.y+gameoverHeight);
     		canvas.drawBitmap(igameover, null, igameoverRect, null);
     	}  
     	
     	// draw the picture of winning
-     	if(status==3){
+     	if(status == 3){
             // sPoint.set((screenWidth-winWidth)/2,(bottomY-winHeight)/2);
             // rect2.set(sPoint.x,sPoint.y,sPoint.x+winWidth,sPoint.y+winHeight);
             canvas.drawBitmap(iwin, null, iwinRect, null);
@@ -340,6 +348,27 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
         // draw quit button
      	canvas.drawBitmap(iquit, null, quitRect,null);
+
+     	// draw score
+     	activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                activity.stageName.setText(stageName);
+
+                String scoreStr = score + "";
+                int loop = 3 - scoreStr.length();
+                for(int i=0;i<loop;i++){
+                    scoreStr = "0" + scoreStr;
+                }
+                int tempScore = scoreStr.charAt(2)-'0';
+                activity.scoreImage0.setImageBitmap(iscore[tempScore]);
+                tempScore = scoreStr.charAt(1)-'0';
+                activity.scoreImage1.setImageBitmap(iscore[tempScore]);
+                tempScore = scoreStr.charAt(0)-'0';
+                activity.scoreImage2.setImageBitmap(iscore[tempScore]);
+            }
+        });
 	}
 
 	@Override
@@ -452,7 +481,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
 
 	public void surfaceCreated(SurfaceHolder holder) {
-        if (gameViewDrawThread==null) {
+        if (gameViewDrawThread == null) {
             gameViewDrawThread = new GameViewDrawThread(this);
             gameViewDrawThread.setFlag(true);
             gameViewDrawThread.start();
@@ -464,20 +493,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 	public void surfaceDestroyed(SurfaceHolder holder) {
 	    // destroy and release the process
         System.out.println("SurfaceView being destroyed");
-
-        /*
-        boolean retry = true;
-        this.gameViewDrawThread.flag = false;
-
-        while (retry) {
-            try {
-            	gameViewDrawThread.join();
-                System.out.println("Join().......\n");
-                retry = false;
-            } 
-            catch (InterruptedException e) {}// continue processing until the thread ends
-        }
-        */
 	}
 
 	private Bitmap getBitmapFromResourceWithText(int resultId, String caption, int textColor) {
@@ -495,7 +510,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 // indexEnd = -1
                 textVector.addElement(caption.substring(indexBegin));
             }
-            System.out.println(caption + " of indexEnd = " + indexEnd);
+            // System.out.println(caption + " of indexEnd = " + indexEnd);
         }
 
 	    Bitmap bm = null;
