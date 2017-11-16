@@ -40,9 +40,7 @@ import static android.content.DialogInterface.BUTTON_NEUTRAL;
 
 public class MainActivity extends AppCompatActivity {
 
-
     String[] stageLevels ;
-
     String replayStr = "";
     String startStr = "";
     String quitStr = "";
@@ -56,18 +54,16 @@ public class MainActivity extends AppCompatActivity {
     ImageView scoreImage1;
     ImageView scoreImage2;
 
-    int screenWidth = 0;
-    int screenHeight = 0;
+    private int screenWidth = 0;
+    private int screenHeight = 0;
 
-    GameView gameView = null;
-
+    private GameView gameView = null;
     // private int autoRotate = 1;
     private boolean firstRun = true;
 
     public boolean gamePause = false;
     public Handler gameHandler = null;
     public FrameLayout frameLayout = null;
-
 
     public interface Constants {
         String LOG = "com.smile.bouncyball";
@@ -137,7 +133,6 @@ public class MainActivity extends AppCompatActivity {
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
-
         screenWidth  = size.x;
         screenHeight = size.y - 100;
 
@@ -223,5 +218,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public int getScreenWidth() {
+        return this.screenWidth;
+    }
+    public int getScreenHeight() {
+        return this.screenHeight;
     }
 }

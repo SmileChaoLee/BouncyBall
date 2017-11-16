@@ -9,46 +9,56 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.provider.CalendarContract;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.smile.bouncyball.models.Banner;
+import com.smile.bouncyball.models.BouncyBall;
+
 import java.util.Random;
 import java.util.Vector;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
-    private MainActivity activity=null;		//Activity
+    public static final int failedStatus = -1;
+    public static final int startStatus = 0;
+    public static final int firstStageStatus = 1;
+    public static final int secondStageStatus = 2;
+    public static final int finalStageStatus = 3;
+    public static final int finishedStatus = 4;
+
+    final private float ballSizeRatio = 1.0f/18.f;
+    final private float hintWidthRatio   = 1.0f/1.5f;
+    final private float hintHeightRatio = 1.0f/8.0f;
+    final private float buttonWidthRatio = 1.0f/4.0f;
+    final private float buttonHeightRatio = 1.0f/12.0f;
+    final private float scoreWidthRatio  = 1.0f/12.0f;
+    final private float scoreHeightRatio = 1.0f/20.0f;
+
+    private MainActivity activity = null;		//Activity
 
     private int backCols=0;
     private int backRows=0;
-
     private int backSize=16;          // the size of background
-	private int ballSize=16;          // size of the ball
-    private float ballSizeRatio = 1.0f/18.f;
-
     private int beginWidth  = 100;           // width of the hint
     private int beginHeight = 20;         // height of the hint
     private int gameoverWidth = 100;
     private int gameoverHeight = 20;
     private int winWidth = 100;
     private int winHeight = 20;
-    private float hintWidthRatio   = 1.0f/1.5f;
-    private float hintHeightRatio = 1.0f/8.0f;
     private int replayWidth = 100;
     private int replayHeight = 20;
     private int startWidth = 100;
     private int startHeight = 20;
     private int quitWidth = 100;
     private int quitHeight = 20;
-    private float buttonWidthRatio = 1.0f/4.0f;
-    private float buttonHeightRatio = 1.0f/12.0f;
     private int scoreWidth = 32;
     private int scoreHeight = 32;
-    private float scoreWidthRatio  = 1.0f/12.0f;
-    private float scoreHeightRatio = 1.0f/20.0f;
+    private int bottomY = 0;            // the coordinate of Y-axis hitting the banner;
 
     private Rect ibeginRect = new Rect(0,0,0,0);   // rectangle area for hint to start
     private Rect igameoverRect = new Rect(0,0,0,0);   // rectangle area for message for game over
@@ -58,7 +68,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private Rect replayRect = new Rect(0,0,0,0);   // rectangle area for replay game
     
     private Bitmap iback;// background picture
-    private Bitmap iball;// ball picture
     private Bitmap ibanner;// banner picture
     private Bitmap ibegin;//  begin picture
     private Bitmap igameover;// game over picrture
@@ -66,52 +75,52 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private Bitmap ireplay;  // replay picture
     private Bitmap istart;   // start picture
     private Bitmap iquit;    // quit picture
+    private Bitmap[] iscore = new Bitmap[10];// score pictures (pictures for numbers)
+
     private float bannerWidthRatio  = 1.0f/5.0f;
     private float bannerHeightRatio = 1.0f/15.0f;
-    private String stageName = "";
-    // default access controller
-    private Random random = new Random(System.currentTimeMillis());
-    private SurfaceHolder surfaceHolder=null;
+    private SurfaceHolder surfaceHolder = null;
+    private int synchronizeTime = 80;
+    // private TimeThread timeThread = null;				//TimeThread
+    private BallGoThread ballGoThread = null;			//BallGoThread
+    private GameViewDrawThread gameViewDrawThread = null;
 
-    // TimeThread timeThread = null;				//TimeThread
-    BallGoThread ballGoThread = null;			//BallGoThread
-    GameViewDrawThread gameViewDrawThread = null;
-    Bitmap[] iscore = new Bitmap[10];// score pictures (pictures for numbers)
+    private int highest = 999;  // maximum value of the number that banner is to be hit to make user win
+    // -1-> failed and game over, 0->waiting to start, 1->first stage (playing), 2->second stage (playing)
+    // 3->final stage (playing), 4-finished the game
+    private int[] stageScore = {0,50,100,150};    // 50 hits for each stage
+    private int status = startStatus;
+    private int score=0;     //  score that user got
 
-    int synchronizeTime = 80;
-    int screenWidth  = 640;    // width of the screen, 320px
-    int screenHeight = 960;    // height of the screen, 480px
-    int status=0;    //  0-start waiting  1-processing   2-game over  3-win the game
-    int score=0;     //  score that user got
-    int direction=0; //  the direction of the ball
-    int ballX;       //  coordinate (x-axis) of the ball
-    int ballY;       //  coordinate (y-axis) of the ball
-    int bannerX;     //  the coordinate (x-axis) of the banner
-    int bannerY;     //  the coordinate (y-axis) of the banner
-    int bannerWidth=40;       // width of the banner
-    int bannerHeight=6;       // height of the banner
-    int ballSpan=8;           // speed of the ball
-    int ballRadius=ballSize/2;
-    int bottomY=0;            // the coordinate of Y-axis hitting the banner;
+    private int screenWidth  = 0;
+    private int screenHeight = 0;
+
+    private BouncyBall bouncyBall = null;
+    private Banner banner = null;
 
 	public GameView(MainActivity activity) {
 		super(activity);
+        // Display d = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
 
         surfaceHolder = getHolder();
 		surfaceHolder.addCallback(this); // register the interface
 
 		this.activity = activity;
-        this.screenWidth  = activity.screenWidth;
-        this.screenHeight = activity.screenHeight;
+        this.screenWidth  = activity.getScreenWidth();
+        this.screenHeight = activity.getScreenHeight();
 
-        stageName = activity.stageName.getText().toString();
+        status = startStatus;    // waiting to start
 
-        initBitmap();
+        initBitmapAndModels();
 
         // setWillNotDraw(false);  // added on 2017-11-07 to activate onDraw() of SurfaceView
         // if set it to false, then the drawing might have to go through by onDraw() all the time
 
         setWillNotDraw(true);   // added on 2017-11-07 for just in case, the default is false
+
+        gameViewDrawThread = new GameViewDrawThread(this);
+        // timeThread   = new TimeThread(this);
+        ballGoThread = new BallGoThread(this);
 
         System.out.println("GameView-->Constructor\n");
 	}
@@ -120,7 +129,19 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 	    return this.surfaceHolder;
     }
 
-	public void initBitmap(){
+	public void initBitmapAndModels(){
+
+        int ballSize = 16;          // size of the ball
+        int ballRadius = ballSize/2;
+        int ballX;       //  coordinate (x-axis) of the ball
+        int ballY;       //  coordinate (y-axis) of the ball
+        int ballSpan=8;  // speed of the ball
+        Bitmap iball;// ball picture
+
+        int bannerX;     //  the coordinate (x-axis) of the banner
+        int bannerY;     //  the coordinate (y-axis) of the banner
+        int bannerWidth=40;       // width of the banner
+        int bannerHeight=6;       // height of the banner
 
 		iscore[0] = BitmapFactory.decodeResource(getResources(), R.drawable.d0);
 		iscore[1] = BitmapFactory.decodeResource(getResources(), R.drawable.d1);
@@ -158,7 +179,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         quitHeight = (int)((float)screenHeight * buttonHeightRatio);
         scoreWidth = (int)((float)screenWidth   * scoreWidthRatio);
         scoreHeight = (int)((float)screenHeight * scoreHeightRatio);
-
 
         ireplay = getBitmapFromResourceWithText(R.drawable.replay, activity.replayStr,Color.BLUE);
         istart = getBitmapFromResourceWithText(R.drawable.start, activity.startStr,Color.BLUE);
@@ -200,21 +220,30 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         }
 
         ballSpan = ballRadius ;
-
 		// initialize the coordinates of the ball and the banner
-		initBallAndBanner();
+        ballX = screenWidth / 2;
+        ballY = bottomY - ballRadius;
+        bouncyBall = new BouncyBall(ballX, ballY, ballSize, ballSpan, iball);
+
+        bannerX = screenWidth / 2;
+        bannerY = bottomY + (bannerHeight/2);
+        banner = new Banner(bannerX, bannerY, bannerWidth, bannerHeight, ibanner);
+
+		// initBallAndBanner();
 	}
 
 	public void initBallAndBanner(){
 		// initialize the coordinates of the ball
         // (ballX,ballY) is the center of the circle
-        ballX = screenWidth / 2;
-		ballY = bottomY - ballRadius;
+
+        bouncyBall.setBallX(screenWidth / 2);
+        bouncyBall.setBallY(bottomY - bouncyBall.getBallRadius());
 
 		// initialize the coordinates of the banner
         // (bannerX,bannerY) is the center of banner
-		bannerX = screenWidth / 2;
-		bannerY = bottomY + (bannerHeight/2);
+
+		banner.setBannerX(screenWidth / 2);
+		banner.setBannerY(bottomY + banner.getBannerHeight()/2);
 	}
 
     @Override
@@ -224,12 +253,86 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
 	public void doDraw(Canvas canvas) {
 
+    	// clear the background
+        Point sPoint = new Point(0,0);
+        Rect rect2 = new Rect(0,0,0,0);
+        for(int i=0;i<backRows;i++){
+    		for(int j=0;j<backCols;j++) {
+                rect2.set(backSize*j,backSize*i,backSize*(j+1),backSize*(i+1));
+    			canvas.drawBitmap(iback, null, rect2, null);
+    		}
+    	}
+    	//
+
+    	// draw the banner
+        sPoint.set(banner.getBannerX()-banner.getBannerWidth()/2,banner.getBannerY()-banner.getBannerHeight()/2);
+        rect2.set(sPoint.x,sPoint.y,sPoint.x+banner.getBannerWidth(),sPoint.y+banner.getBannerHeight());
+    	canvas.drawBitmap(ibanner, null ,rect2, null);
+    	//
+
+        ballGoThread.drawBouncyBall(canvas);
+
+        // draw replay button
+        canvas.drawBitmap(ireplay ,null ,replayRect ,null);
+        //
+    	// draw start button
+        canvas.drawBitmap(istart, null, startRect,null);
+        //
+        // draw quit button
+        canvas.drawBitmap(iquit, null, quitRect,null);
+        //
+
+    	// draw the hint of beginning
+    	if(status == startStatus){
+            // sPoint.set((screenWidth-beginWidth)/2,(bottomY-beginHeight)/2);
+            // rect2.set(sPoint.x,sPoint.y,sPoint.x+beginWidth,sPoint.y+beginHeight);
+    		canvas.drawBitmap(ibegin, null, ibeginRect, null);
+    	} else {
+            // verifying status and score
+            score = ballGoThread.getScore();
+            if (ballGoThread.getHitBanner()) {
+                if (score < highest) {
+                    if (status < finalStageStatus) {
+                        if (score >= stageScore[status]) {
+                            status++;
+                            if (status > finalStageStatus) {
+                                // max stage is 3 (stage no is greater 3
+                                status = finalStageStatus;
+                            }
+                        }
+                    }
+                } else {
+                    // reached highest score then finished
+                    status = finishedStatus;   // reach the hiest score and stop the game
+                }
+            } else {
+                // did not hit the banner
+                status = failedStatus;
+            }
+
+            if (status == failedStatus){
+                // draw the hint of fail
+                canvas.drawBitmap(igameover, null, igameoverRect, null);
+                // timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
+                ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
+                gameViewDrawThread.setFlag(false);  // added on 2017-11-07
+            } else if (status == finishedStatus) {
+                // draw the picture of winning
+                canvas.drawBitmap(iwin, null, iwinRect, null);
+                // timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
+                ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
+                gameViewDrawThread.setFlag(false);  // added on 2017-11-07
+            }
+        }
+
         // draw score, action bar is on the main UI thread
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
-                activity.stageName.setText(stageName);
+                if ( (status >= startStatus) && (status <= finalStageStatus) ) {
+                    activity.stageName.setText(activity.stageLevels[status]);
+                }
 
                 String scoreStr = score + "";
                 int loop = 3 - scoreStr.length();
@@ -245,86 +348,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
             }
         });
         //
-
-
-    	// clear the background
-        Point sPoint = new Point(0,0);
-        Rect rect2 = new Rect(0,0,0,0);
-        for(int i=0;i<backRows;i++){
-    		for(int j=0;j<backCols;j++) {
-                rect2.set(backSize*j,backSize*i,backSize*(j+1),backSize*(i+1));
-    			canvas.drawBitmap(iback, null, rect2, null);
-    		}
-    	}
-    	//
-
-    	// draw the ball
-        int tempX = ballX - ballRadius;
-        if (tempX<0) {
-            tempX = 0;
-            ballX = tempX + ballRadius;
-        }
-        int tempY = ballY - ballRadius;
-        if (tempY<0) {
-            tempY = 0;
-            ballY = tempY + ballRadius;
-        }
-        sPoint.set(tempX,tempY);
-        tempX = sPoint.x + ballSize;
-        if (tempX>screenWidth) {
-            tempX = screenWidth;
-            sPoint.x = tempX - ballSize;
-            ballX = tempX - ballRadius;
-        }
-        tempY = sPoint.y + ballSize;
-        if (tempY>bottomY) {
-            tempY = bottomY;
-            sPoint.y = tempY - ballSize;
-            ballY = tempY - ballRadius;
-        }
-        // draw the bouncy ball
-        rect2.set(sPoint.x,sPoint.y,tempX,tempY);
-    	canvas.drawBitmap(iball, null ,rect2, null);
-    	//
-
-    	// draw the banner
-        sPoint.set(bannerX-bannerWidth/2,bannerY-bannerHeight/2);
-        rect2.set(sPoint.x,sPoint.y,sPoint.x+bannerWidth,sPoint.y+bannerHeight);
-    	canvas.drawBitmap(ibanner, null ,rect2, null);
-    	//
-
-        // draw replay button
-        canvas.drawBitmap(ireplay ,null ,replayRect ,null);
-        //
-    	// draw start button
-        canvas.drawBitmap(istart, null, startRect,null);
-        //
-        // draw quit button
-        canvas.drawBitmap(iquit, null, quitRect,null);
-        //
-
-    	// draw the hint of beginning
-    	if(status == 0){
-            // sPoint.set((screenWidth-beginWidth)/2,(bottomY-beginHeight)/2);
-            // rect2.set(sPoint.x,sPoint.y,sPoint.x+beginWidth,sPoint.y+beginHeight);
-    		canvas.drawBitmap(ibegin, null, ibeginRect, null);
-    	}
-
-    	if(status == 2){
-            // draw the hint of fail
-    		canvas.drawBitmap(igameover, null, igameoverRect, null);
-            // timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
-            ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
-            gameViewDrawThread.setFlag(false);  // added on 2017-11-07
-    	}  
-
-     	if(status == 3){
-            // draw the picture of winning
-            canvas.drawBitmap(iwin, null, iwinRect, null);
-            // timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
-            ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
-            gameViewDrawThread.setFlag(false);  // added on 2017-11-07
-    	}
 	}
 
 	@Override
@@ -402,28 +425,24 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
             activity.finish();
 		}
 
-		if(status == 0){
+		if(status == startStatus){
             // waiting status, press start button to continue
             // set value to status
             if(startRect.contains(x,y)) {
                 // start button was pressed
                 // start playing
-                status = 1;
-                // Random random = new Random(now.toMillis(false));
-                direction = random.nextInt(2)*3;  //   0 or 1  multiple 3 ------>0 or 3
+                status = firstStageStatus;
 
-                gameViewDrawThread = new GameViewDrawThread(this);
-                // timeThread   = new TimeThread(this);
-                ballGoThread = new BallGoThread(this);
+                // start running the threads
                 gameViewDrawThread.start();
                 // timeThread.start();
                 ballGoThread.start();
             }
-		} else if(status == 1) {
+		} else if ( (status >= firstStageStatus) && (status < finishedStatus) ) {
             // if under game, move the banner
             // move the banner
-            bannerX = x;
-        } else if(status==2||status==3) {
+            banner.setBannerX(x);
+        } else if(status==failedStatus||status==finishedStatus) {
             // if fail or win
 			if (replayRect.contains(x,y)) {
 			    // press the replay button
@@ -438,7 +457,31 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     public MainActivity getActivity() {
         return this.activity;
     }
-	
+    public int getSynchronizeTime() {
+	    return this.synchronizeTime;
+    }
+    public int getStatus() {
+	    return this.status;
+    }
+    public int getScore() {
+	    return this.score;
+    }
+    public int getScreenWidth() {
+	    return this.screenWidth;
+    }
+    public int getScreenHeight() {
+	    return this.screenHeight;
+    }
+    public int getBottomY() {
+	    return this.bottomY;
+    }
+    public BouncyBall getBouncyBall() {
+	    return this.bouncyBall;
+    }
+    public Banner getBanner() {
+	    return this.banner;
+    }
+
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
 
 	public void surfaceCreated(SurfaceHolder holder) {
@@ -452,13 +495,18 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 	}
 
     private void replay(){
-        if(status==2||status==3){
+        if(status==failedStatus||status==finishedStatus){
             // initialize the coordinates of the ball and the banner
             initBallAndBanner();
             score = 0;
-            status = 0;
+            status = startStatus;
+
+            gameViewDrawThread = new GameViewDrawThread(this);
+            // timeThread   = new TimeThread(this);
+            ballGoThread = new BallGoThread(this);
+
+            drawBeginGameScreen();
         }
-        drawBeginGameScreen();
     }
 
 	private Bitmap getBitmapFromResourceWithText(int resultId, String caption, int textColor) {

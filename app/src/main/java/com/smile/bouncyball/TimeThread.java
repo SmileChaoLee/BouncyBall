@@ -6,9 +6,14 @@ public class TimeThread extends Thread{
 	private GameView gameView = null;
 	private boolean flag = true;
 
+	private int status = 0;
+	private int score = 0;
+
 	public TimeThread(GameView gameView) {
 		this.gameView = gameView;
         this.activity = gameView.getActivity();
+        this.status = gameView.getStatus();
+        this.score = gameView.getScore();
 	}
 
 	public void run() {
@@ -22,10 +27,10 @@ public class TimeThread extends Thread{
                 }
             }
 
-            gameView.score++;
-			if(gameView.score >= highest) {
+            score++;
+			if(score >= highest) {
                 // reach the highest, win the game
-				gameView.status = 3;
+				status = 3;
 				// gameView.timeThread.flag = false;  // stop running the TimeThread. Removed on 2017-11-07
 				// flag = false;	// removed on 2017-11-07
 				// gameView.ballGoThread.setFlag(false);  // stop running the BallGoThread, removed on 2017-11-07

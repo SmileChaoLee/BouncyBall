@@ -4,6 +4,7 @@
     <string name="app_name">BouncyBall</string>
     <string name="action_settings">Settings</string>
     <string-array name="stageLevels">
+        <item>Start</item>
         <item>Stage 1</item>
         <item>Stage 2</item>
         <item>Stage 3</item>

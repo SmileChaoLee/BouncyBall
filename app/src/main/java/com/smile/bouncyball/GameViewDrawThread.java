@@ -19,7 +19,7 @@ public class GameViewDrawThread extends Thread {
     public GameViewDrawThread(GameView gView) {
         this.gView = gView;
         this.activity = gView.getActivity();
-        this.sleepSpan = gView.synchronizeTime / 2;
+        this.sleepSpan = gView.getSynchronizeTime() / 2;
         this.surfaceHolder = gView.getSurfaceHolder();
     }
 
