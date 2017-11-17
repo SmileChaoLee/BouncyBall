@@ -19,7 +19,6 @@ import android.widget.TextView;
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
 
-import java.util.Random;
 import java.util.Vector;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback{
@@ -81,14 +80,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private float bannerHeightRatio = 1.0f/15.0f;
     private SurfaceHolder surfaceHolder = null;
     private int synchronizeTime = 80;
-    // private TimeThread timeThread = null;				//TimeThread
-    private BallGoThread ballGoThread = null;			//BallGoThread
-    private GameViewDrawThread gameViewDrawThread = null;
 
     private int highest = 999;  // maximum value of the number that banner is to be hit to make user win
     // -1-> failed and game over, 0->waiting to start, 1->first stage (playing), 2->second stage (playing)
     // 3->final stage (playing), 4-finished the game
-    private int[] stageScore = {0,50,100,150};    // 50 hits for each stage
+    private int[] stageScore = {0,10,20,30};    // 50 hits for each stage
     private int status = startStatus;
     private int score=0;     //  score that user got
 
@@ -97,6 +93,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
     private BouncyBall bouncyBall = null;
     private Banner banner = null;
+
+    private GameViewDrawThread gameViewDrawThread = null;
+    // private TimeThread timeThread = null;		    //TimeThread
+    private BallGoThread ballGoThread = null;			//BallGoThread
+    private Vector<ObstacleThread> obstacleThreads = null;
 
 	public GameView(MainActivity activity) {
 		super(activity);
@@ -121,6 +122,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         gameViewDrawThread = new GameViewDrawThread(this);
         // timeThread   = new TimeThread(this);
         ballGoThread = new BallGoThread(this);
+        obstacleThreads = new Vector<ObstacleThread>();
 
         System.out.println("GameView-->Constructor\n");
 	}
@@ -272,6 +274,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
         ballGoThread.drawBouncyBall(canvas);
 
+        // draw obstacles
+        for (ObstacleThread obstacleThread:obstacleThreads) {
+            obstacleThread.drawObstacle(canvas);
+        }
+
         // draw replay button
         canvas.drawBitmap(ireplay ,null ,replayRect ,null);
         //
@@ -300,6 +307,22 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                                 status = finalStageStatus;
                             }
                         }
+                        if (status == secondStageStatus) {
+                            // one obstacle
+                            if (obstacleThreads.size() <= 0) {
+                                // one obstacle for second stage
+                                ObstacleThread obstacleThread = new ObstacleThread(this);
+                                obstacleThreads.addElement(obstacleThread);
+                                obstacleThread.start();
+                            }
+                        } else if (status == finalStageStatus) {
+                            if (obstacleThreads.size() <= 1) {
+                                // two obstacles for third stage (now is final stage)
+                                ObstacleThread obstacleThread = new ObstacleThread(this);
+                                obstacleThreads.addElement(obstacleThread);
+                                obstacleThread.start();
+                            }
+                        }
                     }
                 } else {
                     // reached highest score then finished
@@ -316,12 +339,20 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 // timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
                 ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
                 gameViewDrawThread.setFlag(false);  // added on 2017-11-07
+                for (ObstacleThread obstacleThread:obstacleThreads) {
+                    obstacleThread.setFlag(false);
+                }
+                obstacleThreads.clear();
             } else if (status == finishedStatus) {
                 // draw the picture of winning
                 canvas.drawBitmap(iwin, null, iwinRect, null);
                 // timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
                 ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
                 gameViewDrawThread.setFlag(false);  // added on 2017-11-07
+                for (ObstacleThread obstacleThread:obstacleThreads) {
+                    obstacleThread.setFlag(false);
+                }
+                obstacleThreads.clear();
             }
         }
 
