@@ -12,6 +12,7 @@ public class BouncyBall {
     private int ballSize = 16;          // size of the ball
     private int ballRadius = ballSize/2;
     private int ballSpan = 8;           // speed of the ball
+    private int direction = 0;
     private Bitmap bitmap = null;
 
     public BouncyBall(int ballX, int ballY, int ballSize, int ballSpan, Bitmap bitmap) {
@@ -50,6 +51,12 @@ public class BouncyBall {
     }
     public void setBallSpan(int ballSpan) {
         this.ballSpan = ballSpan;
+    }
+    public int getDirection() {
+        return this.direction;
+    }
+    public void setDirection(int direction) {
+        this.direction = direction;
     }
     public Bitmap getBitmap() {
         return this.bitmap;

@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean firstRun = true;
 
     public boolean gamePause = false;
-    public Handler gameHandler = null;
+    public Handler activityHandler = null;
     public FrameLayout frameLayout = null;
 
     public interface Constants {
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
         screenHeight = size.y - 100;
 
         gamePause = false;
-        gameHandler = new Handler();
+        activityHandler = new Handler();
         gameView = new GameView(this);   // create a gameView
 
         View mainView = getLayoutInflater().inflate(R.layout.activity_main,null);
@@ -157,9 +157,9 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        synchronized (gameHandler) {
+        synchronized (activityHandler) {
             gamePause = false;
-            gameHandler.notifyAll();
+            activityHandler.notifyAll();
         }
     }
 
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
     public void onPause() {
         super.onPause();
 
-        synchronized (gameHandler) {
+        synchronized (activityHandler) {
             gamePause = true;
         }
         // super.onPause();

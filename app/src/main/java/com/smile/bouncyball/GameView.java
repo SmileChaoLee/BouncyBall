@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.os.Looper;
 import android.provider.CalendarContract;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -15,6 +16,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.os.Handler;
 
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
@@ -29,6 +31,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     public static final int secondStageStatus = 2;
     public static final int finalStageStatus = 3;
     public static final int finishedStatus = 4;
+
+    public static final int BouncyBall_RIGHT_TOP = 0; // going to right top
+    public static final int BouncyBall_LEFT_TOP = 3; // going to left top
+    public static final int BouncyBall_RIGHT_BOTTOM = 1; // going to right bottom
+    public static final int BouncyBall_LEFT_BOTTOM = 2; // going to left bottom
 
     final private float ballSizeRatio = 1.0f/18.f;
     final private float hintWidthRatio   = 1.0f/1.5f;
@@ -79,12 +86,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private float bannerWidthRatio  = 1.0f/5.0f;
     private float bannerHeightRatio = 1.0f/15.0f;
     private SurfaceHolder surfaceHolder = null;
-    private int synchronizeTime = 80;
+    private int synchronizeTime = 70;
 
     private int highest = 999;  // maximum value of the number that banner is to be hit to make user win
     // -1-> failed and game over, 0->waiting to start, 1->first stage (playing), 2->second stage (playing)
     // 3->final stage (playing), 4-finished the game
-    private int[] stageScore = {0,10,20,30};    // 50 hits for each stage
+    private int[] stageScore = {0,5,10,15};    // 50 hits for each stage
     private int status = startStatus;
     private int score=0;     //  score that user got
 
@@ -94,9 +101,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private BouncyBall bouncyBall = null;
     private Banner banner = null;
 
-    private GameViewDrawThread gameViewDrawThread = null;
     // private TimeThread timeThread = null;		    //TimeThread
     private BallGoThread ballGoThread = null;			//BallGoThread
+    private GameViewDrawThread gameViewDrawThread = null;
     private Vector<ObstacleThread> obstacleThreads = null;
 
 	public GameView(MainActivity activity) {
@@ -109,6 +116,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 		this.activity = activity;
         this.screenWidth  = activity.getScreenWidth();
         this.screenHeight = activity.getScreenHeight();
+        this.synchronizeTime = 70;
 
         status = startStatus;    // waiting to start
 
@@ -119,9 +127,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
         setWillNotDraw(true);   // added on 2017-11-07 for just in case, the default is false
 
-        gameViewDrawThread = new GameViewDrawThread(this);
         // timeThread   = new TimeThread(this);
         ballGoThread = new BallGoThread(this);
+        gameViewDrawThread = new GameViewDrawThread(this);
         obstacleThreads = new Vector<ObstacleThread>();
 
         System.out.println("GameView-->Constructor\n");
@@ -137,8 +145,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         int ballRadius = ballSize/2;
         int ballX;       //  coordinate (x-axis) of the ball
         int ballY;       //  coordinate (y-axis) of the ball
-        int ballSpan=8;  // speed of the ball
-        Bitmap iball;// ball picture
+        int ballSpan = 8;  // speed of the ball
+        Bitmap iball;   // ball picture
 
         int bannerX;     //  the coordinate (x-axis) of the banner
         int bannerY;     //  the coordinate (y-axis) of the banner
@@ -307,20 +315,28 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                                 status = finalStageStatus;
                             }
                         }
+                        int obsSize = obstacleThreads.size();
                         if (status == secondStageStatus) {
-                            // one obstacle
-                            if (obstacleThreads.size() <= 0) {
-                                // one obstacle for second stage
-                                ObstacleThread obstacleThread = new ObstacleThread(this);
-                                obstacleThreads.addElement(obstacleThread);
-                                obstacleThread.start();
+                            // one obstacle for second stage
+                            int numOfObstacles = 1;
+                            if (obsSize < numOfObstacles) {
+                                for (int i = obsSize; i < numOfObstacles; i++) {
+                                    ObstacleThread obstacleThread = new ObstacleThread(this);
+                                    obstacleThreads.addElement(obstacleThread);
+                                    obstacleThread.start();
+                                }
+                                ballGoThread.setSleepSpan(ballGoThread.getSleepSpan() - 10);
                             }
                         } else if (status == finalStageStatus) {
-                            if (obstacleThreads.size() <= 1) {
-                                // two obstacles for third stage (now is final stage)
-                                ObstacleThread obstacleThread = new ObstacleThread(this);
-                                obstacleThreads.addElement(obstacleThread);
-                                obstacleThread.start();
+                            // two obstacles for third stage (now is final stage)
+                            int numOfObstacles = 2;
+                            if (obsSize < numOfObstacles) {
+                                for (int i = obsSize; i < numOfObstacles; i++) {
+                                    ObstacleThread obstacleThread = new ObstacleThread(this);
+                                    obstacleThreads.addElement(obstacleThread);
+                                    obstacleThread.start();
+                                }
+                                ballGoThread.setSleepSpan(ballGoThread.getSleepSpan() - 10);
                             }
                         }
                     }
@@ -409,29 +425,51 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 		    // quit button was pressed
             // quit the game
 
+            if (ballGoThread != null) {
+                ballGoThread.setKeepRunning(false);
+            }
+
             boolean retry = true;
             if (gameViewDrawThread != null) {
                 gameViewDrawThread.setFlag(false);
+                retry = true;
                 while (retry) {
                     try {
                         gameViewDrawThread.join();
                         System.out.println("gameViewDrawThread.Join()........\n");
                         retry = false;
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
                     }// continue processing until the thread ends
                 }
             }
 
+            for (ObstacleThread obstacleThread:obstacleThreads) {
+                if (obstacleThread != null) {
+                    obstacleThread.setFlag(false);
+                    retry = true;
+                    while (retry) {
+                        try {
+                            obstacleThread.join();
+                            System.out.println("obstacleThread.Join()........\n");
+                            retry = false;
+                        } catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }// continue processing until the thread ends
+                    }
+                }
+            }
+
             if (ballGoThread != null) {
-                retry = true;
                 ballGoThread.setFlag(false);
+                retry = true;
                 while (retry) {
                     try {
                         ballGoThread.join();
                         System.out.println("ballGoThread.Join().......\n");
                         retry = false;
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
                     }// continue processing until the thread ends
                 }
             }
@@ -464,10 +502,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 // start playing
                 status = firstStageStatus;
 
-                // start running the threads
-                gameViewDrawThread.start();
                 // timeThread.start();
                 ballGoThread.start();
+                // start running the threads
+                gameViewDrawThread.start();
             }
 		} else if ( (status >= firstStageStatus) && (status < finishedStatus) ) {
             // if under game, move the banner
@@ -512,6 +550,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     public Banner getBanner() {
 	    return this.banner;
     }
+    public BallGoThread getBallGoThread() {
+	    return this.ballGoThread;
+    }
 
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
 
@@ -532,9 +573,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
             score = 0;
             status = startStatus;
 
-            gameViewDrawThread = new GameViewDrawThread(this);
             // timeThread   = new TimeThread(this);
             ballGoThread = new BallGoThread(this);
+            gameViewDrawThread = new GameViewDrawThread(this);
 
             drawBeginGameScreen();
         }
@@ -602,7 +643,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         Canvas canvas = null;
         try {
             canvas = surfaceHolder.lockCanvas(null);
-            doDraw(canvas);
+            if (canvas != null) {
+                synchronized (surfaceHolder) {
+                    doDraw(canvas);
+                }
+            } else {
+                System.out.println("Canvas is null.");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

@@ -19,10 +19,10 @@ public class TimeThread extends Thread{
 	public void run() {
 		while(flag) {
 
-            synchronized (activity.gameHandler) {
+            synchronized (activity.activityHandler) {
                 while (activity.gamePause) {
                     try {
-                        activity.gameHandler.wait();
+                        activity.activityHandler.wait();
                     } catch (InterruptedException e) {}
                 }
             }
