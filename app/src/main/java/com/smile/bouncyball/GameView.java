@@ -29,8 +29,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     public static final int startStatus = 0;
     public static final int firstStageStatus = 1;
     public static final int secondStageStatus = 2;
-    public static final int finalStageStatus = 3;
-    public static final int finishedStatus = 4;
+    public static final int thirdStageStatus = 3;
+    public static final int finalStageStatus = 4;
+    public static final int finishedStatus = 5;
 
     public static final int BouncyBall_RIGHT_TOP = 0; // going to right top
     public static final int BouncyBall_LEFT_TOP = 3; // going to left top
@@ -91,7 +92,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private int highest = 999;  // maximum value of the number that banner is to be hit to make user win
     // -1-> failed and game over, 0->waiting to start, 1->first stage (playing), 2->second stage (playing)
     // 3->final stage (playing), 4-finished the game
-    private int[] stageScore = {0,5,10,15};    // 50 hits for each stage
+    private int[] stageScore = {0,5,10,15,20};    // 50 hits for each stage
     private int status = startStatus;
     private int score=0;     //  score that user got
 
@@ -311,32 +312,31 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                         if (score >= stageScore[status]) {
                             status++;
                             if (status > finalStageStatus) {
-                                // max stage is 3 (stage no is greater 3
-                                status = finalStageStatus;
-                            }
-                        }
-                        int obsSize = obstacleThreads.size();
-                        if (status == secondStageStatus) {
-                            // one obstacle for second stage
-                            int numOfObstacles = 1;
-                            if (obsSize < numOfObstacles) {
-                                for (int i = obsSize; i < numOfObstacles; i++) {
-                                    ObstacleThread obstacleThread = new ObstacleThread(this);
-                                    obstacleThreads.addElement(obstacleThread);
-                                    obstacleThread.start();
+                                // max stage is 4 (stage no is greater 4
+                                status = finalStageStatus;  // 4, final stage
+                            } else {
+                                // status <= finalStageStatus
+                                int obsSize = obstacleThreads.size();
+                                int numOfObstacles = 0;
+                                if (status == secondStageStatus) {
+                                    // one obstacle for second stage
+                                    numOfObstacles = 1;
+                                } else if (status == thirdStageStatus) {
+                                    // 3 obstacles for third stage (now is final stage)
+                                    numOfObstacles = 2;
+                                } else if (status == finalStageStatus) {
+                                    // 3 obstacles for fourth stage (now is final stage)
+                                    numOfObstacles = 3;
                                 }
-                                ballGoThread.setSleepSpan(ballGoThread.getSleepSpan() - 10);
-                            }
-                        } else if (status == finalStageStatus) {
-                            // two obstacles for third stage (now is final stage)
-                            int numOfObstacles = 2;
-                            if (obsSize < numOfObstacles) {
-                                for (int i = obsSize; i < numOfObstacles; i++) {
-                                    ObstacleThread obstacleThread = new ObstacleThread(this);
-                                    obstacleThreads.addElement(obstacleThread);
-                                    obstacleThread.start();
+                                // adding ObstacleThreads
+                                if (obsSize < numOfObstacles) {
+                                    for (int i = obsSize; i < numOfObstacles; i++) {
+                                        ObstacleThread obstacleThread = new ObstacleThread(this, i+1);
+                                        obstacleThreads.addElement(obstacleThread);
+                                        obstacleThread.start();
+                                    }
+                                    ballGoThread.setSleepSpan(ballGoThread.getSleepSpan() - 10);
                                 }
-                                ballGoThread.setSleepSpan(ballGoThread.getSleepSpan() - 10);
                             }
                         }
                     }

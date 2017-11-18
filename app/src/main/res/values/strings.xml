@@ -8,6 +8,7 @@
         <item>Stage 1</item>
         <item>Stage 2</item>
         <item>Stage 3</item>
+        <item>Stage 4</item>
     </string-array>
     <string name="start_string">Start</string>
     <string name="replay_string">Replay</string>

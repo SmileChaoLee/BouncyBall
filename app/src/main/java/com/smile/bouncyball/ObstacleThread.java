@@ -44,7 +44,7 @@ public class ObstacleThread extends Thread{
 
     private Random random = null;
 
-    public ObstacleThread(GameView gView) {
+    public ObstacleThread(GameView gView, int stageNo) {
 
         this.gameView = gView;
         this.activity = gameView.getActivity();
@@ -62,7 +62,7 @@ public class ObstacleThread extends Thread{
         this.random = new Random();
         random = new Random(System.currentTimeMillis());
 
-        initializeObstacle();
+        initializeObstacle(stageNo);
 
     }
 
@@ -101,7 +101,7 @@ public class ObstacleThread extends Thread{
         }
     }
 
-    private void initializeObstacle() {
+    private void initializeObstacle(int stageNo) {
         float dr = random.nextFloat();
         // only left and right for now
         if (dr <= 0.5) {
@@ -114,12 +114,15 @@ public class ObstacleThread extends Thread{
         color = obsColor[col];
         float x = random.nextFloat();   // 0.0 ~ 1.0
         x *= xRangeOfObstacle;
+        /*
         float y = random.nextFloat();   // 0.0 ~ 1.0
         float minY = 0.3f; // minimum is 0.3f
         if (y < minY) {
             y = minY;
         }
         y *= yRangeOfObstacle;
+        */
+        float y = bouncyBall.getBallSize() * stageNo * 2;
         position.set((int)x,(int)y);    // position of the center
     }
 
