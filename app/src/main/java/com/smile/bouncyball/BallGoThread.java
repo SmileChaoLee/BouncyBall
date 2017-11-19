@@ -18,8 +18,8 @@ public class BallGoThread extends Thread{
 	private int screenWidth = 0;
 	private int screenHeight = 0;
     private int sleepSpan = 80;
-    private boolean flag = true;
-    private boolean keepRunning = true;
+    private boolean flag = true;        // flag = true -> move ball
+    private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
     private Random random = null;
     private int score = 0;     //  score that user got
     private boolean isHitBanner = true;
@@ -48,8 +48,9 @@ public class BallGoThread extends Thread{
         int tempX = 0;
         int tempY = 0;
 
-		while(flag) {
+		while(keepRunning) {
             synchronized (activity.activityHandler) {
+                // for application's (Main activity) synchronizing
                 while (activity.gamePause) {
                     try {
                         activity.activityHandler.wait();
@@ -58,8 +59,18 @@ public class BallGoThread extends Thread{
                 }
             }
 
+            synchronized (gameView.gameViewHandler) {
+                // for GameView's synchronizing
+                while (gameView.gameViewPause) {
+                    try {
+                        gameView.gameViewHandler.wait();
+                    } catch (InterruptedException e) {
+                    }
+                }
+            }
+
             synchronized (this) {
-                if (keepRunning) {
+                if (flag) {
                     tempX = bouncyBall.getBallX();
                     tempY = bouncyBall.getBallY();
                     int direction = bouncyBall.getDirection();

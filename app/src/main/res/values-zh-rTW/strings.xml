@@ -2,7 +2,6 @@
 <resources>
 
     <string name="app_name">彈跳球</string>
-    <string name="action_settings">設定</string>
     <string-array name="stageLevels">
         <item>開始</item>
         <item>第一關</item>
@@ -11,9 +10,11 @@
         <item>第四關</item>
     </string-array>
     <string name="start_string">開始</string>
-    <string name="replay_string">重玩</string>
+    <string name="pause_string">暫停</string>
+    <string name="resume_string">恢復</string>
+    <string name="newGame_string">新遊戲</string>
     <string name="quit_string">離開</string>
     <string name="begin_string">按開始按鈕啟動</string>
-    <string name="gameover_string">你失敗了.\n重玩或離開.</string>
+    <string name="gameOver_string">你失敗了.\n重玩或離開.</string>
     <string name="win_string">你贏了.\n重玩或離開.</string>
 </resources>

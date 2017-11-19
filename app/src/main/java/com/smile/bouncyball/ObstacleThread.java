@@ -1,14 +1,10 @@
 package com.smile.bouncyball;
 
-import android.app.Activity;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.drawable.shapes.OvalShape;
-import android.graphics.drawable.shapes.RectShape;
-import android.graphics.drawable.shapes.Shape;
 
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
@@ -29,8 +25,7 @@ public class ObstacleThread extends Thread{
     private GameView gameView = null;
     private BallGoThread ballGoThread = null;
 
-    private int sleepSpan = 0;
-    private boolean flag = true;
+    private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
     private int direction = 1;  // 1->left, 2->right, 3->up, 4->down
     private int speed = 0;  // no moving, moving speed (left, right, up, or down)
     private int color = Color.BLACK;    // the color of obstacle
@@ -50,7 +45,6 @@ public class ObstacleThread extends Thread{
         this.activity = gameView.getActivity();
         this.ballGoThread = gameView.getBallGoThread();
 
-        this.sleepSpan  = gameView.getSynchronizeTime();
         this.xRangeOfObstacle = gameView.getScreenWidth();
         this.yRangeOfObstacle = gameView.getScreenHeight() / 3;    // one-third of the height of Game View
         this.bouncyBall = gameView.getBouncyBall();
@@ -66,17 +60,28 @@ public class ObstacleThread extends Thread{
 
     }
 
-    public void setFlag(boolean flag) {
-        this.flag = flag;
+    public void setKeepRunning(boolean keepRunning) {
+        this.keepRunning = keepRunning;
     }
 
     public void run () {
-        while (flag) {
+        while (keepRunning) {
             synchronized (activity.activityHandler) {
+                // for application's (Main activity) synchronizing
                 while (activity.gamePause) {
                     try {
                         activity.activityHandler.wait();
                     } catch (InterruptedException ex) {}
+                }
+            }
+
+            synchronized (gameView.gameViewHandler) {
+                // for GameView's synchronizing
+                while (gameView.gameViewPause) {
+                    try {
+                        gameView.gameViewHandler.wait();
+                    } catch (InterruptedException e) {
+                    }
                 }
             }
 
@@ -90,14 +95,6 @@ public class ObstacleThread extends Thread{
                     ex.printStackTrace();
                 }
             }
-
-            /*
-            try {
-                Thread.sleep(sleepSpan);
-            } catch (Exception e) {
-                e.printStackTrace(); // error message
-            }
-            */
         }
     }
 

@@ -27,6 +27,16 @@ public class TimeThread extends Thread{
                 }
             }
 
+			synchronized (gameView.gameViewHandler) {
+				// for GameView's synchronizing
+				while (gameView.gameViewPause) {
+					try {
+						gameView.gameViewHandler.wait();
+					} catch (InterruptedException e) {
+					}
+				}
+			}
+
             score++;
 			if(score >= highest) {
                 // reach the highest, win the game

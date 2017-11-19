@@ -41,12 +41,12 @@ import static android.content.DialogInterface.BUTTON_NEUTRAL;
 public class MainActivity extends AppCompatActivity {
 
     String[] stageLevels ;
-    String replayStr = "";
     String startStr = "";
-    String quitStr = "";
+    String pauseStr = "";
+    String resumeStr = "";
 
     String beginStr = "";
-    String gameoverStr = "";
+    String gameOverStr = "";
     String winStr = "";
 
     TextView stageName;
@@ -115,12 +115,12 @@ public class MainActivity extends AppCompatActivity {
 
         stageLevels = getResources().getStringArray(R.array.stageLevels);
 
-        replayStr = getResources().getString(R.string.replay_string);
         startStr = getResources().getString(R.string.start_string);
-        quitStr = getResources().getString(R.string.quit_string);
+        pauseStr = getResources().getString(R.string.pause_string);
+        resumeStr = getResources().getString(R.string.resume_string);
 
         beginStr = getResources().getString(R.string.begin_string);
-        gameoverStr = getResources().getString(R.string.gameover_string);
+        gameOverStr = getResources().getString(R.string.gameOver_string);
         winStr = getResources().getString(R.string.win_string);
 
         stageName = (TextView)actionBarView.findViewById(R.id.stageName);
@@ -212,8 +212,30 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (gamePause) {
+            // in pause status
+            synchronized (activityHandler) {
+                gamePause = false;
+                activityHandler.notifyAll();
+            }
+        }
+
+        if (gameView.gameViewPause) {
+            // GameView in pause status
+            synchronized (gameView.gameViewHandler) {
+                gameView.gameViewPause = false;
+                gameView.gameViewHandler.notifyAll();
+            }
+        }
+
+        if (id == R.id.replayGame) {
+            gameView.newGame();
+            return true;
+        }
+
+        if (id == R.id.quitGame) {
+            gameView.stopThreads();
+            finish();
             return true;
         }
 

@@ -2,7 +2,6 @@
 <resources>
 
     <string name="app_name">BouncyBall</string>
-    <string name="action_settings">Settings</string>
     <string-array name="stageLevels">
         <item>Start</item>
         <item>Stage 1</item>
@@ -11,9 +10,11 @@
         <item>Stage 4</item>
     </string-array>
     <string name="start_string">Start</string>
-    <string name="replay_string">Replay</string>
+    <string name="pause_string">Pause</string>
+    <string name="resume_string">Resume</string>
+    <string name="newGame_string">New Game</string>
     <string name="quit_string">Quit</string>
     <string name="begin_string">Start button to begin</string>
-    <string name="gameover_string">You failed.\nReplay or quit.</string>
+    <string name="gameOver_string">You failed.\nReplay or quit.</string>
     <string name="win_string">You won.\nReplay or quit.</string>
 </resources>

@@ -20,6 +20,7 @@ import android.os.Handler;
 
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
+import com.smile.bouncyball.models.ButtonHoldThread;
 
 import java.util.Vector;
 
@@ -37,6 +38,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     public static final int BouncyBall_LEFT_TOP = 3; // going to left top
     public static final int BouncyBall_RIGHT_BOTTOM = 1; // going to right bottom
     public static final int BouncyBall_LEFT_BOTTOM = 2; // going to left bottom
+
+    public Handler gameViewHandler = null;  // for synchronizing
+    public boolean gameViewPause = false;   // for synchronizing
+
+    // for running a thread when arrow button (left arrow or right arrow) is held
+    public ButtonHoldThread buttonHoldThread = null;
 
     final private float ballSizeRatio = 1.0f/18.f;
     final private float hintWidthRatio   = 1.0f/1.5f;
@@ -57,12 +64,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private int gameoverHeight = 20;
     private int winWidth = 100;
     private int winHeight = 20;
-    private int replayWidth = 100;
-    private int replayHeight = 20;
+    private int leftArrowWidth = 100;
+    private int leftArrowHeight = 20;
     private int startWidth = 100;
     private int startHeight = 20;
-    private int quitWidth = 100;
-    private int quitHeight = 20;
+    private int rightArrowWidth = 100;
+    private int rightArrowHeight = 20;
     private int scoreWidth = 32;
     private int scoreHeight = 32;
     private int bottomY = 0;            // the coordinate of Y-axis hitting the banner;
@@ -71,17 +78,19 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private Rect igameoverRect = new Rect(0,0,0,0);   // rectangle area for message for game over
     private Rect iwinRect = new Rect(0,0,0,0);   // rectangle area for message for winning
     private Rect startRect  = new Rect(0,0,0,0);   // rectangle area for start game
-    private Rect quitRect   = new Rect(0,0,0,0);   // rectangle area for quit game
-    private Rect replayRect = new Rect(0,0,0,0);   // rectangle area for replay game
+    private Rect rightArrowRect   = new Rect(0,0,0,0);   // rectangle area for right arrow
+    private Rect leftArrowRect = new Rect(0,0,0,0);   // rectangle area for left arrow
     
     private Bitmap iback;// background picture
     private Bitmap ibanner;// banner picture
     private Bitmap ibegin;//  begin picture
     private Bitmap igameover;// game over picrture
     private Bitmap iwin;// winning picture
-    private Bitmap ireplay;  // replay picture
+    private Bitmap ileftarrow;  // left arrow picture
     private Bitmap istart;   // start picture
-    private Bitmap iquit;    // quit picture
+    private Bitmap ipause;   // pause picture
+    private Bitmap iresume;  // resume picture
+    private Bitmap irightarrow;    // right arrow picture
     private Bitmap[] iscore = new Bitmap[10];// score pictures (pictures for numbers)
 
     private float bannerWidthRatio  = 1.0f/5.0f;
@@ -92,7 +101,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private int highest = 999;  // maximum value of the number that banner is to be hit to make user win
     // -1-> failed and game over, 0->waiting to start, 1->first stage (playing), 2->second stage (playing)
     // 3->final stage (playing), 4-finished the game
-    private int[] stageScore = {0,5,10,15,20};    // 50 hits for each stage
+    private int[] stageScore = {0, 20, 60, 120,200};    // hits for each stage
     private int status = startStatus;
     private int score=0;     //  score that user got
 
@@ -102,14 +111,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private BouncyBall bouncyBall = null;
     private Banner banner = null;
 
-    // private TimeThread timeThread = null;		    //TimeThread
     private BallGoThread ballGoThread = null;			//BallGoThread
     private GameViewDrawThread gameViewDrawThread = null;
     private Vector<ObstacleThread> obstacleThreads = null;
 
 	public GameView(MainActivity activity) {
 		super(activity);
+
         // Display d = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+
+        gameViewHandler = new Handler(Looper.getMainLooper());  // for synchronizing
+        gameViewPause = false;   // for synchronizing
 
         surfaceHolder = getHolder();
 		surfaceHolder.addCallback(this); // register the interface
@@ -128,10 +140,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
         setWillNotDraw(true);   // added on 2017-11-07 for just in case, the default is false
 
-        // timeThread   = new TimeThread(this);
         ballGoThread = new BallGoThread(this);
         gameViewDrawThread = new GameViewDrawThread(this);
         obstacleThreads = new Vector<ObstacleThread>();
+        buttonHoldThread = new ButtonHoldThread(this);
+        buttonHoldThread.start();
 
         System.out.println("GameView-->Constructor\n");
 	}
@@ -182,34 +195,37 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         gameoverHeight = (int)((float)screenHeight * hintHeightRatio);
         winWidth = (int)((float)screenWidth   * hintWidthRatio);
         winHeight = (int)((float)screenHeight * hintHeightRatio);
-        replayWidth = (int)((float)screenWidth   * buttonWidthRatio);
-        replayHeight = (int)((float)screenHeight * buttonHeightRatio);
+        leftArrowWidth = (int)((float)screenWidth   * buttonWidthRatio);
+        leftArrowHeight = (int)((float)screenHeight * buttonHeightRatio * 1.5); // 1.5 * normal button
         startWidth = (int)((float)screenWidth   * buttonWidthRatio);
         startHeight = (int)((float)screenHeight * buttonHeightRatio);
-        quitWidth = (int)((float)screenWidth   * buttonWidthRatio);
-        quitHeight = (int)((float)screenHeight * buttonHeightRatio);
+        rightArrowWidth = (int)((float)screenWidth   * buttonWidthRatio);
+        rightArrowHeight = (int)((float)screenHeight * buttonHeightRatio * 1.5); // 1.5 * normal button
         scoreWidth = (int)((float)screenWidth   * scoreWidthRatio);
         scoreHeight = (int)((float)screenHeight * scoreHeightRatio);
 
-        ireplay = getBitmapFromResourceWithText(R.drawable.replay, activity.replayStr,Color.BLUE);
+        ileftarrow = getBitmapFromResourceWithText(R.drawable.leftarrow, "",Color.BLUE);    // no string
         istart = getBitmapFromResourceWithText(R.drawable.start, activity.startStr,Color.BLUE);
-        iquit = getBitmapFromResourceWithText(R.drawable.quit, activity.quitStr,Color.RED);
+        ipause = getBitmapFromResourceWithText(R.drawable.pause, activity.pauseStr,Color.YELLOW);
+        iresume = getBitmapFromResourceWithText(R.drawable.resume, activity.resumeStr,Color.BLUE);
+        irightarrow = getBitmapFromResourceWithText(R.drawable.rightarrow, "",Color.RED);   // no string
 
         ibegin = getBitmapFromResourceWithText(R.drawable.begin, activity.beginStr,Color.BLUE);
-        igameover = getBitmapFromResourceWithText(R.drawable.gameover, activity.gameoverStr,Color.BLUE);
+        igameover = getBitmapFromResourceWithText(R.drawable.gameover, activity.gameOverStr,Color.BLUE);
         iwin = getBitmapFromResourceWithText(R.drawable.win, activity.winStr,Color.BLUE);
 
         int biasX = 10;
-        int biasY = 10;
+        int biasY = 5;
 
-        Point sPoint = new Point(biasX,screenHeight - replayHeight - biasY);
-        replayRect.set(sPoint.x, sPoint.y, sPoint.x + replayWidth, sPoint.y + replayHeight);
+        Point sPoint = new Point(biasX,screenHeight - leftArrowHeight - biasY);
+        leftArrowRect.set(sPoint.x, sPoint.y, sPoint.x + leftArrowWidth, sPoint.y + leftArrowHeight);
         sPoint.set((screenWidth-startWidth)/2,screenHeight - startHeight - biasY);
         startRect.set(sPoint.x, sPoint.y, sPoint.x + startWidth, sPoint.y + startHeight);
-        sPoint.set(screenWidth - quitWidth - biasX, screenHeight - quitHeight - biasY);
-        quitRect.set(sPoint.x, sPoint.y, sPoint.x + quitWidth, sPoint.y + quitHeight);
+        sPoint.set(screenWidth - rightArrowWidth - biasX, screenHeight - rightArrowHeight - biasY);
+        rightArrowRect.set(sPoint.x, sPoint.y, sPoint.x + rightArrowWidth, sPoint.y + rightArrowHeight);
 
-        bottomY = screenHeight - bannerHeight - quitHeight - screenHeight/20;
+        // bottomY = screenHeight - bannerHeight - rightArrowHeight - screenHeight/20;
+        bottomY = screenHeight - bannerHeight - startHeight - screenHeight/20;
 
         int numB = (int)(bottomY/ballSize);
         bottomY = numB * ballSize;
@@ -288,14 +304,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
             obstacleThread.drawObstacle(canvas);
         }
 
-        // draw replay button
-        canvas.drawBitmap(ireplay ,null ,replayRect ,null);
+        // draw left arrow button
+        canvas.drawBitmap(ileftarrow ,null ,leftArrowRect ,null);
         //
-    	// draw start button
-        canvas.drawBitmap(istart, null, startRect,null);
-        //
-        // draw quit button
-        canvas.drawBitmap(iquit, null, quitRect,null);
+
+        // draw right Arrow button
+        canvas.drawBitmap(irightarrow, null, rightArrowRect,null);
         //
 
     	// draw the hint of beginning
@@ -303,7 +317,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
             // sPoint.set((screenWidth-beginWidth)/2,(bottomY-beginHeight)/2);
             // rect2.set(sPoint.x,sPoint.y,sPoint.x+beginWidth,sPoint.y+beginHeight);
     		canvas.drawBitmap(ibegin, null, ibeginRect, null);
+            // start button
+            canvas.drawBitmap(istart, null, startRect, null);
     	} else {
+    	    if (gameViewPause) {
+    	        // under pause status. show resume button
+                canvas.drawBitmap(iresume, null, startRect, null);
+            } else {
+                // under playing status, show pause button
+                canvas.drawBitmap(ipause, null, startRect, null);
+            }
             // verifying status and score
             score = ballGoThread.getScore();
             if (ballGoThread.getHitBanner()) {
@@ -352,21 +375,19 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
             if (status == failedStatus){
                 // draw the hint of fail
                 canvas.drawBitmap(igameover, null, igameoverRect, null);
-                // timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
-                ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
-                gameViewDrawThread.setFlag(false);  // added on 2017-11-07
+                ballGoThread.setKeepRunning(false);  // stop running the BallGoThread, added on 2017-11-07
+                gameViewDrawThread.setKeepRunning(false);  // added on 2017-11-07
                 for (ObstacleThread obstacleThread:obstacleThreads) {
-                    obstacleThread.setFlag(false);
+                    obstacleThread.setKeepRunning(false);
                 }
                 obstacleThreads.clear();
             } else if (status == finishedStatus) {
                 // draw the picture of winning
                 canvas.drawBitmap(iwin, null, iwinRect, null);
-                // timeThread.setFlag(false);  // stop TimeThread, added on 2017-11-07
-                ballGoThread.setFlag(false);  // stop running the BallGoThread, added on 2017-11-07
-                gameViewDrawThread.setFlag(false);  // added on 2017-11-07
+                ballGoThread.setKeepRunning(false);  // stop running the BallGoThread, added on 2017-11-07
+                gameViewDrawThread.setKeepRunning(false);  // added on 2017-11-07
                 for (ObstacleThread obstacleThread:obstacleThreads) {
-                    obstacleThread.setFlag(false);
+                    obstacleThread.setKeepRunning(false);
                 }
                 obstacleThreads.clear();
             }
@@ -400,125 +421,88 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 
-        int x=0,y=0;
+        int x = (int) event.getX();
+        int y = (int) event.getY();
 
-        /*
         int action = event.getAction();
         switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_MOVE:
                 // Log.d(MainActivity.Constants.LOG,"MotionEvent.ACTION_MOVE");
+                if ( (status >= firstStageStatus) && (status < finishedStatus) ) {
+                    if (!gameViewPause) {
+                        if ((y >= bottomY) && (y <= (bottomY + banner.getBannerHeight()))) {
+                            // Y - coordinate is inside the area
+                            banner.setBannerX(x);
+                        }
+                    }
+                }
                 break;
+            case MotionEvent.ACTION_BUTTON_PRESS:
             case MotionEvent.ACTION_DOWN:
+                if(status == startStatus) {
+                    // start button to continue
+                    if (startRect.contains(x, y)) {
+                        // start button was pressed
+                        // start playing
+                        status = firstStageStatus;
+                        // start running the threads
+                        ballGoThread.start();
+                        gameViewDrawThread.start();
+                    }
+                } else if ( (status >= firstStageStatus) && (status < finishedStatus) ) {
+                    // in playing status
+                    System.out.println("Button down");
+                    if (startRect.contains(x, y)) {
+                        if (!gameViewPause) {  // not in pause status
+                            // pause button was pressed
+                            synchronized (gameViewHandler) {
+                                gameViewPause = true;
+                            }
+                            // draw resume bitmap using redraw the whole screen of game view
+                            drawGameScreen();
+                        } else {
+                            // resume button was pressed
+                            synchronized (gameViewHandler) {
+                                gameViewPause = false;
+                                gameViewHandler.notifyAll();
+                            }
+                            // draw pause bitmap using redraw the whole screen of game view
+                            // drawGameScreen();// no need to do it because it will be done in doDraw() when threads start running
+                        }
+                    }
+                    if (!gameViewPause) {
+                        int xSpeed = 3;
+                        int bannerX = banner.getBannerX();
+                        // not in pause status
+                        if (rightArrowRect.contains(x, y)) {
+                            // for new function, right arrow
+                            // then move the banner to right
+                            buttonHoldThread.setBannerMoveSpeed(xSpeed);
+                            buttonHoldThread.setIsButtonHold(true);
+                        } else if (leftArrowRect.contains(x, y)) {
+                            // for new function left arrow
+                            // then move the banner to left
+                            buttonHoldThread.setBannerMoveSpeed(-xSpeed);
+                            buttonHoldThread.setIsButtonHold(true);
+                        } else {
+                            // nothing will happen
+                        }
+                    }
+                } else {
+                    // in failed or finished status
+                }
+
                 break;
             case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                buttonHoldThread.setIsButtonHold(false);
+                System.out.println("Button up");
                 break;
             default:
                 // get the coordinates of point touched
                 break;
         }
-        */
 
-        x = (int) event.getX();
-        y = (int) event.getY();
-
-		if(quitRect.contains(x,y)) {
-		    // quit button was pressed
-            // quit the game
-
-            if (ballGoThread != null) {
-                ballGoThread.setKeepRunning(false);
-            }
-
-            boolean retry = true;
-            if (gameViewDrawThread != null) {
-                gameViewDrawThread.setFlag(false);
-                retry = true;
-                while (retry) {
-                    try {
-                        gameViewDrawThread.join();
-                        System.out.println("gameViewDrawThread.Join()........\n");
-                        retry = false;
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }// continue processing until the thread ends
-                }
-            }
-
-            for (ObstacleThread obstacleThread:obstacleThreads) {
-                if (obstacleThread != null) {
-                    obstacleThread.setFlag(false);
-                    retry = true;
-                    while (retry) {
-                        try {
-                            obstacleThread.join();
-                            System.out.println("obstacleThread.Join()........\n");
-                            retry = false;
-                        } catch (InterruptedException ex) {
-                            ex.printStackTrace();
-                        }// continue processing until the thread ends
-                    }
-                }
-            }
-
-            if (ballGoThread != null) {
-                ballGoThread.setFlag(false);
-                retry = true;
-                while (retry) {
-                    try {
-                        ballGoThread.join();
-                        System.out.println("ballGoThread.Join().......\n");
-                        retry = false;
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }// continue processing until the thread ends
-                }
-            }
-
-            /*
-            if (timeThread != null) {
-                retry = true;
-                // this.timeThread.flag = false; // removed on 2017-11-07
-                timeThread.setFlag(false);
-                while (retry) {
-                    try {
-                        timeThread.join();
-                        System.out.println("timeThread.Join().......\n");
-                        retry = false;
-                    } catch (InterruptedException e) {
-                    }// continue processing until the thread ends
-                }
-            }
-            */
-
-            // System.exit(0);
-            activity.finish();
-		}
-
-		if(status == startStatus){
-            // waiting status, press start button to continue
-            // set value to status
-            if(startRect.contains(x,y)) {
-                // start button was pressed
-                // start playing
-                status = firstStageStatus;
-
-                // timeThread.start();
-                ballGoThread.start();
-                // start running the threads
-                gameViewDrawThread.start();
-            }
-		} else if ( (status >= firstStageStatus) && (status < finishedStatus) ) {
-            // if under game, move the banner
-            // move the banner
-            banner.setBannerX(x);
-        } else if(status==failedStatus||status==finishedStatus) {
-            // if fail or win
-			if (replayRect.contains(x,y)) {
-			    // press the replay button
-                // replay the game
-			    replay();
-			}    		
-		}
 		// return super.onTouchEvent(event);
         return true;   // must return true
 	}
@@ -553,33 +537,110 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     public BallGoThread getBallGoThread() {
 	    return this.ballGoThread;
     }
+    public void newGame(){
+        // if(status==failedStatus||status==finishedStatus){
+        // initialize the coordinates of the ball and the banner
+
+        if (gameViewDrawThread != null) {
+            gameViewDrawThread.setKeepRunning(false);
+        }
+        if (ballGoThread != null) {
+            ballGoThread.setKeepRunning(false);
+        }
+        if (obstacleThreads != null) {
+            for (ObstacleThread obstacleThread:obstacleThreads) {
+                obstacleThread.setKeepRunning(false);
+            }
+            obstacleThreads.clear();
+        }
+
+        initBallAndBanner();
+        score = 0;
+        status = startStatus;
+        ballGoThread = new BallGoThread(this);
+        gameViewDrawThread = new GameViewDrawThread(this);
+
+        drawGameScreen();
+        // }
+    }
+    public void stopThreads() {    // executed when user failed or won
+        if (ballGoThread != null) {
+            ballGoThread.setFlag(false);    // stop moving
+        }
+
+        boolean retry = true;
+        if (gameViewDrawThread != null) {
+            gameViewDrawThread.setKeepRunning(false);
+            retry = true;
+            while (retry) {
+                try {
+                    gameViewDrawThread.join();
+                    System.out.println("gameViewDrawThread.Join()........\n");
+                    retry = false;
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }// continue processing until the thread ends
+            }
+        }
+
+        for (ObstacleThread obstacleThread:obstacleThreads) {
+            if (obstacleThread != null) {
+                obstacleThread.setKeepRunning(false);
+                retry = true;
+                while (retry) {
+                    try {
+                        obstacleThread.join();
+                        System.out.println("obstacleThread.Join()........\n");
+                        retry = false;
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }// continue processing until the thread ends
+                }
+            }
+        }
+        obstacleThreads.clear();
+
+        if (buttonHoldThread != null) {
+            buttonHoldThread.setIsButtonHold(false);
+            buttonHoldThread.setKeepRunning(false);
+            retry = true;
+            while (retry) {
+                try {
+                    buttonHoldThread.join();
+                    System.out.println("buttonHoldThread.Join()........\n");
+                    retry = false;
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }// continue processing until the thread ends
+            }
+        }
+
+        if (ballGoThread != null) {
+            ballGoThread.setKeepRunning(false);
+            retry = true;
+            while (retry) {
+                try {
+                    ballGoThread.join();
+                    System.out.println("ballGoThread.Join().......\n");
+                    retry = false;
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }// continue processing until the thread ends
+            }
+        }
+    }
 
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
 
 	public void surfaceCreated(SurfaceHolder holder) {
         // Draw the first screen when surface view has been created
-        drawBeginGameScreen();
+        drawGameScreen();
     }
 
 	public void surfaceDestroyed(SurfaceHolder holder) {
 	    // destroy and release the process
         System.out.println("SurfaceView being destroyed");
 	}
-
-    private void replay(){
-        if(status==failedStatus||status==finishedStatus){
-            // initialize the coordinates of the ball and the banner
-            initBallAndBanner();
-            score = 0;
-            status = startStatus;
-
-            // timeThread   = new TimeThread(this);
-            ballGoThread = new BallGoThread(this);
-            gameViewDrawThread = new GameViewDrawThread(this);
-
-            drawBeginGameScreen();
-        }
-    }
 
 	private Bitmap getBitmapFromResourceWithText(int resultId, String caption, int textColor) {
 
@@ -637,9 +698,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 	    return bm;
     }
 
-    private void drawBeginGameScreen() {
+    private void drawGameScreen() {
 
-        // Draw the first screen of the game view
+        // Draw the screen of the game view
         Canvas canvas = null;
         try {
             canvas = surfaceHolder.lockCanvas(null);

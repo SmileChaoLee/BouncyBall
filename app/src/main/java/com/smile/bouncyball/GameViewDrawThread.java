@@ -1,36 +1,41 @@
 package com.smile.bouncyball;
 
 import android.graphics.Canvas;
-import android.util.Log;
 import android.view.SurfaceHolder;
-import android.widget.ImageView;
-import android.widget.TextView;
-
 import java.io.InterruptedIOException;
 
 public class GameViewDrawThread extends Thread {
 
-    private int sleepSpan = 100;
     private MainActivity activity = null;
     private GameView gameView = null;
-    private boolean flag = true;
+    private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
     private SurfaceHolder surfaceHolder = null;
     private BallGoThread ballGoThread = null;
 
     public GameViewDrawThread(GameView gView) {
         this.gameView = gView;
         this.activity = gView.getActivity();
-        this.sleepSpan = gView.getSynchronizeTime() / 2;
         this.surfaceHolder = gView.getSurfaceHolder();
         this.ballGoThread = gameView.getBallGoThread();
     }
 
     public void run() {
-        while (flag) {
+        while (keepRunning) {
             synchronized (activity.activityHandler) {
+                // for application's (Main activity) synchronizing
                 while (activity.gamePause) {
                     try {
                         activity.activityHandler.wait();
+                    } catch (InterruptedException e) {
+                    }
+                }
+            }
+
+            synchronized (gameView.gameViewHandler) {
+                // for GameView's synchronizing
+                while (gameView.gameViewPause) {
+                    try {
+                        gameView.gameViewHandler.wait();
                     } catch (InterruptedException e) {
                     }
                 }
@@ -64,22 +69,10 @@ public class GameViewDrawThread extends Thread {
                     ex.printStackTrace();;
                 }
             }
-
-            /*
-            try {
-                Thread.sleep(sleepSpan);
-            } catch (Exception ex) {
-                ex.printStackTrace(); // error message
-            }
-            */
         }
     }
 
-    public boolean getFlag() {
-        return this.flag;
-    }
-
-    public void setFlag(boolean flag) {
-        this.flag = flag;
+    public void setKeepRunning(boolean keepRunning) {
+        this.keepRunning = keepRunning;
     }
 }
