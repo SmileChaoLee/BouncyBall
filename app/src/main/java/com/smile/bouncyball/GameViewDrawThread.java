@@ -17,6 +17,10 @@ public class GameViewDrawThread extends Thread {
         this.activity = gView.getActivity();
         this.surfaceHolder = gView.getSurfaceHolder();
         this.ballGoThread = gameView.getBallGoThread();
+        if (this.ballGoThread == null) {
+            // must not be null
+            throw new NullPointerException("ballGoThread must not be null.");
+        }
     }
 
     public void run() {

@@ -8,8 +8,8 @@ android {
         applicationId "com.smile.bouncyball"
         minSdkVersion 14
         targetSdkVersion 26
-        versionCode 10
-        versionName "2.0"
+        versionCode 22
+        versionName "2.2"
     }
     buildTypes {
         release {

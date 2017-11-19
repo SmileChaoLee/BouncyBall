@@ -3,24 +3,18 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Looper;
-import android.provider.CalendarContract;
-import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.os.Handler;
 
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
-import com.smile.bouncyball.models.ButtonHoldThread;
 
 import java.util.Vector;
 
@@ -140,9 +134,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
         setWillNotDraw(true);   // added on 2017-11-07 for just in case, the default is false
 
+        // obstacleThreads must be created before ballGoThread
+        obstacleThreads = new Vector<ObstacleThread>();
+        // ballGoThread must be created before other threads except obstacleThreads
         ballGoThread = new BallGoThread(this);
         gameViewDrawThread = new GameViewDrawThread(this);
-        obstacleThreads = new Vector<ObstacleThread>();
         buttonHoldThread = new ButtonHoldThread(this);
         buttonHoldThread.start();
 
@@ -312,10 +308,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         canvas.drawBitmap(irightarrow, null, rightArrowRect,null);
         //
 
-    	// draw the hint of beginning
+        // verifying score and status
+        score = ballGoThread.getScore();
+        status = ballGoThread.getStatus();
+
     	if(status == startStatus){
-            // sPoint.set((screenWidth-beginWidth)/2,(bottomY-beginHeight)/2);
-            // rect2.set(sPoint.x,sPoint.y,sPoint.x+beginWidth,sPoint.y+beginHeight);
+            // draw the hint of beginning
     		canvas.drawBitmap(ibegin, null, ibeginRect, null);
             // start button
             canvas.drawBitmap(istart, null, startRect, null);
@@ -327,57 +325,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 // under playing status, show pause button
                 canvas.drawBitmap(ipause, null, startRect, null);
             }
-            // verifying status and score
-            score = ballGoThread.getScore();
-            if (ballGoThread.getHitBanner()) {
-                if (score < highest) {
-                    if (status < finalStageStatus) {
-                        if (score >= stageScore[status]) {
-                            status++;
-                            if (status > finalStageStatus) {
-                                // max stage is 4 (stage no is greater 4
-                                status = finalStageStatus;  // 4, final stage
-                            } else {
-                                // status <= finalStageStatus
-                                int obsSize = obstacleThreads.size();
-                                int numOfObstacles = 0;
-                                if (status == secondStageStatus) {
-                                    // one obstacle for second stage
-                                    numOfObstacles = 1;
-                                } else if (status == thirdStageStatus) {
-                                    // 3 obstacles for third stage (now is final stage)
-                                    numOfObstacles = 2;
-                                } else if (status == finalStageStatus) {
-                                    // 3 obstacles for fourth stage (now is final stage)
-                                    numOfObstacles = 3;
-                                }
-                                // adding ObstacleThreads
-                                if (obsSize < numOfObstacles) {
-                                    for (int i = obsSize; i < numOfObstacles; i++) {
-                                        ObstacleThread obstacleThread = new ObstacleThread(this, i+1);
-                                        obstacleThreads.addElement(obstacleThread);
-                                        obstacleThread.start();
-                                    }
-                                    ballGoThread.setSleepSpan(ballGoThread.getSleepSpan() - 10);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    // reached highest score then finished
-                    status = finishedStatus;   // reach the hiest score and stop the game
-                }
-            } else {
-                // did not hit the banner
-                status = failedStatus;
-            }
 
-            if (status == failedStatus){
+            int obsSize = obstacleThreads.size();
+            int numOfObstacles = 0;
+    	    if (status == failedStatus) {
                 // draw the hint of fail
                 canvas.drawBitmap(igameover, null, igameoverRect, null);
                 ballGoThread.setKeepRunning(false);  // stop running the BallGoThread, added on 2017-11-07
                 gameViewDrawThread.setKeepRunning(false);  // added on 2017-11-07
-                for (ObstacleThread obstacleThread:obstacleThreads) {
+                for (ObstacleThread obstacleThread : obstacleThreads) {
                     obstacleThread.setKeepRunning(false);
                 }
                 obstacleThreads.clear();
@@ -390,6 +346,19 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                     obstacleThread.setKeepRunning(false);
                 }
                 obstacleThreads.clear();
+            } else if ( (status >= secondStageStatus) && (status <= finalStageStatus) ) {
+    	        // stage 1 to stage 4
+                // 1 obstacle for stage 2, 2 obstacles for stage 3, 3 obstacles for stage 4(final stage)
+                numOfObstacles = status - 1;
+                if (obsSize < numOfObstacles) {
+                    for (int i = obsSize; i < numOfObstacles; i++) {
+                        ObstacleThread obstacleThread = new ObstacleThread(this, i+1);
+                        obstacleThreads.addElement(obstacleThread);
+                        obstacleThread.start();
+                    }
+                }
+            } else {
+    	        // first stage, do nothing
             }
         }
 
@@ -444,7 +413,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                     if (startRect.contains(x, y)) {
                         // start button was pressed
                         // start playing
-                        status = firstStageStatus;
+                        // status = firstStageStatus;   // moved to ballGoThread.run()
                         // start running the threads
                         ballGoThread.start();
                         gameViewDrawThread.start();
@@ -470,7 +439,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                         }
                     }
                     if (!gameViewPause) {
-                        int xSpeed = 5;
+                        int xSpeed = 6; // 6 pixels
                         int bannerX = banner.getBannerX();
                         // not in pause status
                         if (rightArrowRect.contains(x, y)) {
@@ -511,12 +480,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     public int getSynchronizeTime() {
 	    return this.synchronizeTime;
     }
-    public int getStatus() {
-	    return this.status;
-    }
-    public int getScore() {
-	    return this.score;
-    }
     public int getScreenWidth() {
 	    return this.screenWidth;
     }
@@ -534,6 +497,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     }
     public BallGoThread getBallGoThread() {
 	    return this.ballGoThread;
+    }
+    public Vector<ObstacleThread> getObstacleThreads() {
+	    return this.obstacleThreads;
     }
     public void newGame(){
         // if(status==failedStatus||status==finishedStatus){

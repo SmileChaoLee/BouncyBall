@@ -44,7 +44,10 @@ public class ObstacleThread extends Thread{
         this.gameView = gView;
         this.activity = gameView.getActivity();
         this.ballGoThread = gameView.getBallGoThread();
-
+        if (this.ballGoThread == null) {
+            // must not be null
+            throw new NullPointerException("ballGoThread must not be null.");
+        }
         this.xRangeOfObstacle = gameView.getScreenWidth();
         this.yRangeOfObstacle = gameView.getScreenHeight() / 3;    // one-third of the height of Game View
         this.bouncyBall = gameView.getBouncyBall();
@@ -62,6 +65,15 @@ public class ObstacleThread extends Thread{
 
     public void setKeepRunning(boolean keepRunning) {
         this.keepRunning = keepRunning;
+    }
+    public Point getPosition() {
+        return this.position;
+    }
+    public int getObstacleWidth() {
+        return this.obstacleWidth;
+    }
+    public int getObstacleHeight() {
+        return this.obstacleHeight;
     }
 
     public void run () {
@@ -90,7 +102,7 @@ public class ObstacleThread extends Thread{
                     ballGoThread.wait();
                     // move the obstacle
                     moveObstacle();
-                    isHitBouncyBall();
+                    // isHitBouncyBall();   // moved to BallGoThread on 2017-11-19
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();
                 }
@@ -111,14 +123,6 @@ public class ObstacleThread extends Thread{
         color = obsColor[col];
         float x = random.nextFloat();   // 0.0 ~ 1.0
         x *= xRangeOfObstacle;
-        /*
-        float y = random.nextFloat();   // 0.0 ~ 1.0
-        float minY = 0.3f; // minimum is 0.3f
-        if (y < minY) {
-            y = minY;
-        }
-        y *= yRangeOfObstacle;
-        */
         float y = bouncyBall.getBallSize() * stageNo * 2;
         position.set((int)x,(int)y);    // position of the center
     }
@@ -162,7 +166,7 @@ public class ObstacleThread extends Thread{
         position.set(x,y);
     }
 
-    private boolean isHitBouncyBall() {
+    private boolean isHitBouncyBall() { // no longer used, it has been moved to BallGoThread that named isHitObstacle()
 
         int ballCenterX = bouncyBall.getBallX();
         int ballCenterY = bouncyBall.getBallY();

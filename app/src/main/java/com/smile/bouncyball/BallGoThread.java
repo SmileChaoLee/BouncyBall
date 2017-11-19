@@ -10,27 +10,42 @@ import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
 
 import java.util.Random;
+import java.util.Vector;
+
 import android.os.Handler;
 
 public class BallGoThread extends Thread{
     private MainActivity activity = null;
 	private GameView gameView = null;
+	private Vector<ObstacleThread> obstacleThreads = null;
 	private int screenWidth = 0;
 	private int screenHeight = 0;
     private int sleepSpan = 80;
     private boolean flag = true;        // flag = true -> move ball
     private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
     private Random random = null;
-    private int score = 0;     //  score that user got
-    private boolean isHitBanner = true;
     private int bottomY = 0;
     private BouncyBall bouncyBall = null;
     private Banner banner = null;
+
+    private int highest = 999;  // maximum value of the number that banner is to be hit to make user win
+    // -1-> failed and game over, 0->waiting to start, 1->first stage (playing), 2->second stage (playing)
+    // 3->final stage (playing), 4-finished the game
+    private int[] stageScore = {0, 20, 60, 120,200};    // hits for each stage
+    private int score = 0;     //  score that user got
+    private int status = GameView.startStatus;
 
 	public BallGoThread(GameView gView) {
 
 		this.gameView = gView;
         this.activity = gView.getActivity();
+
+        this.obstacleThreads = gameView.getObstacleThreads();
+        // obstacleThreads must not be null
+        if (this.obstacleThreads == null) {
+            throw new NullPointerException("obstacleThreads must not be null.");
+        }
+
         this.screenWidth = gView.getScreenWidth();
         this.screenHeight = gView.getScreenHeight();
         this.sleepSpan  = gView.getSynchronizeTime();
@@ -42,11 +57,29 @@ public class BallGoThread extends Thread{
         int direction = random.nextInt(2)*3;  //   0 or 1  multiple 3 ------>0 or 3
         bouncyBall.setDirection(direction);    // direction of bouncy ball
 
+        score = 0;
+        status = GameView.startStatus;
 	}
 
+    public void setKeepRunning(boolean keepRunning) {
+        this.keepRunning = keepRunning;
+    }
+    public boolean getFlag() {
+        return this.flag;
+    }
+    public void setFlag(boolean flag) {
+        this.flag = flag;
+    }
+    public int getScore() {
+        return this.score;
+    }
+    public int getStatus() {
+	    return this.status;
+    }
+
 	public void run(){
-        int tempX = 0;
-        int tempY = 0;
+
+	    status = GameView.firstStageStatus; // start running is first stage
 
 		while(keepRunning) {
             synchronized (activity.activityHandler) {
@@ -71,109 +104,18 @@ public class BallGoThread extends Thread{
 
             synchronized (this) {
                 if (flag) {
-                    tempX = bouncyBall.getBallX();
-                    tempY = bouncyBall.getBallY();
-                    int direction = bouncyBall.getDirection();
-                    switch (direction) {
-                        case GameView.BouncyBall_RIGHT_TOP:
-                            // going to right top
-                            bouncyBall.setBallX(tempX + bouncyBall.getBallSpan());
-                            bouncyBall.setBallY(tempY - bouncyBall.getBallSpan());
-                            // ballX = ballX + gView.ballSpan;
-                            // ballY = ballY - gView.ballSpan;
-
-                            if ((bouncyBall.getBallX() + bouncyBall.getBallRadius()) > screenWidth) {
-                                if ((tempX > (screenWidth - bouncyBall.getBallRadius())) && (tempX < screenWidth)) {
-                                    bouncyBall.setBallX(screenWidth - bouncyBall.getBallRadius());
-                                    // ballX = screenWidth - ballRadius;
-                                } else {
-                                    // hit the right wall
-                                    bouncyBall.setDirection(GameView.BouncyBall_LEFT_TOP);
-                                }
-                            } else if ((bouncyBall.getBallY() - bouncyBall.getBallRadius()) < 0) {
-                                if ((tempY < bouncyBall.getBallRadius()) && (tempY > 0)) {
-                                    bouncyBall.setBallY(bouncyBall.getBallRadius());
-                                    // ballY = ballRadius;
-                                } else {
-                                    // hit the top wall
-                                    bouncyBall.setDirection(GameView.BouncyBall_RIGHT_BOTTOM);
-                                }
-                            }
-                            break;
-                        case GameView.BouncyBall_LEFT_TOP:
-                            // going to left top
-                            bouncyBall.setBallX(tempX - bouncyBall.getBallSpan());
-                            // ballX = ballX - gView.ballSpan;
-                            bouncyBall.setBallY(tempY - bouncyBall.getBallSpan());
-                            // ballY = ballY - gView.ballSpan;
-                            if ((bouncyBall.getBallX() - bouncyBall.getBallRadius()) < 0) {
-                                if ((tempX < bouncyBall.getBallRadius()) && (tempX > 0)) {
-                                    bouncyBall.setBallX(bouncyBall.getBallRadius());
-                                    // ballX = ballRadius;
-                                } else {
-                                    // hit the left wall
-                                    bouncyBall.setDirection(GameView.BouncyBall_RIGHT_TOP);
-                                }
-                            } else if ((bouncyBall.getBallY() - bouncyBall.getBallRadius()) < 0) {
-                                if ((tempY < bouncyBall.getBallRadius()) && (tempY > 0)) {
-                                    bouncyBall.setBallY(bouncyBall.getBallRadius());
-                                    // ballY = ballRadius;
-                                } else {
-                                    // hit the top wall
-                                    bouncyBall.setDirection(GameView.BouncyBall_LEFT_BOTTOM);
-                                }
-                            }
-                            break;
-                        case GameView.BouncyBall_RIGHT_BOTTOM:
-                            // going to right bottom
-                            bouncyBall.setBallX(tempX + bouncyBall.getBallSpan());
-                            // ballX = ballX + gView.ballSpan;
-                            bouncyBall.setBallY(tempY + bouncyBall.getBallSpan());
-                            // ballY = ballY + gView.ballSpan;
-
-                            if ((bouncyBall.getBallY() + bouncyBall.getBallRadius()) > bottomY) {
-                                if ((tempY > (bottomY - bouncyBall.getBallRadius())) && (tempY < bottomY)) {
-                                    bouncyBall.setBallY(bottomY - bouncyBall.getBallRadius());
-                                    // ballY = bottomY - ballRadius;
-                                } else {
-                                    // hit the bottom wall
-                                    checkCollision(GameView.BouncyBall_RIGHT_BOTTOM);
-                                }
-                            } else if ((bouncyBall.getBallX() + bouncyBall.getBallRadius()) > screenWidth) {
-                                if ((tempX > (screenWidth - bouncyBall.getBallRadius())) && (tempX < screenWidth)) {
-                                    bouncyBall.setBallX(screenWidth - bouncyBall.getBallRadius());
-                                    // ballX = screenWidth - ballRadius;
-                                } else {
-                                    //hit the right wall
-                                    bouncyBall.setDirection(GameView.BouncyBall_LEFT_BOTTOM);
-                                }
-                            }
-                            break;
-                        case GameView.BouncyBall_LEFT_BOTTOM:
-                            // going to left bottom
-                            bouncyBall.setBallX(tempX - bouncyBall.getBallSpan());
-                            // ballX = ballX - gView.ballSpan;
-                            bouncyBall.setBallY(tempY + bouncyBall.getBallSpan());
-                            // ballY = ballY + gView.ballSpan;
-
-                            if ((bouncyBall.getBallY() + bouncyBall.getBallRadius()) > bottomY) {
-                                if ((tempY > (bottomY - bouncyBall.getBallRadius())) && (tempY < bottomY)) {
-                                    bouncyBall.setBallY(bottomY - bouncyBall.getBallRadius());
-                                    // ballY = bottomY - ballRadius;
-                                } else {
-                                    // hit the bottom wall
-                                    checkCollision(GameView.BouncyBall_LEFT_BOTTOM);
-                                }
-                            } else if ((bouncyBall.getBallX() - bouncyBall.getBallRadius()) < 0) {
-                                if ((tempX < bouncyBall.getBallRadius()) && (tempX > 0)) {
-                                    bouncyBall.setBallX(bouncyBall.getBallRadius());
-                                    // ballX = ballRadius;
-                                } else {
-                                    // hit the left wall
-                                    bouncyBall.setDirection(GameView.BouncyBall_RIGHT_BOTTOM);
-                                }
-                            }
-                            break;
+                    // 2017-11-19
+                    checkCollision();   // collision with banner or walls
+                    if ( (status == GameView.failedStatus) || (status == GameView.finishedStatus) ) {
+                        // failed or reach highest score (finished)
+                        // stop running this thread, means set keepRunning to false;
+                        keepRunning = false;
+                    } else {
+                        // 2017-11-19 morning
+                        for (ObstacleThread obstacleThread : obstacleThreads) {
+                            // obstacleThread.isHitBouncyBall();    // removed on 2017-11-19
+                            isHitObstacle(obstacleThread);
+                        }
                     }
                 }
                 notifyAll();
@@ -184,13 +126,123 @@ public class BallGoThread extends Thread{
 		}
 	}
 
-	public void checkCollision(int direction) {
+	private void checkCollision() {
+
+        int tempX = bouncyBall.getBallX();
+        int tempY = bouncyBall.getBallY();
+        int direction = bouncyBall.getDirection();
+        switch (direction) {
+            case GameView.BouncyBall_RIGHT_TOP:
+                // going to right top
+                bouncyBall.setBallX(tempX + bouncyBall.getBallSpan());
+                bouncyBall.setBallY(tempY - bouncyBall.getBallSpan());
+                // ballX = ballX + gView.ballSpan;
+                // ballY = ballY - gView.ballSpan;
+
+                if ((bouncyBall.getBallX() + bouncyBall.getBallRadius()) > screenWidth) {
+                    if ((tempX > (screenWidth - bouncyBall.getBallRadius())) && (tempX < screenWidth)) {
+                        bouncyBall.setBallX(screenWidth - bouncyBall.getBallRadius());
+                        // ballX = screenWidth - ballRadius;
+                    } else {
+                        // hit the right wall
+                        bouncyBall.setDirection(GameView.BouncyBall_LEFT_TOP);
+                    }
+                } else if ((bouncyBall.getBallY() - bouncyBall.getBallRadius()) < 0) {
+                    if ((tempY < bouncyBall.getBallRadius()) && (tempY > 0)) {
+                        bouncyBall.setBallY(bouncyBall.getBallRadius());
+                        // ballY = ballRadius;
+                    } else {
+                        // hit the top wall
+                        bouncyBall.setDirection(GameView.BouncyBall_RIGHT_BOTTOM);
+                    }
+                }
+                break;
+            case GameView.BouncyBall_LEFT_TOP:
+                // going to left top
+                bouncyBall.setBallX(tempX - bouncyBall.getBallSpan());
+                // ballX = ballX - gView.ballSpan;
+                bouncyBall.setBallY(tempY - bouncyBall.getBallSpan());
+                // ballY = ballY - gView.ballSpan;
+                if ((bouncyBall.getBallX() - bouncyBall.getBallRadius()) < 0) {
+                    if ((tempX < bouncyBall.getBallRadius()) && (tempX > 0)) {
+                        bouncyBall.setBallX(bouncyBall.getBallRadius());
+                        // ballX = ballRadius;
+                    } else {
+                        // hit the left wall
+                        bouncyBall.setDirection(GameView.BouncyBall_RIGHT_TOP);
+                    }
+                } else if ((bouncyBall.getBallY() - bouncyBall.getBallRadius()) < 0) {
+                    if ((tempY < bouncyBall.getBallRadius()) && (tempY > 0)) {
+                        bouncyBall.setBallY(bouncyBall.getBallRadius());
+                        // ballY = ballRadius;
+                    } else {
+                        // hit the top wall
+                        bouncyBall.setDirection(GameView.BouncyBall_LEFT_BOTTOM);
+                    }
+                }
+                break;
+            case GameView.BouncyBall_RIGHT_BOTTOM:
+                // going to right bottom
+                bouncyBall.setBallX(tempX + bouncyBall.getBallSpan());
+                // ballX = ballX + gView.ballSpan;
+                bouncyBall.setBallY(tempY + bouncyBall.getBallSpan());
+                // ballY = ballY + gView.ballSpan;
+
+                if ((bouncyBall.getBallY() + bouncyBall.getBallRadius()) > bottomY) {
+                    if ((tempY > (bottomY - bouncyBall.getBallRadius())) && (tempY < bottomY)) {
+                        bouncyBall.setBallY(bottomY - bouncyBall.getBallRadius());
+                        // ballY = bottomY - ballRadius;
+                    } else {
+                        // hit the bottom wall
+                        checkHitBanner(GameView.BouncyBall_RIGHT_BOTTOM);
+                    }
+                } else if ((bouncyBall.getBallX() + bouncyBall.getBallRadius()) > screenWidth) {
+                    if ((tempX > (screenWidth - bouncyBall.getBallRadius())) && (tempX < screenWidth)) {
+                        bouncyBall.setBallX(screenWidth - bouncyBall.getBallRadius());
+                        // ballX = screenWidth - ballRadius;
+                    } else {
+                        //hit the right wall
+                        bouncyBall.setDirection(GameView.BouncyBall_LEFT_BOTTOM);
+                    }
+                }
+                break;
+            case GameView.BouncyBall_LEFT_BOTTOM:
+                // going to left bottom
+                bouncyBall.setBallX(tempX - bouncyBall.getBallSpan());
+                // ballX = ballX - gView.ballSpan;
+                bouncyBall.setBallY(tempY + bouncyBall.getBallSpan());
+                // ballY = ballY + gView.ballSpan;
+
+                if ((bouncyBall.getBallY() + bouncyBall.getBallRadius()) > bottomY) {
+                    if ((tempY > (bottomY - bouncyBall.getBallRadius())) && (tempY < bottomY)) {
+                        bouncyBall.setBallY(bottomY - bouncyBall.getBallRadius());
+                        // ballY = bottomY - ballRadius;
+                    } else {
+                        // hit the bottom wall
+                        checkHitBanner(GameView.BouncyBall_LEFT_BOTTOM);
+                    }
+                } else if ((bouncyBall.getBallX() - bouncyBall.getBallRadius()) < 0) {
+                    if ((tempX < bouncyBall.getBallRadius()) && (tempX > 0)) {
+                        bouncyBall.setBallX(bouncyBall.getBallRadius());
+                        // ballX = ballRadius;
+                    } else {
+                        // hit the left wall
+                        bouncyBall.setDirection(GameView.BouncyBall_RIGHT_BOTTOM);
+                    }
+                }
+                break;
+        }
+    }
+
+    private boolean checkHitBanner(int direction) {
+
+        boolean isHit = false;
+
         int bannerX1, bannerX2;
         bannerX1 = banner.getBannerX() - banner.getBannerWidth()/2;
         bannerX2 = banner.getBannerX() + banner.getBannerWidth()/2;
-
         // (gView.bannerX,gView.bannerY) is the center of the banner
-	  	if ( ((bouncyBall.getBallX()+bouncyBall.getBallRadius())>=bannerX1) && ((bouncyBall.getBallX()-bouncyBall.getBallRadius())<=bannerX2) ) {
+        if ( ((bouncyBall.getBallX()+bouncyBall.getBallRadius())>=bannerX1) && ((bouncyBall.getBallX()-bouncyBall.getBallRadius())<=bannerX2) ) {
             // hit the banner
             switch(direction){
                 case 1:
@@ -199,15 +251,104 @@ public class BallGoThread extends Thread{
                 case 2:
                     bouncyBall.setDirection(GameView.BouncyBall_LEFT_TOP);
                     break;
-	  		}
-            // score policy: add one score before it hit the banner. Added on 2017-11-07
-	  		score++;
-            isHitBanner = true;
-	  	} else {
-	  	    // did not hit the banner, means failed
-	  		isHitBanner = false;
-	  	}		
-	}
+            }
+            // score policy: add one score when it hit the banner. Added on 2017-11-07
+            score++;
+            isHit = true;
+        } else {
+            // did not hit the banner, means failed
+            isHit = false;
+        }
+
+        checkStatus(isHit);
+
+        return isHit;
+    }
+
+    private void checkStatus(boolean isHit) {
+
+	    if (!isHit) {
+	        status = GameView.failedStatus;
+	        return;
+        }
+
+        if (score < highest) {
+	        // has not reach highest score yet
+            if (status < GameView.finalStageStatus) {
+                if (score >= stageScore[status]) {
+                    status++;
+                    if (status > GameView.finalStageStatus) {
+                        // max stage is 4 (stage no is greater 4
+                        status = GameView.finalStageStatus;  // 4, final stage
+                    } else {
+                        // status <= finalStageStatus
+                        sleepSpan -= 10;    // speed up by 10 pixels
+                    }
+                }
+            }
+        } else {
+            // reached highest score then finished
+            status = GameView.finishedStatus;
+        }
+    }
+
+    private boolean isHitObstacle(ObstacleThread obstacleThread) {
+
+        int ballCenterX = bouncyBall.getBallX();
+        int ballCenterY = bouncyBall.getBallY();
+        int radius = bouncyBall.getBallRadius();
+
+        int ballLeft = ballCenterX - radius;
+        int ballRight = ballCenterX + radius;
+        int ballTop = ballCenterY - radius;
+        int ballBottom = ballCenterY + radius;
+
+        Point position = obstacleThread.getPosition();
+        int obstacleLeft = position.x - obstacleThread.getObstacleWidth()/2;
+        int obstacleRight = position.x + obstacleThread.getObstacleWidth()/2;
+        int obstacleTop = position.y - obstacleThread.getObstacleHeight()/2;
+        int obstacleBottom = position.y + obstacleThread.getObstacleHeight()/2;
+
+        boolean isHit = false;
+        if ( (ballRight >= obstacleLeft) && (ballLeft <= obstacleRight) ) {
+            // center point is inside the range of the obstacle
+            int ballDirection = bouncyBall.getDirection();
+            switch (ballDirection) {
+                case GameView.BouncyBall_RIGHT_TOP:
+                    if ((ballTop >= obstacleTop) && (ballTop <= obstacleBottom)) {
+                        // hit
+                        bouncyBall.setDirection(GameView.BouncyBall_RIGHT_BOTTOM);
+                        bouncyBall.setBallY(obstacleBottom + radius);
+                        isHit = true;
+                    }
+                    break;
+                case GameView.BouncyBall_LEFT_TOP:
+                    if ((ballTop >= obstacleTop) && (ballTop <= obstacleBottom)) {
+                        // hit
+                        bouncyBall.setDirection(GameView.BouncyBall_LEFT_BOTTOM);
+                        bouncyBall.setBallY(obstacleBottom + radius);
+                        isHit = true;
+                    }
+                    break;
+                case GameView.BouncyBall_RIGHT_BOTTOM:
+                    if ((ballBottom >= obstacleTop) && (ballBottom <= obstacleBottom)) {
+                        bouncyBall.setDirection(GameView.BouncyBall_RIGHT_TOP);
+                        bouncyBall.setBallY(obstacleTop - radius);
+                        isHit = true;
+                    }
+                    break;
+                case GameView.BouncyBall_LEFT_BOTTOM:
+                    if ((ballBottom >= obstacleTop) && (ballBottom <= obstacleBottom)) {
+                        bouncyBall.setDirection(GameView.BouncyBall_LEFT_TOP);
+                        bouncyBall.setBallY(obstacleTop - radius);
+                        isHit = true;
+                    }
+                    break;
+            }
+        }
+
+        return isHit;
+    }
 
 	public void drawBouncyBall(Canvas canvas) {
 
@@ -245,28 +386,6 @@ public class BallGoThread extends Thread{
         canvas.drawBitmap(bouncyBall.getBitmap(), null ,rect2, null);
         //
 
-    }
-
-    public boolean getFlag() {
-        return this.flag;
-    }
-    public void setKeepRunning(boolean keepRunning) {
-	    this.keepRunning = keepRunning;
-    }
-    public void setFlag(boolean flag) {
-        this.flag = flag;
-    }
-    public int getScore() {
-	    return this.score;
-    }
-    public boolean getHitBanner() {
-	    return this.isHitBanner;
-    }
-    public int getSleepSpan() {
-	    return this.sleepSpan;
-    }
-    public void setSleepSpan(int sleepSpan) {
-	    this.sleepSpan = sleepSpan;
     }
 
 }
