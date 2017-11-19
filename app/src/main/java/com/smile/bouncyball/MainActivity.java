@@ -185,8 +185,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onDestroy() {
+        // release and destroy threads and resources before destroy activity
+        finishApplication();
+
         super.onDestroy();
         System.out.println("onDestroy --> Setting Screen orientation to User");
+
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
     }
 
@@ -202,6 +206,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+
         return true;
     }
 
@@ -212,6 +217,28 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
+        if (id == R.id.newGame) {
+            releaseSynchronizings();
+            gameView.newGame();
+            return true;
+        }
+
+        if (id == R.id.quitGame) {
+            finish();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    public int getScreenWidth() {
+        return this.screenWidth;
+    }
+    public int getScreenHeight() {
+        return this.screenHeight;
+    }
+
+    private void releaseSynchronizings() {
         if (gamePause) {
             // in pause status
             synchronized (activityHandler) {
@@ -227,25 +254,11 @@ public class MainActivity extends AppCompatActivity {
                 gameView.gameViewHandler.notifyAll();
             }
         }
-
-        if (id == R.id.replayGame) {
-            gameView.newGame();
-            return true;
-        }
-
-        if (id == R.id.quitGame) {
-            gameView.stopThreads();
-            finish();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
-    public int getScreenWidth() {
-        return this.screenWidth;
-    }
-    public int getScreenHeight() {
-        return this.screenHeight;
+    private void finishApplication() {
+        // release resources and threads
+        releaseSynchronizings();
+        gameView.stopThreads();
     }
 }

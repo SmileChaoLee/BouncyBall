@@ -70,7 +70,7 @@ public class ButtonHoldThread extends Thread {
                 }
                 // set position of banner
                 banner.setBannerX(bannerX);
-                try{Thread.sleep(10);}
+                try{Thread.sleep(20);}
                 catch(Exception e){e.printStackTrace();}
             }
 

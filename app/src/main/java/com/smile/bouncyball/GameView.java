@@ -93,8 +93,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private Bitmap irightarrow;    // right arrow picture
     private Bitmap[] iscore = new Bitmap[10];// score pictures (pictures for numbers)
 
-    private float bannerWidthRatio  = 1.0f/5.0f;
-    private float bannerHeightRatio = 1.0f/15.0f;
+    private float bannerWidthRatio  = 1.0f/4.0f;
+    private float bannerHeightRatio = 1.0f/10.0f;
     private SurfaceHolder surfaceHolder = null;
     private int synchronizeTime = 70;
 
@@ -451,7 +451,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                     }
                 } else if ( (status >= firstStageStatus) && (status < finishedStatus) ) {
                     // in playing status
-                    System.out.println("Button down");
                     if (startRect.contains(x, y)) {
                         if (!gameViewPause) {  // not in pause status
                             // pause button was pressed
@@ -471,7 +470,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                         }
                     }
                     if (!gameViewPause) {
-                        int xSpeed = 3;
+                        int xSpeed = 5;
                         int bannerX = banner.getBannerX();
                         // not in pause status
                         if (rightArrowRect.contains(x, y)) {
@@ -496,7 +495,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 buttonHoldThread.setIsButtonHold(false);
-                System.out.println("Button up");
                 break;
             default:
                 // get the coordinates of point touched
