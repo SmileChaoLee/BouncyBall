@@ -1,18 +1,44 @@
 package com.smile.bouncyball;
+
+// import android.app.AlertDialog;
+import android.support.v7.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RectShape;
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Looper;
+import android.support.v7.app.ActionBar;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.os.Handler;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
+import com.smile.bouncyball.Utility.ScreenUtl;
+import com.smile.bouncyball.dao.ScoreSQLite;
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
 
@@ -54,8 +80,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private int backSize=16;          // the size of background
     private int beginWidth  = 100;           // width of the hint
     private int beginHeight = 20;         // height of the hint
-    private int gameoverWidth = 100;
-    private int gameoverHeight = 20;
     private int winWidth = 100;
     private int winHeight = 20;
     private int leftArrowWidth = 100;
@@ -69,8 +93,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private int bottomY = 0;            // the coordinate of Y-axis hitting the banner;
 
     private Rect ibeginRect = new Rect(0,0,0,0);   // rectangle area for hint to start
-    private Rect igameoverRect = new Rect(0,0,0,0);   // rectangle area for message for game over
-    private Rect iwinRect = new Rect(0,0,0,0);   // rectangle area for message for winning
     private Rect startRect  = new Rect(0,0,0,0);   // rectangle area for start game
     private Rect rightArrowRect   = new Rect(0,0,0,0);   // rectangle area for right arrow
     private Rect leftArrowRect = new Rect(0,0,0,0);   // rectangle area for left arrow
@@ -78,14 +100,31 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private Bitmap iback;// background picture
     private Bitmap ibanner;// banner picture
     private Bitmap ibegin;//  begin picture
-    private Bitmap igameover;// game over picrture
-    private Bitmap iwin;// winning picture
     private Bitmap ileftarrow;  // left arrow picture
     private Bitmap istart;   // start picture
     private Bitmap ipause;   // pause picture
     private Bitmap iresume;  // resume picture
     private Bitmap irightarrow;    // right arrow picture
     private Bitmap[] iscore = new Bitmap[10];// score pictures (pictures for numbers)
+
+    private TextView stageName;
+    private ImageView scoreImage0;
+    private ImageView scoreImage1;
+    private ImageView scoreImage2;
+
+    // string resources
+    private String[] stageLevels ;
+    private String startStr = "";
+    private String pauseStr = "";
+    private String resumeStr = "";
+    private String beginStr = "";
+    private String gameOverStr = "";
+    private String winStr = "";
+    private String nameStr = new String("");
+    private String cancelStr = new String("");
+    private String submitStr = new String("");
+    private String noStr = new String("");
+    private String yesStr = new String("");
 
     private float bannerWidthRatio  = 1.0f/4.0f;
     private float bannerHeightRatio = 1.0f/10.0f;
@@ -102,6 +141,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private int screenWidth  = 0;
     private int screenHeight = 0;
 
+    private ScoreSQLite scoreSQLite = null;
+
     private BouncyBall bouncyBall = null;
     private Banner banner = null;
 
@@ -109,10 +150,54 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private GameViewDrawThread gameViewDrawThread = null;
     private Vector<ObstacleThread> obstacleThreads = null;
 
+    private boolean dialogFinished = false;
+
 	public GameView(MainActivity activity) {
 		super(activity);
 
+        this.activity = activity;
+
         // Display d = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        // Display display = getWindowManager().getDefaultDisplay();
+        // Point size = new Point();
+        // display.getSize(size);
+        Point size = new Point();
+        ScreenUtl.getScreenSize(this.activity,size);
+
+        screenWidth  = size.x;
+        screenHeight = size.y;
+        int statusBarHeight = ScreenUtl.getStatusBarHeight(this.activity);
+        int actionBarHeight = ScreenUtl.getActionBarHeight(this.activity);
+        // screenHeight = screenHeight - statusBarHeight - actionBarHeight;
+        screenHeight = screenHeight - actionBarHeight;
+
+        ActionBar actionBar = activity.getSupportActionBar();
+        // actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        actionBar.setDisplayShowCustomEnabled(true);    // enable customized action bar
+        actionBar.setBackgroundDrawable(new ColorDrawable(Color.LTGRAY));
+        actionBar.setCustomView(R.layout.action_bar_layout);
+        View actionBarView = actionBar.getCustomView();
+
+        stageName = (TextView)actionBarView.findViewById(R.id.stageName);
+        scoreImage0 = (ImageView)actionBarView.findViewById(R.id.scoreView0);
+        scoreImage1 = (ImageView)actionBarView.findViewById(R.id.scoreView1);
+        scoreImage2 = (ImageView)actionBarView.findViewById(R.id.scoreView2);
+
+        stageLevels = getResources().getStringArray(R.array.stageLevels);
+        stageName.setText(stageLevels[0]);   // start from stage 1
+
+        startStr = getResources().getString(R.string.start_string);
+        pauseStr = getResources().getString(R.string.pause_string);
+        resumeStr = getResources().getString(R.string.resume_string);
+        beginStr = getResources().getString(R.string.begin_string);
+        gameOverStr = getResources().getString(R.string.gameOver_string);
+        winStr = getResources().getString(R.string.win_string);
+        nameStr = getResources().getString(R.string.nameStr);
+        submitStr = getResources().getString(R.string.submitStr);
+        cancelStr = getResources().getString(R.string.cancelStr);
+        noStr = getResources().getString(R.string.noStr);
+        yesStr = getResources().getString(R.string.yesStr);
 
         gameViewHandler = new Handler(Looper.getMainLooper());  // for synchronizing
         gameViewPause = false;   // for synchronizing
@@ -120,10 +205,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         surfaceHolder = getHolder();
 		surfaceHolder.addCallback(this); // register the interface
 
-		this.activity = activity;
-        this.screenWidth  = activity.getScreenWidth();
-        this.screenHeight = activity.getScreenHeight();
-        this.synchronizeTime = 70;
+        scoreSQLite = new ScoreSQLite(this.activity);
+        int highestScore = scoreSQLite.readHighestScore();
 
         status = startStatus;    // waiting to start
 
@@ -178,8 +261,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 		iball = BitmapFactory.decodeResource(getResources(), R.drawable.ball);
 		ibanner = BitmapFactory.decodeResource(getResources(), R.drawable.banner);
 		ibegin = BitmapFactory.decodeResource(getResources(), R.drawable.begin);
-		igameover = BitmapFactory.decodeResource(getResources(), R.drawable.gameover);
-		iwin = BitmapFactory.decodeResource(getResources(), R.drawable.win);
 
         bannerWidth = (int)((float)screenWidth   * bannerWidthRatio);         // width of the banner
         bannerHeight = (int)((float)screenHeight * bannerHeightRatio);      // height of the banner
@@ -187,10 +268,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         ballRadius = ballSize/2;
         beginWidth  = (int)((float)screenWidth  * hintWidthRatio);          // width of the hint
         beginHeight = (int)((float)screenHeight * hintHeightRatio);        // height of the hint
-        gameoverWidth = (int)((float)screenWidth   * hintWidthRatio);
-        gameoverHeight = (int)((float)screenHeight * hintHeightRatio);
-        winWidth = (int)((float)screenWidth   * hintWidthRatio);
-        winHeight = (int)((float)screenHeight * hintHeightRatio);
         leftArrowWidth = (int)((float)screenWidth   * buttonWidthRatio);
         leftArrowHeight = (int)((float)screenHeight * buttonHeightRatio * 1.5); // 1.5 * normal button
         startWidth = (int)((float)screenWidth   * buttonWidthRatio);
@@ -201,17 +278,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         scoreHeight = (int)((float)screenHeight * scoreHeightRatio);
 
         ileftarrow = getBitmapFromResourceWithText(R.drawable.leftarrow, "",Color.BLUE);    // no string
-        istart = getBitmapFromResourceWithText(R.drawable.start, activity.startStr,Color.BLUE);
-        ipause = getBitmapFromResourceWithText(R.drawable.pause, activity.pauseStr,Color.YELLOW);
-        iresume = getBitmapFromResourceWithText(R.drawable.resume, activity.resumeStr,Color.BLUE);
+        istart = getBitmapFromResourceWithText(R.drawable.start, startStr,Color.BLUE);
+        ipause = getBitmapFromResourceWithText(R.drawable.pause, pauseStr,Color.YELLOW);
+        iresume = getBitmapFromResourceWithText(R.drawable.resume, resumeStr,Color.BLUE);
         irightarrow = getBitmapFromResourceWithText(R.drawable.rightarrow, "",Color.RED);   // no string
 
-        ibegin = getBitmapFromResourceWithText(R.drawable.begin, activity.beginStr,Color.BLUE);
-        igameover = getBitmapFromResourceWithText(R.drawable.gameover, activity.gameOverStr,Color.BLUE);
-        iwin = getBitmapFromResourceWithText(R.drawable.win, activity.winStr,Color.BLUE);
+        ibegin = getBitmapFromResourceWithText(R.drawable.begin, beginStr,Color.BLUE);
 
         int biasX = 10;
-        int biasY = 5;
+        int biasY = 10;
 
         Point sPoint = new Point(biasX,screenHeight - leftArrowHeight - biasY);
         leftArrowRect.set(sPoint.x, sPoint.y, sPoint.x + leftArrowWidth, sPoint.y + leftArrowHeight);
@@ -228,10 +303,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
         sPoint.set((screenWidth - beginWidth)/2,(bottomY - beginHeight)/2);
         ibeginRect.set(sPoint.x,sPoint.y,sPoint.x + beginWidth,sPoint.y + beginHeight);
-        sPoint.set((screenWidth - gameoverWidth)/2,(bottomY - gameoverHeight)/2);
-        igameoverRect.set(sPoint.x,sPoint.y,sPoint.x + gameoverWidth,sPoint.y + gameoverHeight);
-        sPoint.set((screenWidth - winWidth)/2,(bottomY - winHeight)/2);
-        iwinRect.set(sPoint.x,sPoint.y,sPoint.x + winWidth,sPoint.y + winHeight);
 
         backCols = screenWidth/backSize;   // number of columns
         if (screenWidth%backSize!=0) {
@@ -312,6 +383,29 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         score = ballGoThread.getScore();
         status = ballGoThread.getStatus();
 
+        // draw score, action bar is on the main UI thread not in the game view
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                if ( (status >= startStatus) && (status <= finalStageStatus) ) {
+                    stageName.setText(stageLevels[status]);
+                }
+
+                String scoreStr = score + "";
+                int loop = 3 - scoreStr.length();
+                for(int i=0;i<loop;i++){
+                    scoreStr = "0" + scoreStr;
+                }
+                int tempScore = scoreStr.charAt(2)-'0';
+                scoreImage0.setImageBitmap(iscore[tempScore]);
+                tempScore = scoreStr.charAt(1)-'0';
+                scoreImage1.setImageBitmap(iscore[tempScore]);
+                tempScore = scoreStr.charAt(0)-'0';
+                scoreImage2.setImageBitmap(iscore[tempScore]);
+            }
+        });
+
     	if(status == startStatus){
             // draw the hint of beginning
     		canvas.drawBitmap(ibegin, null, ibeginRect, null);
@@ -325,66 +419,80 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 // under playing status, show pause button
                 canvas.drawBitmap(ipause, null, startRect, null);
             }
-
-            int obsSize = obstacleThreads.size();
-            int numOfObstacles = 0;
-    	    if (status == failedStatus) {
-                // draw the hint of fail
-                canvas.drawBitmap(igameover, null, igameoverRect, null);
+            if ( (status >= secondStageStatus) && (status <= finalStageStatus) ) {
+                // stage 1 to stage 4
+                // 1 obstacle for stage 2, 2 obstacles for stage 3, 3 obstacles for stage 4(final stage)
+                int obsSize = obstacleThreads.size();
+                int numOfObstacles = 0;
+                numOfObstacles = status - 1;
+                if (obsSize < numOfObstacles) {
+                    for (int i = obsSize; i < numOfObstacles; i++) {
+                        ObstacleThread obstacleThread = new ObstacleThread(this, i + 1);
+                        obstacleThreads.addElement(obstacleThread);
+                        obstacleThread.start();
+                    }
+                }
+            } else if ( (status == failedStatus) || (status == finishedStatus) ) {
                 ballGoThread.setKeepRunning(false);  // stop running the BallGoThread, added on 2017-11-07
                 gameViewDrawThread.setKeepRunning(false);  // added on 2017-11-07
                 for (ObstacleThread obstacleThread : obstacleThreads) {
                     obstacleThread.setKeepRunning(false);
                 }
                 obstacleThreads.clear();
-            } else if (status == finishedStatus) {
-                // draw the picture of winning
-                canvas.drawBitmap(iwin, null, iwinRect, null);
-                ballGoThread.setKeepRunning(false);  // stop running the BallGoThread, added on 2017-11-07
-                gameViewDrawThread.setKeepRunning(false);  // added on 2017-11-07
-                for (ObstacleThread obstacleThread:obstacleThreads) {
-                    obstacleThread.setKeepRunning(false);
-                }
-                obstacleThreads.clear();
-            } else if ( (status >= secondStageStatus) && (status <= finalStageStatus) ) {
-    	        // stage 1 to stage 4
-                // 1 obstacle for stage 2, 2 obstacles for stage 3, 3 obstacles for stage 4(final stage)
-                numOfObstacles = status - 1;
-                if (obsSize < numOfObstacles) {
-                    for (int i = obsSize; i < numOfObstacles; i++) {
-                        ObstacleThread obstacleThread = new ObstacleThread(this, i+1);
-                        obstacleThreads.addElement(obstacleThread);
-                        obstacleThread.start();
+
+                //  game over
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        final TextView tv = new TextView(activity);
+                        tv.setTextSize(40);
+                        // tv.setWidth(400);
+                        // tv.setHeight(300);
+                        tv.setTextColor(Color.BLUE);
+                        if (status == failedStatus) {
+                            // failed
+                            tv.setText(gameOverStr);
+                        } else {
+                            // won
+                            tv.setText(winStr);
+                        }
+                        tv.setGravity(Gravity.CENTER);
+                        AlertDialog alertDialog = new  AlertDialog.Builder(activity, AlertDialog.BUTTON_NEUTRAL).create();
+                        alertDialog.setTitle(null);
+                        alertDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                        // alertDialog.setInverseBackgroundForced(false);
+                        alertDialog.setCancelable(false);
+                        alertDialog.setView(tv);
+                        alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, noStr, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                recordScore(score,false);   // quit game
+                            }
+                        });
+                        alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, yesStr, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                recordScore(score,true);   //   replay the game
+                            }
+                        });
+
+                        alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                            @Override
+                            public void onShow(DialogInterface dialog) {
+                                setDialogStyle(dialog);
+                            }
+                        });
+                        alertDialog.show();
                     }
-                }
+                });
+                //
+
             } else {
     	        // first stage, do nothing
             }
         }
-
-        // draw score, action bar is on the main UI thread
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-                if ( (status >= startStatus) && (status <= finalStageStatus) ) {
-                    activity.stageName.setText(activity.stageLevels[status]);
-                }
-
-                String scoreStr = score + "";
-                int loop = 3 - scoreStr.length();
-                for(int i=0;i<loop;i++){
-                    scoreStr = "0" + scoreStr;
-                }
-                int tempScore = scoreStr.charAt(2)-'0';
-                activity.scoreImage0.setImageBitmap(iscore[tempScore]);
-                tempScore = scoreStr.charAt(1)-'0';
-                activity.scoreImage1.setImageBitmap(iscore[tempScore]);
-                tempScore = scoreStr.charAt(0)-'0';
-                activity.scoreImage2.setImageBitmap(iscore[tempScore]);
-            }
-        });
-        //
 	}
 
 	@Override
@@ -474,6 +582,18 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         return true;   // must return true
 	}
 
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
+
+    public void surfaceCreated(SurfaceHolder holder) {
+        // Draw the first screen when surface view has been created
+        drawGameScreen();
+    }
+
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        // destroy and release the process
+        System.out.println("SurfaceView being destroyed");
+    }
+
     public MainActivity getActivity() {
         return this.activity;
     }
@@ -527,6 +647,25 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         drawGameScreen();
         // }
     }
+
+    public void releaseSynchronizings() {
+        if (activity.gamePause) {
+            // in pause status
+            synchronized (activity.activityHandler) {
+                activity.gamePause = false;
+                activity.activityHandler.notifyAll();
+            }
+        }
+
+        if (gameViewPause) {
+            // GameView in pause status
+            synchronized (gameViewHandler) {
+                gameViewPause = false;
+                gameViewHandler.notifyAll();
+            }
+        }
+    }
+
     public void stopThreads() {    // executed when user failed or won
         if (ballGoThread != null) {
             ballGoThread.setFlag(false);    // stop moving
@@ -594,17 +733,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         }
     }
 
-	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
+    public void getScoreHistory() {
+        String[] resultStr = scoreSQLite.read10HighestScore();
 
-	public void surfaceCreated(SurfaceHolder holder) {
-        // Draw the first screen when surface view has been created
-        drawGameScreen();
+        Intent intent = new Intent(activity, HistoryActivity.class);
+        Bundle extras = new Bundle();
+        extras.putStringArray("resultStr", resultStr);
+        intent.putExtras(extras);
+
+        activity.startActivity(intent);
     }
-
-	public void surfaceDestroyed(SurfaceHolder holder) {
-	    // destroy and release the process
-        System.out.println("SurfaceView being destroyed");
-	}
 
 	private Bitmap getBitmapFromResourceWithText(int resultId, String caption, int textColor) {
 
@@ -682,5 +820,79 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 surfaceHolder.unlockCanvasAndPost(canvas);
             }
         }
+    }
+
+    private void setDialogStyle(DialogInterface dialog) {
+        AlertDialog dlg = (AlertDialog)dialog;
+
+        dlg.getWindow().setLayout(WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT);
+        dlg.getWindow().setBackgroundDrawableResource(R.drawable.dialogbackground);
+
+        Button nBtn = dlg.getButton(DialogInterface.BUTTON_NEGATIVE);
+        nBtn.setTextColor(Color.RED);
+
+        LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams)nBtn.getLayoutParams();
+        layoutParams.weight = 10;
+        nBtn.setLayoutParams(layoutParams);
+
+        Button pBtn = dlg.getButton(DialogInterface.BUTTON_POSITIVE);
+        pBtn.setTextColor(Color.rgb(0x00,0x64,0x00));
+        pBtn.setLayoutParams(layoutParams);
+    }
+
+    private void recordScore(final int currentScore, final boolean replayYn) {
+        //    record currentScore as a score in database
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                final EditText et = new EditText(activity);
+                et.setTextSize(24);
+                // et.setWidth(400);
+                et.setHeight(200);
+                et.setTextColor(Color.RED);
+                et.setBackgroundColor(Color.CYAN);
+                et.setHint(nameStr);
+                et.setGravity(Gravity.CENTER);
+                AlertDialog alertD = new AlertDialog.Builder(activity, AlertDialog.BUTTON_NEUTRAL).create();
+                alertD.setTitle(null);
+                alertD.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                alertD.setCancelable(false);
+                alertD.setView(et);
+                alertD.setButton(DialogInterface.BUTTON_NEGATIVE, cancelStr, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        if (replayYn) {
+                            releaseSynchronizings();
+                            newGame();
+                        } else {
+                            activity.finish();
+                        }
+                    }
+                });
+                alertD.setButton(DialogInterface.BUTTON_POSITIVE, submitStr, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+
+                        scoreSQLite.addScore(et.getText().toString(), currentScore);
+
+                        if (replayYn) {
+                            releaseSynchronizings();
+                            newGame();
+                        } else {
+                            activity.finish();
+                        }
+                    }
+                });
+                alertD.setOnShowListener(new DialogInterface.OnShowListener() {
+                    @Override
+                    public void onShow(DialogInterface dialog) {
+                        setDialogStyle(dialog);
+                    }
+                });
+                alertD.show();
+            }
+        });
     }
 }

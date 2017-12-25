@@ -2,6 +2,7 @@
 <resources>
 
     <string name="app_name">弹跳球</string>
+
     <string-array name="stageLevels">
         <item>开始</item>
         <item>第一关</item>
@@ -9,12 +10,22 @@
         <item>第三关</item>
         <item>第四关</item>
     </string-array>
+
     <string name="start_string">开始</string>
     <string name="pause_string">暂停</string>
     <string name="resume_string">恢复</string>
     <string name="newGame_string">新遊戏</string>
     <string name="quit_string">离开</string>
     <string name="begin_string">按开始按钮启动</string>
-    <string name="gameOver_string">你失败了.\n重玩或离开.</string>
-    <string name="win_string">你赢了.\n重玩或离开.</string>
+    <string name="gameOver_string">你失败了.\n重玩?</string>
+    <string name="win_string">你赢了.\n重玩?</string>
+    <string name="cancelStr">取消</string>
+    <string name="submitStr">提交</string>
+    <string name="nameStr">输入你的名字</string>
+    <string name="yesStr">是</string>
+    <string name="noStr">否</string>
+
+    <string name="historyStr">历史纪录</string>
+    <string name="activity_history">历史纪录</string>
+    <string name="highScore">前10名最高分</string>
 </resources>

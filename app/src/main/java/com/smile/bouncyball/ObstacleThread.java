@@ -23,7 +23,7 @@ public class ObstacleThread extends Thread{
 
     private MainActivity activity = null;
     private GameView gameView = null;
-    private BallGoThread ballGoThread = null;
+    private int synchronizeTime = 70;
 
     private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
     private int direction = 1;  // 1->left, 2->right, 3->up, 4->down
@@ -43,11 +43,7 @@ public class ObstacleThread extends Thread{
 
         this.gameView = gView;
         this.activity = gameView.getActivity();
-        this.ballGoThread = gameView.getBallGoThread();
-        if (this.ballGoThread == null) {
-            // must not be null
-            throw new NullPointerException("ballGoThread must not be null.");
-        }
+        this.synchronizeTime  = gView.getSynchronizeTime();
         this.xRangeOfObstacle = gameView.getScreenWidth();
         this.yRangeOfObstacle = gameView.getScreenHeight() / 3;    // one-third of the height of Game View
         this.bouncyBall = gameView.getBouncyBall();
@@ -97,16 +93,12 @@ public class ObstacleThread extends Thread{
                 }
             }
 
-            synchronized (ballGoThread) {
-                try {
-                    ballGoThread.wait();
-                    // move the obstacle
-                    moveObstacle();
-                    // isHitBouncyBall();   // moved to BallGoThread on 2017-11-19
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-            }
+            // move the obstacle
+            moveObstacle();
+            // isHitBouncyBall();   // moved to BallGoThread on 2017-11-19
+
+            try{Thread.sleep(synchronizeTime);}
+            catch(Exception e){e.printStackTrace();}
         }
     }
 

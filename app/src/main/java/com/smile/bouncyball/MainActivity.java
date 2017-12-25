@@ -1,6 +1,8 @@
 package com.smile.bouncyball;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Canvas;
@@ -26,11 +28,14 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import com.smile.bouncyball.Utility.ScreenUtl;
 
 import static android.content.ContentValues.TAG;
 
@@ -39,20 +44,6 @@ import java.lang.reflect.Field;
 import static android.content.DialogInterface.BUTTON_NEUTRAL;
 
 public class MainActivity extends AppCompatActivity {
-
-    String[] stageLevels ;
-    String startStr = "";
-    String pauseStr = "";
-    String resumeStr = "";
-
-    String beginStr = "";
-    String gameOverStr = "";
-    String winStr = "";
-
-    TextView stageName;
-    ImageView scoreImage0;
-    ImageView scoreImage1;
-    ImageView scoreImage2;
 
     private int screenWidth = 0;
     private int screenHeight = 0;
@@ -76,16 +67,6 @@ public class MainActivity extends AppCompatActivity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN ,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
-
-        ActionBar actionBar = getSupportActionBar();
-        // actionBar.setDisplayShowTitleEnabled(false);
-        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-        actionBar.setDisplayShowCustomEnabled(true);    // enable customized action bar
-        actionBar.setBackgroundDrawable(new ColorDrawable(Color.LTGRAY));
-
-        actionBar.setCustomView(R.layout.action_bar_layout);
-        View actionBarView = actionBar.getCustomView();
 
         /*
         ActionBar.LayoutParams params = new ActionBar.LayoutParams(
@@ -112,29 +93,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception ex) {
             // Ignore
         }
-
-        stageLevels = getResources().getStringArray(R.array.stageLevels);
-
-        startStr = getResources().getString(R.string.start_string);
-        pauseStr = getResources().getString(R.string.pause_string);
-        resumeStr = getResources().getString(R.string.resume_string);
-
-        beginStr = getResources().getString(R.string.begin_string);
-        gameOverStr = getResources().getString(R.string.gameOver_string);
-        winStr = getResources().getString(R.string.win_string);
-
-        stageName = (TextView)actionBarView.findViewById(R.id.stageName);
-        stageName.setText(stageLevels[0]);   // start from stage 1
-        scoreImage0 = actionBarView.findViewById(R.id.scoreView0);
-        scoreImage1 = actionBarView.findViewById(R.id.scoreView1);
-        scoreImage2 = actionBarView.findViewById(R.id.scoreView2);
-
-        // Display d = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        screenWidth  = size.x;
-        screenHeight = size.y - 100;
 
         gamePause = false;
         activityHandler = new Handler();
@@ -188,10 +146,10 @@ public class MainActivity extends AppCompatActivity {
         // release and destroy threads and resources before destroy activity
         finishApplication();
 
-        super.onDestroy();
         System.out.println("onDestroy --> Setting Screen orientation to User");
-
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+
+        super.onDestroy();
     }
 
 
@@ -218,47 +176,32 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.newGame) {
-            releaseSynchronizings();
+            gameView.releaseSynchronizings();
             gameView.newGame();
             return true;
         }
 
+        if (id == R.id.scoreHistory) {
+            gameView.getScoreHistory();
+            return true;
+        }
+
         if (id == R.id.quitGame) {
-            finish();
+            Handler handlerClose = new Handler();
+            handlerClose.postDelayed(new Runnable() {
+                public void run() {
+                    finish();
+                }
+            },300);
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    public int getScreenWidth() {
-        return this.screenWidth;
-    }
-    public int getScreenHeight() {
-        return this.screenHeight;
-    }
-
-    private void releaseSynchronizings() {
-        if (gamePause) {
-            // in pause status
-            synchronized (activityHandler) {
-                gamePause = false;
-                activityHandler.notifyAll();
-            }
-        }
-
-        if (gameView.gameViewPause) {
-            // GameView in pause status
-            synchronized (gameView.gameViewHandler) {
-                gameView.gameViewPause = false;
-                gameView.gameViewHandler.notifyAll();
-            }
-        }
-    }
-
     private void finishApplication() {
         // release resources and threads
-        releaseSynchronizings();
+        gameView.releaseSynchronizings();
         gameView.stopThreads();
     }
 }

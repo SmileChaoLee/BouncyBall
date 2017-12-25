@@ -10,17 +10,13 @@ public class GameViewDrawThread extends Thread {
     private GameView gameView = null;
     private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
     private SurfaceHolder surfaceHolder = null;
-    private BallGoThread ballGoThread = null;
+    private int synchronizeTime = 70;
 
     public GameViewDrawThread(GameView gView) {
         this.gameView = gView;
         this.activity = gView.getActivity();
         this.surfaceHolder = gView.getSurfaceHolder();
-        this.ballGoThread = gameView.getBallGoThread();
-        if (this.ballGoThread == null) {
-            // must not be null
-            throw new NullPointerException("ballGoThread must not be null.");
-        }
+        this.synchronizeTime  = gView.getSynchronizeTime();
     }
 
     public void run() {
@@ -45,34 +41,30 @@ public class GameViewDrawThread extends Thread {
                 }
             }
 
-            synchronized (ballGoThread) {
-                try {
-                    ballGoThread.wait();
-                    // start drawing
-                    Canvas c;
-                    c = null;
-                    // lock the whole canvas. high requirement on memory, do not use null advised
-                    try {
-                        c = surfaceHolder.lockCanvas(null);
-                        if (c != null) {
-                            // synchronized (gView.surfaceHolder) {
-                            synchronized (surfaceHolder) {
-                                gameView.doDraw(c); // draw
-                                // System.out.println("Drawing .............");
-                            }
-                        } else {
-                            System.out.println("Canvas = null.");
-                        }
-                    } finally {
-                        if (c != null) {
-                            // fresh the screen
-                            surfaceHolder.unlockCanvasAndPost(c);
-                        }
+            // start drawing
+            Canvas c;
+            c = null;
+            // lock the whole canvas. high requirement on memory, do not use null advised
+            try {
+                c = surfaceHolder.lockCanvas(null);
+                if (c != null) {
+                    // synchronized (gView.surfaceHolder) {
+                    synchronized (surfaceHolder) {
+                        gameView.doDraw(c); // draw
+                        // System.out.println("Drawing .............");
                     }
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();;
+                } else {
+                    System.out.println("Canvas = null.");
+                }
+            } finally {
+                if (c != null) {
+                    // fresh the screen
+                    surfaceHolder.unlockCanvasAndPost(c);
                 }
             }
+
+            try{Thread.sleep(synchronizeTime);}
+            catch(Exception e){e.printStackTrace();}
         }
     }
 

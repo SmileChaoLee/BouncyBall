@@ -20,7 +20,7 @@ public class BallGoThread extends Thread{
 	private Vector<ObstacleThread> obstacleThreads = null;
 	private int screenWidth = 0;
 	private int screenHeight = 0;
-    private int sleepSpan = 80;
+    private int synchronizeTime = 70;
     private boolean flag = true;        // flag = true -> move ball
     private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
     private Random random = null;
@@ -48,7 +48,7 @@ public class BallGoThread extends Thread{
 
         this.screenWidth = gView.getScreenWidth();
         this.screenHeight = gView.getScreenHeight();
-        this.sleepSpan  = gView.getSynchronizeTime();
+        this.synchronizeTime  = gView.getSynchronizeTime();
         this.bottomY = gView.getBottomY();
         this.bouncyBall = gView.getBouncyBall();
         this.banner = gView.getBanner();
@@ -102,26 +102,23 @@ public class BallGoThread extends Thread{
                 }
             }
 
-            synchronized (this) {
-                if (flag) {
-                    // 2017-11-19
-                    checkCollision();   // collision with banner or walls
-                    if ( (status == GameView.failedStatus) || (status == GameView.finishedStatus) ) {
-                        // failed or reach highest score (finished)
-                        // stop running this thread, means set keepRunning to false;
-                        keepRunning = false;
-                    } else {
-                        // 2017-11-19 morning
-                        for (ObstacleThread obstacleThread : obstacleThreads) {
-                            // obstacleThread.isHitBouncyBall();    // removed on 2017-11-19
-                            isHitObstacle(obstacleThread);
-                        }
+            if (flag) {
+                // 2017-11-19
+                checkCollision();   // collision with banner or walls
+                if ( (status == GameView.failedStatus) || (status == GameView.finishedStatus) ) {
+                    // failed or reach highest score (finished)
+                    // stop running this thread, means set keepRunning to false;
+                    keepRunning = false;
+                } else {
+                    // 2017-11-19 morning
+                    for (ObstacleThread obstacleThread : obstacleThreads) {
+                        // obstacleThread.isHitBouncyBall();    // removed on 2017-11-19
+                        isHitObstacle(obstacleThread);
                     }
                 }
-                notifyAll();
             }
 
-            try{Thread.sleep(sleepSpan);}
+            try{Thread.sleep(synchronizeTime);}
             catch(Exception e){e.printStackTrace();}
 		}
 	}
@@ -282,7 +279,7 @@ public class BallGoThread extends Thread{
                         status = GameView.finalStageStatus;  // 4, final stage
                     } else {
                         // status <= finalStageStatus
-                        sleepSpan -= 10;    // speed up by 10 pixels
+                        synchronizeTime -= 10;    // speed up by 10 pixels
                     }
                 }
             }
