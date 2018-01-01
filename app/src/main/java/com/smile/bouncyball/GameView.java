@@ -446,9 +446,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                     public void run() {
                         final TextView tv = new TextView(activity);
                         tv.setTextSize(40);
-                        // tv.setWidth(400);
-                        // tv.setHeight(300);
                         tv.setTextColor(Color.BLUE);
+                        tv.setTypeface(Typeface.DEFAULT);
                         if (status == failedStatus) {
                             // failed
                             tv.setText(gameOverStr);
@@ -457,10 +456,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                             tv.setText(winStr);
                         }
                         tv.setGravity(Gravity.CENTER);
-                        AlertDialog alertDialog = new  AlertDialog.Builder(activity, AlertDialog.BUTTON_NEUTRAL).create();
+                        AlertDialog alertDialog = new  AlertDialog.Builder(activity).create();
                         alertDialog.setTitle(null);
                         alertDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                        // alertDialog.setInverseBackgroundForced(false);
                         alertDialog.setCancelable(false);
                         alertDialog.setView(tv);
                         alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, noStr, new DialogInterface.OnClickListener() {
@@ -824,11 +822,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
     private void setDialogStyle(DialogInterface dialog) {
         AlertDialog dlg = (AlertDialog)dialog;
+        
+        dlg.getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        dlg.getWindow().setDimAmount(0.0f); // no dim for background screen
 
         dlg.getWindow().setLayout(WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT);
         dlg.getWindow().setBackgroundDrawableResource(R.drawable.dialogbackground);
 
+        float fontSize = 20;
         Button nBtn = dlg.getButton(DialogInterface.BUTTON_NEGATIVE);
+        nBtn.setTextSize(fontSize);
+        nBtn.setTypeface(Typeface.DEFAULT_BOLD);
         nBtn.setTextColor(Color.RED);
 
         LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams)nBtn.getLayoutParams();
@@ -836,6 +840,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         nBtn.setLayoutParams(layoutParams);
 
         Button pBtn = dlg.getButton(DialogInterface.BUTTON_POSITIVE);
+        pBtn.setTextSize(fontSize);
+        pBtn.setTypeface(Typeface.DEFAULT_BOLD);
         pBtn.setTextColor(Color.rgb(0x00,0x64,0x00));
         pBtn.setLayoutParams(layoutParams);
     }
@@ -847,13 +853,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
             public void run() {
                 final EditText et = new EditText(activity);
                 et.setTextSize(24);
-                // et.setWidth(400);
-                et.setHeight(200);
-                et.setTextColor(Color.RED);
-                et.setBackgroundColor(Color.CYAN);
+                // et.setHeight(200);
+                et.setTextColor(Color.BLUE);
+                et.setBackground(new ColorDrawable(Color.TRANSPARENT));
                 et.setHint(nameStr);
                 et.setGravity(Gravity.CENTER);
-                AlertDialog alertD = new AlertDialog.Builder(activity, AlertDialog.BUTTON_NEUTRAL).create();
+                AlertDialog alertD = new AlertDialog.Builder(activity).create();
                 alertD.setTitle(null);
                 alertD.requestWindowFeature(Window.FEATURE_NO_TITLE);
                 alertD.setCancelable(false);
