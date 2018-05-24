@@ -19,6 +19,7 @@ public class HistoryActivity extends ListActivity {
     private static final String TAG = "HistoryActivity";
     private String[] queryResult = new String[] {"","","","","","","","","",""};
     private int total = 0;
+    private int multiply = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,13 +50,14 @@ public class HistoryActivity extends ListActivity {
 
         setListAdapter(new mListAdapter(queryResult));
 
+        // examples for thread synchronization
         // the following is about synchronize two threads. added on 2017-11-11
         final Handler handler = new Handler(Looper.getMainLooper());
         final Thread a = new Thread(new Runnable() {
             @Override
             public void run() {
                 synchronized (handler) {
-                    for (int i=0; i<=10; i++) {
+                    for (int i=1; i<=10; i++) {
                         total += i;
                     }
                     System.out.println("a-> total = " + total);
@@ -64,7 +66,7 @@ public class HistoryActivity extends ListActivity {
             }
         });
 
-        Thread b = new Thread(new Runnable() {
+        final Thread b = new Thread(new Runnable() {
             @Override
             public void run() {
                 a.start();
@@ -80,6 +82,38 @@ public class HistoryActivity extends ListActivity {
         });
 
         b.start();
+        //
+
+        // the following is about synchronize two threads. added on 2018-05-20
+        final Thread c = new Thread() {
+            @Override
+            public void run() {
+                synchronized (this) {
+                    for (int i=1; i<=10; i++) {
+                        multiply *= i;
+                    }
+                    System.out.println("c-> multiply = " + multiply);
+                    notify();
+                }
+            }
+        };
+
+        Thread d = new Thread() {
+            @Override
+            public void run() {
+                c.start();
+                synchronized (c) {
+                    try {
+                        c.wait();
+                        System.out.println("d-> multiply = " + multiply);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        };
+
+        d.start();
         //
 
     }
