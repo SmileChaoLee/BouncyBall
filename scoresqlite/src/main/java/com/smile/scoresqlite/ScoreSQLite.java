@@ -1,4 +1,4 @@
-package com.smile.bouncyball.dao;
+package com.smile.scoresqlite;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -34,13 +34,13 @@ public class ScoreSQLite extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-        // MyActivity act = new MyActivity();
-        // act.getApplicationContext().getDatabasePath(dbName);
         database.execSQL(createTable);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase database , int oldVersion , int newVersion) {
+        database.execSQL("DROP TABLE IF EXISTS " + tableName);
+        onCreate(database);
     }
 
     public void openScoreDatabase() {

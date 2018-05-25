@@ -38,7 +38,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.smile.bouncyball.Utility.ScreenUtl;
-import com.smile.bouncyball.dao.ScoreSQLite;
+// import com.smile.bouncyball.dao.ScoreSQLite;
+import com.smile.scoresqlite.*;
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
 

@@ -1,4 +1,4 @@
-package com.smile.bouncyball;
+package com.smile.scoresqlite;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.smile.bouncyball", appContext.getPackageName());
+        assertEquals("com.smile.scoresqlite.test", appContext.getPackageName());
     }
 }
