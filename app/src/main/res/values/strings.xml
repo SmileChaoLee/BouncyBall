@@ -25,7 +25,12 @@
     <string name="yesStr">YES</string>
     <string name="noStr">NO</string>
 
-    <string name="historyStr">History</string>
-    <string name="activity_history">HistoryActivity</string>
-    <string name="highScore">Top 10 Scores</string>
+    <string name="top_10_score_str">Top 10 scores</string>              <!-- for menu item -->
+    <string name="activity_top_10_score">Top10ScoreActivity</string>    <!-- for activity name -->
+    <string name="top_10_score_title">Top 10 Scores</string>            <!-- for title of list view -->
+
+    <string name="score_history">Score history</string>                    <!-- for menu item -->
+    <string name="activity_score_history">ScoreHistoryActivity</string>    <!-- for activity name -->
+    <string name="score_history_title">Score History</string>              <!-- for title of list view -->
+
 </resources>

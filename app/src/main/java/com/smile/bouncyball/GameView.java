@@ -1,7 +1,6 @@
 package com.smile.bouncyball;
 
 // import android.app.AlertDialog;
-import android.graphics.Matrix;
 import android.support.v7.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -9,17 +8,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.RectShape;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Looper;
 import android.support.v7.app.ActionBar;
@@ -29,7 +22,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.os.Handler;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -740,10 +732,21 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         }
     }
 
+    public void getTop10Score() {
+        String[] resultStr = scoreSQLite.read10HighestScore();
+
+        Intent intent = new Intent(activity, Top10ScoreActivity.class);
+        Bundle extras = new Bundle();
+        extras.putStringArray("resultStr", resultStr);
+        intent.putExtras(extras);
+
+        activity.startActivity(intent);
+    }
+
     public void getScoreHistory() {
         String[] resultStr = scoreSQLite.read10HighestScore();
 
-        Intent intent = new Intent(activity, HistoryActivity.class);
+        Intent intent = new Intent(activity, ScoreHistoryActivity.class);
         Bundle extras = new Bundle();
         extras.putStringArray("resultStr", resultStr);
         intent.putExtras(extras);

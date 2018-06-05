@@ -5,10 +5,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -16,9 +15,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-public class HistoryActivity extends ListActivity {
+public class Top10ScoreActivity extends ListActivity {
 
-    private static final String TAG = "HistoryActivity";
+    private static final String TAG = "Top10ScoreActivity";
     private String[] queryResult = new String[] {"","","","","","","","","",""};
     private int total = 0;
     private int multiply = 1;
@@ -26,12 +25,9 @@ public class HistoryActivity extends ListActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_history);
+        setContentView(R.layout.activity_top_10_score);
 
-        // View historyView = getLayoutInflater().inflate(R.layout.activity_history,null);
-        // final ListView listView = findViewById(android.R.id.list);
-
-        Button okButton = (Button)findViewById(R.id.historyOkButton);
+        Button okButton = (Button)findViewById(R.id.top10OkButton);
         okButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -50,7 +46,11 @@ public class HistoryActivity extends ListActivity {
             queryResult[i] = itemNo[i] + " " + queryResult[i];
         }
 
-        setListAdapter(new mListAdapter(queryResult));
+        // setListAdapter(new mListAdapter(queryResult));
+
+        ArrayAdapter<String> myArrayAdapter = new ArrayAdapter<String>(this, R.layout.top_10_score_list_item, R.id.itemText, queryResult);
+        setListAdapter(myArrayAdapter);
+
 
         // examples for thread synchronization
         // the following is about synchronize two threads. added on 2017-11-11
@@ -156,7 +156,7 @@ public class HistoryActivity extends ListActivity {
         @Override
         public View getView(final int position, View convertView, ViewGroup container) {
             if (convertView == null) {
-                convertView = getLayoutInflater().inflate(R.layout.history_list_items, container, false);
+                convertView = getLayoutInflater().inflate(R.layout.score_history_list_item, container, false);
             }
 
             // int listViewHeight = getListView().getHeight();
@@ -164,7 +164,7 @@ public class HistoryActivity extends ListActivity {
             int itemHeight = listViewHeight / (getCount()+1);
 
             TextView vText1;
-            vText1 = (TextView) convertView.findViewById(R.id.text1);
+            vText1 = (TextView) convertView.findViewById(R.id.itemText);
             vText1.setText(this.text1[position]);
             vText1.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
             // vText1.setHeight(itemHeight);

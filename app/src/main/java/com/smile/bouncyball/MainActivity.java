@@ -183,6 +183,11 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
+        if (id == R.id.top_10_score) {
+            gameView.getTop10Score();
+            return true;
+        }
+
         if (id == R.id.scoreHistory) {
             gameView.getScoreHistory();
             return true;

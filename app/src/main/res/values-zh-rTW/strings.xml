@@ -25,7 +25,11 @@
     <string name="yesStr">是</string>
     <string name="noStr">否</string>
 
-    <string name="historyStr">歷史紀錄</string>
-    <string name="activity_history">歷史紀錄</string>
-    <string name="highScore">前10名最高分</string>
+    <string name="top_10_score_str">前10名最高分</string>        <!-- for menu item -->
+    <string name="activity_top_10_score">前10名最高分</string>   <!-- for activity name -->
+    <string name="top_10_score_title">前10名最高分</string>      <!-- for title of list view -->
+
+    <string name="score_history">歷史分數</string>                    <!-- for menu item -->
+    <string name="activity_score_history">歷史分數</string>    <!-- for activity name -->
+    <string name="score_history_title">歷史分數</string>              <!-- for title of list view -->
 </resources>
