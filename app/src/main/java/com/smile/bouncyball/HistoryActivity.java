@@ -11,7 +11,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 public class HistoryActivity extends ListActivity {
@@ -118,6 +120,11 @@ public class HistoryActivity extends ListActivity {
 
     }
 
+    @Override
+    protected void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+        Toast.makeText(this, (String)getListView().getItemAtPosition(position), Toast.LENGTH_SHORT).show();
+    }
 
     private class mListAdapter extends BaseAdapter {
 
@@ -138,7 +145,7 @@ public class HistoryActivity extends ListActivity {
 
         @Override
         public Object getItem(int position) {
-            return null;
+            return text1[position];
         }
 
         @Override

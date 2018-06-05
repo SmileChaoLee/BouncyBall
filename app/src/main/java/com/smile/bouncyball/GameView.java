@@ -1,6 +1,7 @@
 package com.smile.bouncyball;
 
 // import android.app.AlertDialog;
+import android.graphics.Matrix;
 import android.support.v7.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -343,21 +344,26 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
     @Override
     public void onDraw(Canvas canvas) {
+	    System.out.println("onDraw() running.");
         doDraw(canvas);
     }
 
 	public void doDraw(Canvas canvas) {
 
     	// clear the background
+
         Point sPoint = new Point(0,0);
         Rect rect2 = new Rect(0,0,0,0);
+        /*
         for(int i=0;i<backRows;i++){
     		for(int j=0;j<backCols;j++) {
                 rect2.set(backSize*j,backSize*i,backSize*(j+1),backSize*(i+1));
     			canvas.drawBitmap(iback, null, rect2, null);
     		}
     	}
+    	*/
     	//
+        canvas.drawBitmap(iback,null,new Rect(0,0,screenWidth,screenHeight),null);
 
     	// draw the banner
         sPoint.set(banner.getBannerX()-banner.getBannerWidth()/2,banner.getBannerY()-banner.getBannerHeight()/2);
@@ -581,7 +587,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         return true;   // must return true
 	}
 
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+	    System.out.println("surfaceChanged() is called");
+    }
 
     public void surfaceCreated(SurfaceHolder holder) {
         // Draw the first screen when surface view has been created

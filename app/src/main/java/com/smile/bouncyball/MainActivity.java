@@ -98,11 +98,13 @@ public class MainActivity extends AppCompatActivity {
         activityHandler = new Handler();
         gameView = new GameView(this);   // create a gameView
 
+        /*
         View mainView = getLayoutInflater().inflate(R.layout.activity_main,null);
         frameLayout = mainView.findViewById(R.id.frameLayout);
         frameLayout.addView(gameView);
-        // setContentView(gameView);
         setContentView(frameLayout);
+        */
+        setContentView(gameView);
     }
 
     @Override
