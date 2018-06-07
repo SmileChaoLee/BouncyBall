@@ -5,6 +5,10 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Pair;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by lee on 10/8/2014.
@@ -95,7 +99,6 @@ public class ScoreSQLite extends SQLiteOpenHelper {
     public String[] read10HighestScore() {
 
         String[] resultStr  = new String[] {"","","","","","","","","",""};
-        String temp = new String("");
         String space = new String(new char[1]).replace("\0"," ");
         int strLen = 14;
 
@@ -108,6 +111,7 @@ public class ScoreSQLite extends SQLiteOpenHelper {
                 String sql = "select playerName,playerScore from " + tableName + " order by playerScore desc";
                 Cursor cur = scoreDatabase.rawQuery(sql, new String[]{});
                 int i = 0;
+                String temp = new String("");
                 while (cur.moveToNext() && (i < 10)) {
                     temp = cur.getString(0);
                     temp = temp.substring(0, Math.min(temp.length(), strLen)).trim();
@@ -116,10 +120,82 @@ public class ScoreSQLite extends SQLiteOpenHelper {
                     i++;
                 }
                 cur.close();
+                temp = null;
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
             closeScoreDatabase();
+        }
+
+        readFinished = true;
+
+        return resultStr;
+    }
+
+    public ArrayList<Pair<String, Integer>> readTop10ScoreList() {
+
+        ArrayList<Pair<String, Integer>> result = new ArrayList<Pair<String, Integer>>();
+
+        while (!readFinished) {}    // wait for other operations finish
+        readFinished = false;
+
+        openScoreDatabase();
+        if (scoreDatabase != null) {
+            String temp = new String("");
+            int score = 0;
+            int i = 0;
+            Pair<String, Integer> pair;
+
+            Cursor cur = scoreDatabase.query(tableName, new String[] {"playerName","playerScore"}, null, null, null, null, "playerScore desc");
+            if (cur.moveToFirst()) {
+                do {
+                    temp = cur.getString(0);
+                    score = cur.getInt(1);
+                    pair = new Pair<>(temp, score);
+                    result.add(pair);
+                    temp = null;
+                    i++;
+                } while (cur.moveToNext() && (i<10));
+            }
+
+            closeScoreDatabase();
+        }
+
+        readFinished = true;
+
+        return result;
+    }
+
+    public ArrayList<String> readAllScores() {
+
+        ArrayList<String> resultStr  = new ArrayList<String>();
+        String space = new String(new char[1]).replace("\0"," ");
+        int strLen = 14;    // maximum chars for player name
+
+        while (!readFinished) { }   // waits for other operations finishes
+        readFinished = false;
+
+        openScoreDatabase();
+        if (scoreDatabase != null) {
+            // succeeded to open
+            try {
+                String sql = "SELECT playerName, playerScore FROM " + tableName;    // no order
+                Cursor cur = scoreDatabase.query(tableName, new String[] {"playerName", "playerScore"},null,null,null,null,null);
+                if (cur.moveToFirst()) {
+                    // has data
+                    String temp = "";
+                    do {
+                        temp = cur.getString(0);
+                        temp = temp.substring(0, Math.min(temp.length(), strLen)).trim();
+                        temp = temp + (new String(new char[strLen - temp.length()]).replace("\0", " "));
+                        resultStr.add(temp + space + String.valueOf(cur.getInt(1)));
+                    } while (cur.moveToNext());
+
+                    temp = null;
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
 
         readFinished = true;

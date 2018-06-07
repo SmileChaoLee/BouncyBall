@@ -16,6 +16,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Looper;
 import android.support.v7.app.ActionBar;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -36,6 +37,11 @@ import com.smile.scoresqlite.*;
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.Vector;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback{
@@ -743,12 +749,30 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         activity.startActivity(intent);
     }
 
+    public void getTop10ScoreList() {
+        ArrayList<Pair<String, Integer>> top10 = scoreSQLite.readTop10ScoreList();
+        ArrayList<String> playerNames = new ArrayList<String>();
+        ArrayList<Integer> playerScores = new ArrayList<Integer>();
+        for (Pair pair : top10) {
+            playerNames.add((String)pair.first);
+            playerScores.add((Integer)pair.second);
+        }
+
+        Intent intent = new Intent(activity, Top10ScoreActivity.class);
+        Bundle extras = new Bundle();
+        extras.putStringArrayList("Top10Players", playerNames);
+        extras.putIntegerArrayList("Top10Scores", playerScores);
+        intent.putExtras(extras);
+
+        activity.startActivity(intent);
+    }
+
     public void getScoreHistory() {
-        String[] resultStr = scoreSQLite.read10HighestScore();
+        ArrayList<String> resultStr = scoreSQLite.readAllScores();
 
         Intent intent = new Intent(activity, ScoreHistoryActivity.class);
         Bundle extras = new Bundle();
-        extras.putStringArray("resultStr", resultStr);
+        extras.putStringArrayList("resultStr", resultStr);
         intent.putExtras(extras);
 
         activity.startActivity(intent);

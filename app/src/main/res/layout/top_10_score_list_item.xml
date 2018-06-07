@@ -6,12 +6,34 @@
     android:gravity="center"
     android:orientation="vertical">
 
-    <TextView android:id="@+id/itemText"
+    <TextView android:id="@+id/playerTextView"
         android:textSize="22sp"
         android:textScaleX="1.0"
         android:typeface="monospace"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="#ffff0e1d" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:weightSum="2">
+
+        <TextView android:id="@+id/scoreTextView"
+            android:textSize="22sp"
+            android:textScaleX="1.0"
+            android:typeface="monospace"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#0e32ff" />
+
+        <ImageView android:id="@+id/medalImage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+    </LinearLayout>
 
 </LinearLayout>

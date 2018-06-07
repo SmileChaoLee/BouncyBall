@@ -19,8 +19,7 @@
         </activity>
 
         <activity
-            android:name=".Top10ScoreActivity"
-            android:label="@string/activity_top_10_score">
+            android:name=".Top10ScoreActivity" >
         </activity>
 
         <activity
