@@ -32,7 +32,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.smile.bouncyball.Utility.ScreenUtl;
-// import com.smile.bouncyball.dao.ScoreSQLite;
 import com.smile.scoresqlite.*;
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
@@ -46,6 +45,7 @@ import java.util.Vector;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
+    // public properties
     public static final int failedStatus = -1;
     public static final int startStatus = 0;
     public static final int firstStageStatus = 1;
@@ -65,19 +65,23 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     // for running a thread when arrow button (left arrow or right arrow) is held
     public ButtonHoldThread buttonHoldThread = null;
 
-    final private float ballSizeRatio = 1.0f/18.f;
-    final private float hintWidthRatio   = 1.0f/1.5f;
-    final private float hintHeightRatio = 1.0f/8.0f;
-    final private float buttonWidthRatio = 1.0f/4.0f;
-    final private float buttonHeightRatio = 1.0f/12.0f;
-    final private float scoreWidthRatio  = 1.0f/12.0f;
-    final private float scoreHeightRatio = 1.0f/20.0f;
+
+    // private properties
+    private static final float ballSizeRatio = 1.0f/18.f;
+    private static final float hintWidthRatio   = 1.0f/1.5f;
+    private static final float hintHeightRatio = 1.0f/8.0f;
+    private static final float buttonWidthRatio = 1.0f/4.0f;
+    private static final float buttonHeightRatio = 1.0f/12.0f;
+    private static final float scoreWidthRatio  = 1.0f/12.0f;
+    private static final float scoreHeightRatio = 1.0f/20.0f;
+    private static final float bannerWidthRatio  = 1.0f/4.0f;
+    private static final float bannerHeightRatio = 1.0f/10.0f;
+
+    private static final float bannerAdsHeightRatio = 0.05f;
+    private int bannerAdsWidth = 0;
+    private int bannerAdsHeight = 0;
 
     private MainActivity activity = null;		//Activity
-
-    private int backCols=0;
-    private int backRows=0;
-    private int backSize=16;          // the size of background
     private int beginWidth  = 100;           // width of the hint
     private int beginHeight = 20;         // height of the hint
     private int winWidth = 100;
@@ -126,20 +130,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private String noStr = new String("");
     private String yesStr = new String("");
 
-    private float bannerWidthRatio  = 1.0f/4.0f;
-    private float bannerHeightRatio = 1.0f/10.0f;
     private SurfaceHolder surfaceHolder = null;
     private int synchronizeTime = 70;
 
-    private int highest = 999;  // maximum value of the number that banner is to be hit to make user win
-    // -1-> failed and game over, 0->waiting to start, 1->first stage (playing), 2->second stage (playing)
-    // 3->final stage (playing), 4-finished the game
-    private int[] stageScore = {0, 20, 60, 120,200};    // hits for each stage
     private int status = startStatus;
     private int score=0;     //  score that user got
 
-    private int screenWidth  = 0;
-    private int screenHeight = 0;
+    private int gameViewWidth  = 0;
+    private int gameViewHeight = 0;
 
     private ScoreSQLite scoreSQLite = null;
 
@@ -156,20 +154,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 		super(activity);
 
         this.activity = activity;
-
-        // Display d = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        // Display display = getWindowManager().getDefaultDisplay();
-        // Point size = new Point();
-        // display.getSize(size);
-        Point size = new Point();
-        ScreenUtl.getScreenSize(this.activity,size);
-
-        screenWidth  = size.x;
-        screenHeight = size.y;
-        int statusBarHeight = ScreenUtl.getStatusBarHeight(this.activity);
-        int actionBarHeight = ScreenUtl.getActionBarHeight(this.activity);
-        // screenHeight = screenHeight - statusBarHeight - actionBarHeight;
-        screenHeight = screenHeight - actionBarHeight;
 
         ActionBar actionBar = activity.getSupportActionBar();
         // actionBar.setDisplayShowTitleEnabled(false);
@@ -210,13 +194,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
         status = startStatus;    // waiting to start
 
-        initBitmapAndModels();
-
         // setWillNotDraw(false);  // added on 2017-11-07 to activate onDraw() of SurfaceView
         // if set it to false, then the drawing might have to go through by onDraw() all the time
-
         setWillNotDraw(true);   // added on 2017-11-07 for just in case, the default is false
 
+        // the followings were moved to surfaceCreated()
+        /*
+        initBitmapAndModels();
         // obstacleThreads must be created before ballGoThread
         obstacleThreads = new Vector<ObstacleThread>();
         // ballGoThread must be created before other threads except obstacleThreads
@@ -224,6 +208,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         gameViewDrawThread = new GameViewDrawThread(this);
         buttonHoldThread = new ButtonHoldThread(this);
         buttonHoldThread.start();
+        */
 
         System.out.println("GameView-->Constructor\n");
 	}
@@ -262,20 +247,20 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 		ibanner = BitmapFactory.decodeResource(getResources(), R.drawable.banner);
 		ibegin = BitmapFactory.decodeResource(getResources(), R.drawable.begin);
 
-        bannerWidth = (int)((float)screenWidth   * bannerWidthRatio);         // width of the banner
-        bannerHeight = (int)((float)screenHeight * bannerHeightRatio);      // height of the banner
-        ballSize   = (int)((float)screenHeight * ballSizeRatio);            // size of the ball
+        bannerWidth = (int)((float)gameViewWidth   * bannerWidthRatio);         // width of the banner
+        bannerHeight = (int)((float)gameViewHeight * bannerHeightRatio);      // height of the banner
+        ballSize   = (int)((float)gameViewHeight * ballSizeRatio);            // size of the ball
         ballRadius = ballSize/2;
-        beginWidth  = (int)((float)screenWidth  * hintWidthRatio);          // width of the hint
-        beginHeight = (int)((float)screenHeight * hintHeightRatio);        // height of the hint
-        leftArrowWidth = (int)((float)screenWidth   * buttonWidthRatio);
-        leftArrowHeight = (int)((float)screenHeight * buttonHeightRatio * 1.5); // 1.5 * normal button
-        startWidth = (int)((float)screenWidth   * buttonWidthRatio);
-        startHeight = (int)((float)screenHeight * buttonHeightRatio);
-        rightArrowWidth = (int)((float)screenWidth   * buttonWidthRatio);
-        rightArrowHeight = (int)((float)screenHeight * buttonHeightRatio * 1.5); // 1.5 * normal button
-        scoreWidth = (int)((float)screenWidth   * scoreWidthRatio);
-        scoreHeight = (int)((float)screenHeight * scoreHeightRatio);
+        beginWidth  = (int)((float)gameViewWidth  * hintWidthRatio);          // width of the hint
+        beginHeight = (int)((float)gameViewHeight * hintHeightRatio);        // height of the hint
+        leftArrowWidth = (int)((float)gameViewWidth   * buttonWidthRatio);
+        leftArrowHeight = (int)((float)gameViewHeight * buttonHeightRatio * 1.5); // 1.5 * normal button
+        startWidth = (int)((float)gameViewWidth   * buttonWidthRatio);
+        startHeight = (int)((float)gameViewHeight * buttonHeightRatio);
+        rightArrowWidth = (int)((float)gameViewWidth   * buttonWidthRatio);
+        rightArrowHeight = (int)((float)gameViewHeight * buttonHeightRatio * 1.5); // 1.5 * normal button
+        scoreWidth = (int)((float)gameViewWidth   * scoreWidthRatio);
+        scoreHeight = (int)((float)gameViewHeight * scoreHeightRatio);
 
         ileftarrow = getBitmapFromResourceWithText(R.drawable.leftarrow, "",Color.BLUE);    // no string
         istart = getBitmapFromResourceWithText(R.drawable.start, startStr,Color.BLUE);
@@ -288,55 +273,43 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         int biasX = 10;
         int biasY = 10;
 
-        Point sPoint = new Point(biasX,screenHeight - leftArrowHeight - biasY);
+        Point sPoint = new Point(biasX,gameViewHeight - leftArrowHeight - biasY);
         leftArrowRect.set(sPoint.x, sPoint.y, sPoint.x + leftArrowWidth, sPoint.y + leftArrowHeight);
-        sPoint.set((screenWidth-startWidth)/2,screenHeight - startHeight - biasY);
+        sPoint.set((gameViewWidth-startWidth)/2,gameViewHeight - startHeight - biasY);
         startRect.set(sPoint.x, sPoint.y, sPoint.x + startWidth, sPoint.y + startHeight);
-        sPoint.set(screenWidth - rightArrowWidth - biasX, screenHeight - rightArrowHeight - biasY);
+        sPoint.set(gameViewWidth - rightArrowWidth - biasX, gameViewHeight - rightArrowHeight - biasY);
         rightArrowRect.set(sPoint.x, sPoint.y, sPoint.x + rightArrowWidth, sPoint.y + rightArrowHeight);
 
-        // bottomY = screenHeight - bannerHeight - rightArrowHeight - screenHeight/20;
-        bottomY = screenHeight - bannerHeight - startHeight - screenHeight/20;
+        bottomY = gameViewHeight - bannerHeight - startHeight - gameViewHeight/20;
 
-        int numB = (int)(bottomY/ballSize);
+        int numB = (int)(bottomY/ballSize);  // removed on 2018-07-08
         bottomY = numB * ballSize;
 
-        sPoint.set((screenWidth - beginWidth)/2,(bottomY - beginHeight)/2);
+        sPoint.set((gameViewWidth - beginWidth)/2,(bottomY - beginHeight)/2);
         ibeginRect.set(sPoint.x,sPoint.y,sPoint.x + beginWidth,sPoint.y + beginHeight);
-
-        backCols = screenWidth/backSize;   // number of columns
-        if (screenWidth%backSize!=0) {
-            backCols++;
-        }
-        backRows = screenHeight/backSize; // number of rows
-        if (screenHeight%backSize!=0) {
-            backRows++;
-        }
 
         ballSpan = ballRadius ;
 		// initialize the coordinates of the ball and the banner
-        ballX = screenWidth / 2;
+        ballX = gameViewWidth / 2;
         ballY = bottomY - ballRadius;
         bouncyBall = new BouncyBall(ballX, ballY, ballSize, ballSpan, iball);
 
-        bannerX = screenWidth / 2;
+        bannerX = gameViewWidth / 2;
         bannerY = bottomY + (bannerHeight/2);
         banner = new Banner(bannerX, bannerY, bannerWidth, bannerHeight, ibanner);
-
-		// initBallAndBanner();
 	}
 
 	public void initBallAndBanner(){
 		// initialize the coordinates of the ball
         // (ballX,ballY) is the center of the circle
 
-        bouncyBall.setBallX(screenWidth / 2);
+        bouncyBall.setBallX(gameViewWidth / 2);
         bouncyBall.setBallY(bottomY - bouncyBall.getBallRadius());
 
 		// initialize the coordinates of the banner
         // (bannerX,bannerY) is the center of banner
 
-		banner.setBannerX(screenWidth / 2);
+		banner.setBannerX(gameViewWidth / 2);
 		banner.setBannerY(bottomY + banner.getBannerHeight()/2);
 	}
 
@@ -352,16 +325,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
         Point sPoint = new Point(0,0);
         Rect rect2 = new Rect(0,0,0,0);
-        /*
-        for(int i=0;i<backRows;i++){
-    		for(int j=0;j<backCols;j++) {
-                rect2.set(backSize*j,backSize*i,backSize*(j+1),backSize*(i+1));
-    			canvas.drawBitmap(iback, null, rect2, null);
-    		}
-    	}
-    	*/
     	//
-        canvas.drawBitmap(iback,null,new Rect(0,0,screenWidth,screenHeight),null);
+        canvas.drawBitmap(iback,null,new Rect(0,0,gameViewWidth, gameViewHeight),null);
+        // getWidth() --> width of SurfaceView, getHeight() --> height of SurfaceView
+        // canvas.drawBitmap(iback,null,new Rect(0,0,getWidth(), getHeight()),null);
 
     	// draw the banner
         sPoint.set(banner.getBannerX()-banner.getBannerWidth()/2,banner.getBannerY()-banner.getBannerHeight()/2);
@@ -510,8 +477,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 // Log.d(MainActivity.Constants.LOG,"MotionEvent.ACTION_MOVE");
                 if ( (status >= firstStageStatus) && (status < finishedStatus) ) {
                     if (!gameViewPause) {
-                        if ((y >= bottomY) && (y <= (bottomY + banner.getBannerHeight()))) {
-                            // Y - coordinate is inside the area
+                        if ((y >= (bottomY - 20)) && (y <= (bottomY + 20 + banner.getBannerHeight()))) {
+                            // Y - coordinate is inside the area and add 20 extra pixels
                             banner.setBannerX(x);
                         }
                     }
@@ -550,7 +517,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                         }
                     }
                     if (!gameViewPause) {
-                        int xSpeed = 6; // 6 pixels
+                        // int xSpeed = 6; // 6 pixels  original
+                        int xSpeed = 8; //  8 pixels
                         int bannerX = banner.getBannerX();
                         // not in pause status
                         if (rightArrowRect.contains(x, y)) {
@@ -591,6 +559,23 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
     public void surfaceCreated(SurfaceHolder holder) {
         // Draw the first screen when surface view has been created
+        System.out.println("surfaceCreated is called --> getWidth() = " + getWidth());
+        System.out.println("surfaceCreated is called --> getHeight() = " + getHeight());
+
+        gameViewWidth = getWidth();
+        gameViewHeight = getHeight();
+
+        // the followings were moved from constructor
+        initBitmapAndModels();
+        // obstacleThreads must be created before ballGoThread
+        obstacleThreads = new Vector<ObstacleThread>();
+        // ballGoThread must be created before other threads except obstacleThreads
+        ballGoThread = new BallGoThread(this);
+        gameViewDrawThread = new GameViewDrawThread(this);
+        buttonHoldThread = new ButtonHoldThread(this);
+        buttonHoldThread.start();
+        //
+
         drawGameScreen();
     }
 
@@ -605,11 +590,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     public int getSynchronizeTime() {
 	    return this.synchronizeTime;
     }
-    public int getScreenWidth() {
-	    return this.screenWidth;
+    public int getGameViewWidth() {
+	    return this.gameViewWidth;
     }
-    public int getScreenHeight() {
-	    return this.screenHeight;
+    public int getGameViewHeight() {
+	    return this.gameViewHeight;
     }
     public int getBottomY() {
 	    return this.bottomY;
@@ -691,22 +676,24 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
             }
         }
 
-        for (ObstacleThread obstacleThread:obstacleThreads) {
-            if (obstacleThread != null) {
-                obstacleThread.setKeepRunning(false);
-                retry = true;
-                while (retry) {
-                    try {
-                        obstacleThread.join();
-                        System.out.println("obstacleThread.Join()........\n");
-                        retry = false;
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }// continue processing until the thread ends
+        if (obstacleThreads != null) {
+            for (ObstacleThread obstacleThread : obstacleThreads) {
+                if (obstacleThread != null) {
+                    obstacleThread.setKeepRunning(false);
+                    retry = true;
+                    while (retry) {
+                        try {
+                            obstacleThread.join();
+                            System.out.println("obstacleThread.Join()........\n");
+                            retry = false;
+                        } catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }// continue processing until the thread ends
+                    }
                 }
             }
+            obstacleThreads.clear();
         }
-        obstacleThreads.clear();
 
         if (buttonHoldThread != null) {
             buttonHoldThread.setIsButtonHold(false);
@@ -891,7 +878,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 et.setTextSize(24);
                 // et.setHeight(200);
                 et.setTextColor(Color.BLUE);
-                et.setBackground(new ColorDrawable(Color.TRANSPARENT));
+                // et.setBackground(new ColorDrawable(Color.TRANSPARENT));
+                // et.setBackgroundColor(Color.TRANSPARENT);
                 et.setHint(nameStr);
                 et.setGravity(Gravity.CENTER);
                 AlertDialog alertD = new AlertDialog.Builder(activity).create();

@@ -3,6 +3,8 @@ package com.smile.bouncyball.Utility;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
+import android.os.Build;
+import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Display;
 
@@ -44,5 +46,18 @@ public class ScreenUtl {
         // Display display = ((WindowManager)context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         Display display =  ((Activity)context).getWindowManager().getDefaultDisplay();
         display.getSize(size);
+    }
+
+    public static boolean isTablet(Context context)
+    {
+        Display display = ((Activity)context).getWindowManager().getDefaultDisplay();
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        display.getMetrics(displayMetrics);
+
+        float wInches = (float)(displayMetrics.widthPixels) / (float)(displayMetrics.densityDpi);
+        float hInches = (float)(displayMetrics.heightPixels) / (float)(displayMetrics.densityDpi);
+
+        double screenDiagonal = Math.sqrt(Math.pow(wInches, 2) + Math.pow(hInches, 2));
+        return (screenDiagonal >= 7.0);
     }
 }

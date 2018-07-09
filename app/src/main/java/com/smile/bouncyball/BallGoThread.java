@@ -18,8 +18,8 @@ public class BallGoThread extends Thread{
     private MainActivity activity = null;
 	private GameView gameView = null;
 	private Vector<ObstacleThread> obstacleThreads = null;
-	private int screenWidth = 0;
-	private int screenHeight = 0;
+	private int gameViewWidth = 0;
+	private int gameViewHeight = 0;
     private int synchronizeTime = 70;
     private boolean flag = true;        // flag = true -> move ball
     private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
@@ -31,7 +31,7 @@ public class BallGoThread extends Thread{
     private int highest = 999;  // maximum value of the number that banner is to be hit to make user win
     // -1-> failed and game over, 0->waiting to start, 1->first stage (playing), 2->second stage (playing)
     // 3->final stage (playing), 4-finished the game
-    private int[] stageScore = {0, 20, 60, 120,200};    // hits for each stage
+    private int[] stageScore = {0, 10, 30, 60,100};    // hits for each stage
     private int score = 0;     //  score that user got
     private int status = GameView.startStatus;
 
@@ -46,8 +46,8 @@ public class BallGoThread extends Thread{
             throw new NullPointerException("obstacleThreads must not be null.");
         }
 
-        this.screenWidth = gView.getScreenWidth();
-        this.screenHeight = gView.getScreenHeight();
+        this.gameViewWidth = gView.getGameViewWidth();
+        this.gameViewHeight = gView.getGameViewHeight();
         this.synchronizeTime  = gView.getSynchronizeTime();
         this.bottomY = gView.getBottomY();
         this.bouncyBall = gView.getBouncyBall();
@@ -136,10 +136,10 @@ public class BallGoThread extends Thread{
                 // ballX = ballX + gView.ballSpan;
                 // ballY = ballY - gView.ballSpan;
 
-                if ((bouncyBall.getBallX() + bouncyBall.getBallRadius()) > screenWidth) {
-                    if ((tempX > (screenWidth - bouncyBall.getBallRadius())) && (tempX < screenWidth)) {
-                        bouncyBall.setBallX(screenWidth - bouncyBall.getBallRadius());
-                        // ballX = screenWidth - ballRadius;
+                if ((bouncyBall.getBallX() + bouncyBall.getBallRadius()) > gameViewWidth) {
+                    if ((tempX > (gameViewWidth - bouncyBall.getBallRadius())) && (tempX < gameViewWidth)) {
+                        bouncyBall.setBallX(gameViewWidth - bouncyBall.getBallRadius());
+                        // ballX = gameViewWidth - ballRadius;
                     } else {
                         // hit the right wall
                         bouncyBall.setDirection(GameView.BouncyBall_LEFT_TOP);
@@ -193,10 +193,10 @@ public class BallGoThread extends Thread{
                         // hit the bottom wall
                         checkHitBanner(GameView.BouncyBall_RIGHT_BOTTOM);
                     }
-                } else if ((bouncyBall.getBallX() + bouncyBall.getBallRadius()) > screenWidth) {
-                    if ((tempX > (screenWidth - bouncyBall.getBallRadius())) && (tempX < screenWidth)) {
-                        bouncyBall.setBallX(screenWidth - bouncyBall.getBallRadius());
-                        // ballX = screenWidth - ballRadius;
+                } else if ((bouncyBall.getBallX() + bouncyBall.getBallRadius()) > gameViewWidth) {
+                    if ((tempX > (gameViewWidth - bouncyBall.getBallRadius())) && (tempX < gameViewWidth)) {
+                        bouncyBall.setBallX(gameViewWidth - bouncyBall.getBallRadius());
+                        // ballX = gameViewWidth - ballRadius;
                     } else {
                         //hit the right wall
                         bouncyBall.setDirection(GameView.BouncyBall_LEFT_BOTTOM);
@@ -365,8 +365,8 @@ public class BallGoThread extends Thread{
         Point sPoint = new Point(tempX,tempY);
 
         tempX = sPoint.x + bouncyBall.getBallSize();
-        if (tempX>screenWidth) {
-            tempX = screenWidth;
+        if (tempX>gameViewWidth) {
+            tempX = gameViewWidth;
             sPoint.x = tempX - bouncyBall.getBallSize();
             bouncyBall.setBallX(tempX - bouncyBall.getBallRadius());
             // ballX = tempX - ballRadius;

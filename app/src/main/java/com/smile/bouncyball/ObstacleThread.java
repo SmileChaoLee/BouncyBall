@@ -44,8 +44,8 @@ public class ObstacleThread extends Thread{
         this.gameView = gView;
         this.activity = gameView.getActivity();
         this.synchronizeTime  = gView.getSynchronizeTime();
-        this.xRangeOfObstacle = gameView.getScreenWidth();
-        this.yRangeOfObstacle = gameView.getScreenHeight() / 3;    // one-third of the height of Game View
+        this.xRangeOfObstacle = gameView.getGameViewWidth();
+        this.yRangeOfObstacle = gameView.getGameViewHeight() / 3;    // one-third of the height of Game View
         this.bouncyBall = gameView.getBouncyBall();
         this.obstacleHeight = bouncyBall.getBallRadius();
         this.banner = gameView.getBanner();

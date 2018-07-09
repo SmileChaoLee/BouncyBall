@@ -34,27 +34,36 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.facebook.ads.Ad;
+import com.facebook.ads.AdError;
+import com.facebook.ads.AdListener;
+import com.facebook.ads.AdSize;
+import com.facebook.ads.AdView;
 import com.smile.bouncyball.Utility.ScreenUtl;
-
-import static android.content.ContentValues.TAG;
-
 import java.lang.reflect.Field;
 
-import static android.content.DialogInterface.BUTTON_NEUTRAL;
+import com.smile.facebookadsutil.*;
 
 public class MainActivity extends AppCompatActivity {
+
+    // private properties
+    private static final String TAG = new String("com.smile.bouncyball.MainActivity");
 
     private int screenWidth = 0;
     private int screenHeight = 0;
 
     private GameView gameView = null;
-    // private int autoRotate = 1;
-    private boolean firstRun = true;
+    private int gameViewWidth = 0;      // the width of game view
+    private int gameViewHeight = 0;     // the height of game view
 
+    private FacebookBannerAds facebookBannerAdView = null;
+
+    // public properties
     public boolean gamePause = false;
     public Handler activityHandler = null;
-    public FrameLayout frameLayout = null;
+    public LinearLayout gameLayout = null;
 
     public interface Constants {
         String LOG = "com.smile.bouncyball";
@@ -64,25 +73,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        System.out.println("onCreate() is called.");
+
+        // autoRotate = android.provider.Settings.System.getInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
+        // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN ,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
-        /*
-        ActionBar.LayoutParams params = new ActionBar.LayoutParams(
-                // center the TextView in action bar
-                ActionBar.LayoutParams.MATCH_PARENT,
-                ActionBar.LayoutParams.MATCH_PARENT,
-                Gravity.CENTER
-        );
-        View actionBarView = getLayoutInflater().inflate(R.layout.action_bar_layout,null);
-        */
-
-        System.out.println("onCreate()\n");
-
-        // autoRotate = android.provider.Settings.System.getInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-
         try {
             ViewConfiguration config = ViewConfiguration.get(this);
             Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
@@ -94,28 +92,73 @@ public class MainActivity extends AppCompatActivity {
             // Ignore
         }
 
+        setContentView(R.layout.activity_main_new);
+
         gamePause = false;
         activityHandler = new Handler();
-        gameView = new GameView(this);   // create a gameView
+
+        Point size = new Point();
+        ScreenUtl.getScreenSize(this, size);
+        screenWidth  = size.x;
+        screenHeight = size.y;
+
+        int statusBarHeight = ScreenUtl.getStatusBarHeight(this);
+        int actionBarHeight = ScreenUtl.getActionBarHeight(this);
 
         /*
-        View mainView = getLayoutInflater().inflate(R.layout.activity_main,null);
-        frameLayout = mainView.findViewById(R.id.frameLayout);
-        frameLayout.addView(gameView);
-        setContentView(frameLayout);
+        ActionBar actionBar = getSupportActionBar();
+        // actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        actionBar.setDisplayShowCustomEnabled(true);    // enable customized action bar
+        actionBar.setBackgroundDrawable(new ColorDrawable(Color.LTGRAY));
+        actionBar.setCustomView(R.layout.action_bar_layout);
+        View actionBarView = actionBar.getCustomView();
         */
-        setContentView(gameView);
+
+        LinearLayout mainUiLayout = findViewById(R.id.mainUiLayout);
+        float weightSum = mainUiLayout.getWeightSum();
+        if (weightSum == 0.0f) {
+            weightSum = 20.0f;  // default weight sum
+        }
+
+        int realHeight = screenHeight - actionBarHeight;
+
+        // game view
+        gameLayout = findViewById(R.id.layoutForGameView);
+        LinearLayout.LayoutParams fLp = (LinearLayout.LayoutParams) gameLayout.getLayoutParams();
+        float gameWeight = fLp.weight;
+        gameViewWidth = screenWidth;
+        gameViewHeight = (int)((float)realHeight * (gameWeight/weightSum) );
+
+        gameView = new GameView(this);   // create a gameView
+        gameLayout.addView(gameView);
+
+        // facebook banner ads view
+        LinearLayout adLayout = findViewById(R.id.facebookBannerAds);
+        LinearLayout.LayoutParams adLp = (LinearLayout.LayoutParams) adLayout.getLayoutParams();
+        float adsWeight = adLp.weight;
+        int adsHeight = realHeight - gameViewHeight;
+        System.out.println("Height of Banner Ads View = " + adsHeight);
+
+        boolean isTable = ScreenUtl.isTablet(this);
+        int adSizeId = (!isTable) ? 1 : 2; // phone is 1, others is 2 (like tablet)
+        facebookBannerAdView = new FacebookBannerAds(this,"253834931867002_253835175200311", adSizeId);
+        adLayout.addView(facebookBannerAdView.getBannerAdView());
+        facebookBannerAdView.showAd(TAG);
+
     }
 
     @Override
     public void onStart() {
         super.onStart();
+        System.out.println("onStart() is called.");
     }
 
 
     @Override
     public void onResume() {
         super.onResume();
+        System.out.println("onResume() is called.");
 
         synchronized (activityHandler) {
             gamePause = false;
@@ -126,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
+        System.out.println("onPause() is called.");
 
         synchronized (activityHandler) {
             gamePause = true;
@@ -146,10 +190,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         // release and destroy threads and resources before destroy activity
-        finishApplication();
 
         System.out.println("onDestroy --> Setting Screen orientation to User");
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+
+        if (facebookBannerAdView != null) {
+            facebookBannerAdView.close();
+        }
+
+        finishApplication();
 
         super.onDestroy();
     }

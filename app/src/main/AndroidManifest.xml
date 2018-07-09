@@ -10,7 +10,9 @@
         android:theme="@style/CustomTheme">
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -19,11 +21,15 @@
         </activity>
 
         <activity
-            android:name=".Top10ScoreActivity" >
+            android:name=".Top10ScoreActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
         </activity>
 
         <activity
-            android:name=".ScoreHistoryActivity">
+            android:name=".ScoreHistoryActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
         </activity>
     </application>
 

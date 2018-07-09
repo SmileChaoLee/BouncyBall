@@ -65,8 +65,8 @@ public class ButtonHoldThread extends Thread {
                 if (bannerX < 0) {
                     bannerX = 0;
                 }
-                if (bannerX > gameView.getScreenWidth()) {
-                    bannerX = gameView.getScreenWidth();
+                if (bannerX > gameView.getGameViewWidth()) {
+                    bannerX = gameView.getGameViewWidth();
                 }
                 // set position of banner
                 banner.setBannerX(bannerX);
