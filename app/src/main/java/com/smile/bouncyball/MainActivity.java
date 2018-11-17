@@ -1,50 +1,17 @@
 package com.smile.bouncyball;
 
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.Point;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Handler;
-import android.provider.Settings;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.Display;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.EditText;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import com.facebook.ads.Ad;
-import com.facebook.ads.AdError;
-import com.facebook.ads.AdListener;
-import com.facebook.ads.AdSize;
-import com.facebook.ads.AdView;
 import com.smile.bouncyball.Utility.ScreenUtl;
 import java.lang.reflect.Field;
-
-import com.smile.facebookadsutil.*;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -57,8 +24,6 @@ public class MainActivity extends AppCompatActivity {
     private GameView gameView = null;
     private int gameViewWidth = 0;      // the width of game view
     private int gameViewHeight = 0;     // the height of game view
-
-    private FacebookBannerAds facebookBannerAdView = null;
 
     // public properties
     public boolean gamePause = false;
@@ -75,9 +40,6 @@ public class MainActivity extends AppCompatActivity {
 
         System.out.println("onCreate() is called.");
 
-        // autoRotate = android.provider.Settings.System.getInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
-        // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN ,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -92,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
             // Ignore
         }
 
-        setContentView(R.layout.activity_main_new);
+        setContentView(R.layout.activity_main);
 
         gamePause = false;
         activityHandler = new Handler();
@@ -134,17 +96,17 @@ public class MainActivity extends AppCompatActivity {
         gameLayout.addView(gameView);
 
         // facebook banner ads view
-        LinearLayout adLayout = findViewById(R.id.facebookBannerAds);
-        LinearLayout.LayoutParams adLp = (LinearLayout.LayoutParams) adLayout.getLayoutParams();
-        float adsWeight = adLp.weight;
-        int adsHeight = realHeight - gameViewHeight;
-        System.out.println("Height of Banner Ads View = " + adsHeight);
+        // LinearLayout adLayout = findViewById(R.id.facebookBannerAds);
+        // LinearLayout.LayoutParams adLp = (LinearLayout.LayoutParams) adLayout.getLayoutParams();
+        // float adsWeight = adLp.weight;
+        // int adsHeight = realHeight - gameViewHeight;
+        // System.out.println("Height of Banner Ads View = " + adsHeight);
 
-        boolean isTable = ScreenUtl.isTablet(this);
-        int adSizeId = (!isTable) ? 1 : 2; // phone is 1, others is 2 (like tablet)
-        facebookBannerAdView = new FacebookBannerAds(this,"253834931867002_253835175200311", adSizeId);
-        adLayout.addView(facebookBannerAdView.getBannerAdView());
-        facebookBannerAdView.showAd(TAG);
+        // boolean isTable = ScreenUtl.isTablet(this);
+        // int adSizeId = (!isTable) ? 1 : 2; // phone is 1, others is 2 (like tablet)
+        // facebookBannerAdView = new FacebookBannerAds(this,"253834931867002_253835175200311", adSizeId);
+        // adLayout.addView(facebookBannerAdView.getBannerAdView());
+        // facebookBannerAdView.showAd(TAG);
 
     }
 
@@ -193,10 +155,6 @@ public class MainActivity extends AppCompatActivity {
 
         System.out.println("onDestroy --> Setting Screen orientation to User");
         // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-
-        if (facebookBannerAdView != null) {
-            facebookBannerAdView.close();
-        }
 
         finishApplication();
 

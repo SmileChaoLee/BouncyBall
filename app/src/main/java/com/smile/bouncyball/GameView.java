@@ -243,6 +243,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 		iscore[9] = BitmapFactory.decodeResource(getResources(), R.drawable.d9);
 
         iback = BitmapFactory.decodeResource(getResources(), R.drawable.back);
+        if (iback == null) {
+            System.out.println("iback is null.");
+        }
 		iball = BitmapFactory.decodeResource(getResources(), R.drawable.ball);
 		ibanner = BitmapFactory.decodeResource(getResources(), R.drawable.banner);
 		ibegin = BitmapFactory.decodeResource(getResources(), R.drawable.begin);
