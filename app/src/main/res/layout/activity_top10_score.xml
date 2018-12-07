@@ -7,16 +7,17 @@
     android:background="#ff00ff00">
 
     <TextView
+        android:id="@+id/top10TitleTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="40sp"
         android:textScaleX="1.0"
         android:textColor="#ff0000ff"
         android:layout_gravity="center_horizontal"
-        android:text="@string/score_history" />
+        android:text="@string/local_top_10_score_title" />
 
     <ListView
-        android:id="@android:id/list"
+        android:id="@+id/top10ListView"
         android:layout_marginTop="10dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -25,11 +26,11 @@
         android:layout_weight="1"/>
 
     <Button
-        android:id="@+id/historyOkButton"
+        android:id="@+id/top10OkButton"
         android:layout_marginTop="10dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="OK"
+        android:text="@string/okStr"
         android:textStyle="bold"
         android:background="@android:drawable/btn_default"
         android:layout_gravity="center"

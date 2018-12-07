@@ -16,6 +16,7 @@
     <string name="resume_string">恢復</string>
     <string name="newGame_string">新遊戲</string>
     <string name="quit_string">離開</string>
+    <string name="okStr">确定</string>
     <string name="begin_string">按開始按鈕啟動</string>
     <string name="gameOver_string">你失敗了.\n重玩?</string>
     <string name="win_string">你贏了.\n重玩?</string>
@@ -25,11 +26,13 @@
     <string name="yesStr">是</string>
     <string name="noStr">否</string>
 
-    <string name="top_10_score_str">前10名最高分</string>        <!-- for menu item -->
-    <string name="activity_top_10_score">前10名最高分</string>   <!-- for activity name -->
-    <string name="top_10_score_title">前10名最高分</string>      <!-- for title of list view -->
+    <string name="local_top10_string">前10名</string>
+    <string name="global_top10_string">全球前10名</string>
 
-    <string name="score_history">歷史分數</string>                    <!-- for menu item -->
-    <string name="activity_score_history">歷史分數</string>    <!-- for activity name -->
-    <string name="score_history_title">歷史分數</string>              <!-- for title of list view -->
+    <string name="local_top_10_score_str">前10名最高分</string>        <!-- for menu item -->
+    <string name="activity_top_10_score">前10名最高分</string>   <!-- for activity name -->
+    <string name="local_top_10_score_title">前10名最高分</string>      <!-- for title of list view -->
+    <string name="global_top_10_score_title">全球前10名最高分</string>      <!-- for title of list view -->
+
+    <string name="google_AdMobAppID">ca-app-pub-8354869049759576~7223507458</string>
 </resources>

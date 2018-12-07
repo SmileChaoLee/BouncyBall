@@ -16,6 +16,7 @@
     <string name="resume_string">Resume</string>
     <string name="newGame_string">New Game</string>
     <string name="quit_string">Quit</string>
+    <string name="okStr">Ok</string>
     <string name="begin_string">Start button to begin</string>
     <string name="gameOver_string">You failed.\nReplay?</string>
     <string name="win_string">You won.\nReplay?</string>
@@ -25,12 +26,13 @@
     <string name="yesStr">YES</string>
     <string name="noStr">NO</string>
 
-    <string name="top_10_score_str">Top 10 scores</string>              <!-- for menu item -->
+    <string name="local_top10_string">Top 10</string>
+    <string name="global_top10_string">Global Top 10</string>
+
+    <string name="local_top_10_score_str">Top 10 scores</string>              <!-- for menu item -->
     <string name="activity_top_10_score">Top10ScoreActivity</string>    <!-- for activity name -->
-    <string name="top_10_score_title">Top 10 Scores</string>            <!-- for title of list view -->
+    <string name="local_top_10_score_title">Top 10 Scores</string>
+    <string name="global_top_10_score_title">Global Top 10 Scores</string>
 
-    <string name="score_history">Score history</string>                    <!-- for menu item -->
-    <string name="activity_score_history">ScoreHistoryActivity</string>    <!-- for activity name -->
-    <string name="score_history_title">Score History</string>              <!-- for title of list view -->
-
+    <string name="google_AdMobAppID">ca-app-pub-8354869049759576~7223507458</string>
 </resources>

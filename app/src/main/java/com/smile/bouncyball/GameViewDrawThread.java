@@ -6,7 +6,7 @@ import java.io.InterruptedIOException;
 
 public class GameViewDrawThread extends Thread {
 
-    private MainActivity activity = null;
+    private MainActivity mainActivity = null;
     private GameView gameView = null;
     private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
     private SurfaceHolder surfaceHolder = null;
@@ -14,18 +14,18 @@ public class GameViewDrawThread extends Thread {
 
     public GameViewDrawThread(GameView gView) {
         this.gameView = gView;
-        this.activity = gView.getActivity();
+        this.mainActivity = gView.getMainActivity();
         this.surfaceHolder = gView.getSurfaceHolder();
         this.synchronizeTime  = gView.getSynchronizeTime();
     }
 
     public void run() {
         while (keepRunning) {
-            synchronized (activity.activityHandler) {
+            synchronized (mainActivity.activityHandler) {
                 // for application's (Main activity) synchronizing
-                while (activity.gamePause) {
+                while (mainActivity.gamePause) {
                     try {
-                        activity.activityHandler.wait();
+                        mainActivity.activityHandler.wait();
                     } catch (InterruptedException e) {
                     }
                 }

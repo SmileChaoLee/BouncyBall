@@ -21,7 +21,7 @@ public class ObstacleThread extends Thread{
     private int obstacleWidth = 100;
     private int obstacleHeight = 20;
 
-    private MainActivity activity = null;
+    private MainActivity mainActivity = null;
     private GameView gameView = null;
     private int synchronizeTime = 70;
 
@@ -42,7 +42,7 @@ public class ObstacleThread extends Thread{
     public ObstacleThread(GameView gView, int stageNo) {
 
         this.gameView = gView;
-        this.activity = gameView.getActivity();
+        this.mainActivity = gameView.getMainActivity();
         this.synchronizeTime  = gView.getSynchronizeTime();
         this.xRangeOfObstacle = gameView.getGameViewWidth();
         this.yRangeOfObstacle = gameView.getGameViewHeight() / 3;    // one-third of the height of Game View
@@ -74,11 +74,11 @@ public class ObstacleThread extends Thread{
 
     public void run () {
         while (keepRunning) {
-            synchronized (activity.activityHandler) {
+            synchronized (mainActivity.activityHandler) {
                 // for application's (Main activity) synchronizing
-                while (activity.gamePause) {
+                while (mainActivity.gamePause) {
                     try {
-                        activity.activityHandler.wait();
+                        mainActivity.activityHandler.wait();
                     } catch (InterruptedException ex) {}
                 }
             }

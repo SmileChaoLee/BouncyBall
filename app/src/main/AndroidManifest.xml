@@ -7,10 +7,16 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
+        android:name=".BouncyBallApp"
         android:allowBackup="true"
         android:icon="@drawable/icon"
         android:label="@string/app_name"
-        android:theme="@style/CustomTheme">
+        android:theme="@style/AppThemeTextSize30">
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/google_AdMobAppID"/>
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -29,11 +35,17 @@
             android:screenOrientation="portrait">
         </activity>
 
-        <activity
-            android:name=".ScoreHistoryActivity"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait">
-        </activity>
+        <service
+            android:name=".Service.GlobalTop10IntentService"
+            android:enabled="true"
+            android:exported="false">
+        </service>
+        <service
+            android:name=".Service.LocalTop10IntentService"
+            android:enabled="true"
+            android:exported="false">
+        </service>
+
     </application>
 
 </manifest>

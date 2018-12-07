@@ -15,7 +15,7 @@ import java.util.Vector;
 import android.os.Handler;
 
 public class BallGoThread extends Thread{
-    private MainActivity activity = null;
+    private MainActivity mainActivity = null;
 	private GameView gameView = null;
 	private Vector<ObstacleThread> obstacleThreads = null;
 	private int gameViewWidth = 0;
@@ -38,7 +38,7 @@ public class BallGoThread extends Thread{
 	public BallGoThread(GameView gView) {
 
 		this.gameView = gView;
-        this.activity = gView.getActivity();
+        this.mainActivity = gView.getMainActivity();
 
         this.obstacleThreads = gameView.getObstacleThreads();
         // obstacleThreads must not be null
@@ -82,11 +82,11 @@ public class BallGoThread extends Thread{
 	    status = GameView.firstStageStatus; // start running is first stage
 
 		while(keepRunning) {
-            synchronized (activity.activityHandler) {
+            synchronized (mainActivity.activityHandler) {
                 // for application's (Main activity) synchronizing
-                while (activity.gamePause) {
+                while (mainActivity.gamePause) {
                     try {
-                        activity.activityHandler.wait();
+                        mainActivity.activityHandler.wait();
                     } catch (InterruptedException e) {
                     }
                 }

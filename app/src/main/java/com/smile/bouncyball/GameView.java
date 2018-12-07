@@ -1,6 +1,6 @@
 package com.smile.bouncyball;
-
-// import android.app.AlertDialog;
+import android.graphics.PixelFormat;
+import android.graphics.RectF;
 import android.support.v7.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,6 +16,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Looper;
 import android.support.v7.app.ActionBar;
+import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -31,20 +32,20 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.smile.bouncyball.Utility.ScreenUtl;
-import com.smile.scoresqlite.*;
+import com.smile.bouncyball.Service.GlobalTop10IntentService;
+import com.smile.bouncyball.Service.LocalTop10IntentService;
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
+import com.smile.smilepublicclasseslibrary.player_record_rest.PlayerRecordRest;
+import com.smile.smilepublicclasseslibrary.showing_instertitial_ads_utility.ShowingInterstitialAdsUtil;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Vector;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
+    private final String TAG = "BouncyBall.GameVew";
     // public properties
     public static final int failedStatus = -1;
     public static final int startStatus = 0;
@@ -65,7 +66,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     // for running a thread when arrow button (left arrow or right arrow) is held
     public ButtonHoldThread buttonHoldThread = null;
 
-
     // private properties
     private static final float ballSizeRatio = 1.0f/18.f;
     private static final float hintWidthRatio   = 1.0f/1.5f;
@@ -81,7 +81,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private int bannerAdsWidth = 0;
     private int bannerAdsHeight = 0;
 
-    private MainActivity activity = null;		//Activity
+    private MainActivity mainActivity = null;		//Activity
     private int beginWidth  = 100;           // width of the hint
     private int beginHeight = 20;         // height of the hint
     private int winWidth = 100;
@@ -139,8 +139,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private int gameViewWidth  = 0;
     private int gameViewHeight = 0;
 
-    private ScoreSQLite scoreSQLite = null;
-
     private BouncyBall bouncyBall = null;
     private Banner banner = null;
 
@@ -150,12 +148,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
     private boolean dialogFinished = false;
 
-	public GameView(MainActivity activity) {
-		super(activity);
+	public GameView(MainActivity mainActivity) {
+		super(mainActivity);
 
-        this.activity = activity;
+        this.mainActivity = mainActivity;
 
-        ActionBar actionBar = activity.getSupportActionBar();
+        ActionBar actionBar = mainActivity.getSupportActionBar();
         // actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
         actionBar.setDisplayShowCustomEnabled(true);    // enable customized action bar
@@ -188,9 +186,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
         surfaceHolder = getHolder();
 		surfaceHolder.addCallback(this); // register the interface
+        setZOrderOnTop(true);
+        surfaceHolder.setFormat(PixelFormat.TRANSLUCENT);
 
-        scoreSQLite = new ScoreSQLite(this.activity);
-        int highestScore = scoreSQLite.readHighestScore();
+        int highestScore = BouncyBallApp.ScoreSQLiteDB.readHighestScore();
 
         status = startStatus;    // waiting to start
 
@@ -218,6 +217,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     }
 
 	public void initBitmapAndModels(){
+
+	    Log.d(TAG, "initBitmapAndModels() is called");
 
         int ballSize = 16;          // size of the ball
         int ballRadius = ballSize/2;
@@ -329,9 +330,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         Point sPoint = new Point(0,0);
         Rect rect2 = new Rect(0,0,0,0);
     	//
-        canvas.drawBitmap(iback,null,new Rect(0,0,gameViewWidth, gameViewHeight),null);
-        // getWidth() --> width of SurfaceView, getHeight() --> height of SurfaceView
-        // canvas.drawBitmap(iback,null,new Rect(0,0,getWidth(), getHeight()),null);
+        RectF rectf = new RectF(0,0, gameViewWidth, gameViewHeight);
+        canvas.drawBitmap(iback,null, rectf, null);
 
     	// draw the banner
         sPoint.set(banner.getBannerX()-banner.getBannerWidth()/2,banner.getBannerY()-banner.getBannerHeight()/2);
@@ -359,7 +359,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         status = ballGoThread.getStatus();
 
         // draw score, action bar is on the main UI thread not in the game view
-        activity.runOnUiThread(new Runnable() {
+        mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
@@ -416,10 +416,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 obstacleThreads.clear();
 
                 //  game over
-                activity.runOnUiThread(new Runnable() {
+                mainActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        final TextView tv = new TextView(activity);
+                        final TextView tv = new TextView(mainActivity);
                         tv.setTextSize(40);
                         tv.setTextColor(Color.BLUE);
                         tv.setTypeface(Typeface.DEFAULT);
@@ -431,7 +431,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                             tv.setText(winStr);
                         }
                         tv.setGravity(Gravity.CENTER);
-                        AlertDialog alertDialog = new  AlertDialog.Builder(activity).create();
+                        AlertDialog alertDialog = new  AlertDialog.Builder(mainActivity).create();
                         alertDialog.setTitle(null);
                         alertDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
                         alertDialog.setCancelable(false);
@@ -587,8 +587,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         System.out.println("SurfaceView being destroyed");
     }
 
-    public MainActivity getActivity() {
-        return this.activity;
+    public MainActivity getMainActivity() {
+        return this.mainActivity;
     }
     public int getSynchronizeTime() {
 	    return this.synchronizeTime;
@@ -614,39 +614,32 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     public Vector<ObstacleThread> getObstacleThreads() {
 	    return this.obstacleThreads;
     }
+
     public void newGame(){
         // if(status==failedStatus||status==finishedStatus){
         // initialize the coordinates of the ball and the banner
-
-        if (gameViewDrawThread != null) {
-            gameViewDrawThread.setKeepRunning(false);
+        Log.i(TAG, "Showing Ad from AdMob or Facebook");
+        if (BouncyBallApp.InterstitialAd != null) {
+            int entryPoint = 0; //  no used
+            ShowingInterstitialAdsUtil.ShowAdAsyncTask showAdsAsyncTask =
+                    BouncyBallApp.InterstitialAd.new ShowAdAsyncTask(mainActivity
+                            , entryPoint
+                            , new ShowingInterstitialAdsUtil.AfterDismissFunctionOfShowAd() {
+                        @Override
+                        public void executeAfterDismissAds(int endPoint) {
+                            renewGame();
+                        }
+                    });
+            showAdsAsyncTask.execute();
         }
-        if (ballGoThread != null) {
-            ballGoThread.setKeepRunning(false);
-        }
-        if (obstacleThreads != null) {
-            for (ObstacleThread obstacleThread:obstacleThreads) {
-                obstacleThread.setKeepRunning(false);
-            }
-            obstacleThreads.clear();
-        }
-
-        initBallAndBanner();
-        score = 0;
-        status = startStatus;
-        ballGoThread = new BallGoThread(this);
-        gameViewDrawThread = new GameViewDrawThread(this);
-
-        drawGameScreen();
-        // }
     }
 
     public void releaseSynchronizings() {
-        if (activity.gamePause) {
+        if (mainActivity.gamePause) {
             // in pause status
-            synchronized (activity.activityHandler) {
-                activity.gamePause = false;
-                activity.activityHandler.notifyAll();
+            synchronized (mainActivity.activityHandler) {
+                mainActivity.gamePause = false;
+                mainActivity.activityHandler.notifyAll();
             }
         }
 
@@ -728,44 +721,27 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         }
     }
 
-    public void getTop10Score() {
-        String[] resultStr = scoreSQLite.read10HighestScore();
-
-        Intent intent = new Intent(activity, Top10ScoreActivity.class);
-        Bundle extras = new Bundle();
-        extras.putStringArray("resultStr", resultStr);
-        intent.putExtras(extras);
-
-        activity.startActivity(intent);
-    }
-
-    public void getTop10ScoreList() {
-        ArrayList<Pair<String, Integer>> top10 = scoreSQLite.readTop10ScoreList();
-        ArrayList<String> playerNames = new ArrayList<String>();
-        ArrayList<Integer> playerScores = new ArrayList<Integer>();
-        for (Pair pair : top10) {
-            playerNames.add((String)pair.first);
-            playerScores.add((Integer)pair.second);
+    private void renewGame() {
+        if (gameViewDrawThread != null) {
+            gameViewDrawThread.setKeepRunning(false);
+        }
+        if (ballGoThread != null) {
+            ballGoThread.setKeepRunning(false);
+        }
+        if (obstacleThreads != null) {
+            for (ObstacleThread obstacleThread:obstacleThreads) {
+                obstacleThread.setKeepRunning(false);
+            }
+            obstacleThreads.clear();
         }
 
-        Intent intent = new Intent(activity, Top10ScoreActivity.class);
-        Bundle extras = new Bundle();
-        extras.putStringArrayList("Top10Players", playerNames);
-        extras.putIntegerArrayList("Top10Scores", playerScores);
-        intent.putExtras(extras);
+        initBallAndBanner();
+        score = 0;
+        status = startStatus;
+        ballGoThread = new BallGoThread(this);
+        gameViewDrawThread = new GameViewDrawThread(this);
 
-        activity.startActivity(intent);
-    }
-
-    public void getScoreHistory() {
-        ArrayList<String> resultStr = scoreSQLite.readAllScores();
-
-        Intent intent = new Intent(activity, ScoreHistoryActivity.class);
-        Bundle extras = new Bundle();
-        extras.putStringArrayList("resultStr", resultStr);
-        intent.putExtras(extras);
-
-        activity.startActivity(intent);
+        drawGameScreen();
     }
 
 	private Bitmap getBitmapFromResourceWithText(int resultId, String caption, int textColor) {
@@ -874,10 +850,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
     private void recordScore(final int currentScore, final boolean replayYn) {
         //    record currentScore as a score in database
-        activity.runOnUiThread(new Runnable() {
+        mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                final EditText et = new EditText(activity);
+                final EditText et = new EditText(mainActivity);
                 et.setTextSize(24);
                 // et.setHeight(200);
                 et.setTextColor(Color.BLUE);
@@ -885,7 +861,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                 // et.setBackgroundColor(Color.TRANSPARENT);
                 et.setHint(nameStr);
                 et.setGravity(Gravity.CENTER);
-                AlertDialog alertD = new AlertDialog.Builder(activity).create();
+                AlertDialog alertD = new AlertDialog.Builder(mainActivity).create();
                 alertD.setTitle(null);
                 alertD.requestWindowFeature(Window.FEATURE_NO_TITLE);
                 alertD.setCancelable(false);
@@ -898,7 +874,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                             releaseSynchronizings();
                             newGame();
                         } else {
-                            activity.finish();
+                            mainActivity.quitGame();
                         }
                     }
                 });
@@ -907,13 +883,32 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
 
-                        scoreSQLite.addScore(et.getText().toString(), currentScore);
+                        // use thread to add a record to database (remote database on AWS-EC2)
+                        Thread restThread = new Thread() {
+                            @Override
+                            public void run() {
+                                try {
+                                    String webUrl = new String(BouncyBallApp.REST_Website + "/AddOneRecordREST");   // ASP.NET Cor
+                                    JSONObject jsonObject = new JSONObject();
+                                    jsonObject.put("PlayerName", et.getText().toString());
+                                    jsonObject.put("Score", score);
+                                    jsonObject.put("GameId", BouncyBallApp.GameId);
+                                    PlayerRecordRest.addOneRecord(webUrl, jsonObject);
+                                } catch (Exception ex) {
+                                    ex.printStackTrace();
+                                    Log.d(TAG, "Failed to add one record to Playerscore table.");
+                                }
+                            }
+                        };
+                        restThread.start();
+
+                        BouncyBallApp.ScoreSQLiteDB.addScore(et.getText().toString(), currentScore);
 
                         if (replayYn) {
                             releaseSynchronizings();
                             newGame();
                         } else {
-                            activity.finish();
+                            mainActivity.quitGame();
                         }
                     }
                 });

@@ -11,7 +11,7 @@ import com.smile.bouncyball.models.Banner;
 public class ButtonHoldThread extends Thread {
 
     private GameView gameView = null;
-    private MainActivity activity = null;
+    private MainActivity mainActivity = null;
     private boolean keepRunning = true;
     private Banner banner = null;
     private boolean isButtonHold = false;
@@ -19,7 +19,7 @@ public class ButtonHoldThread extends Thread {
 
     public ButtonHoldThread(GameView gameView) {
         this.gameView = gameView;
-        this.activity = this.gameView.getActivity();
+        this.mainActivity = this.gameView.getMainActivity();
         this.banner = this.gameView.getBanner();
         this.keepRunning = true;
         this.isButtonHold = false;
@@ -38,11 +38,11 @@ public class ButtonHoldThread extends Thread {
 
     public void run() {
         while (keepRunning) {
-            synchronized (activity.activityHandler) {
+            synchronized (mainActivity.activityHandler) {
                 // for application's (Main activity) synchronizing
-                while (activity.gamePause) {
+                while (mainActivity.gamePause) {
                     try {
-                        activity.activityHandler.wait();
+                        mainActivity.activityHandler.wait();
                     } catch (InterruptedException e) {
                     }
                 }
