@@ -903,6 +903,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                         restThread.start();
 
                         BouncyBallApp.ScoreSQLiteDB.addScore(et.getText().toString(), currentScore);
+                        BouncyBallApp.ScoreSQLiteDB.deleteAllAfterTop10();  // only keep the top 10
 
                         if (replayYn) {
                             releaseSynchronizings();
