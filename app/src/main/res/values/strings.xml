@@ -25,6 +25,7 @@
     <string name="nameStr">Input your name</string>
     <string name="yesStr">YES</string>
     <string name="noStr">NO</string>
+    <string name="loadingString">Loading ...</string>
 
     <string name="local_top10_string">Top 10</string>
     <string name="global_top10_string">Global Top 10</string>

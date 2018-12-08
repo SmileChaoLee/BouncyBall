@@ -25,6 +25,7 @@
     <string name="nameStr">輸入你的名字</string>
     <string name="yesStr">是</string>
     <string name="noStr">否</string>
+    <string name="loadingString">下載中 ...</string>
 
     <string name="local_top10_string">前10名</string>
     <string name="global_top10_string">全球前10名</string>

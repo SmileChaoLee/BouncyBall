@@ -872,7 +872,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                         dialog.dismiss();
                         if (replayYn) {
                             releaseSynchronizings();
-                            newGame();
+                            renewGame();    // no showing for ad
                         } else {
                             mainActivity.quitGame();
                         }
@@ -906,7 +906,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
 
                         if (replayYn) {
                             releaseSynchronizings();
-                            newGame();
+                            renewGame();    // no showing for ad
                         } else {
                             mainActivity.quitGame();
                         }

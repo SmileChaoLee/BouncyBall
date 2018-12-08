@@ -5,7 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Point;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -25,7 +25,7 @@ import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.smile.bouncyball.Service.GlobalTop10IntentService;
 import com.smile.bouncyball.Service.LocalTop10IntentService;
-import com.smile.bouncyball.Utility.ScreenUtl;
+import com.smile.smilepublicclasseslibrary.alertdialogfragment.AlertDialogFragment;
 import com.smile.smilepublicclasseslibrary.showing_instertitial_ads_utility.ShowingInterstitialAdsUtil;
 import com.smile.smilepublicclasseslibrary.utilities.ScreenUtil;
 
@@ -36,14 +36,12 @@ public class MainActivity extends AppCompatActivity {
     // private properties
     private static final String TAG = new String("com.smile.bouncyball.MainActivity");
 
-    private int screenWidth = 0;
-    private int screenHeight = 0;
     private float textFontSize;
     private GameView gameView = null;
-    private int gameViewWidth = 0;      // the width of game view
-    private int gameViewHeight = 0;     // the height of game view
     private LinearLayout bannerLinearLayout = null;
     private AdView bannerAdView = null;
+    private AlertDialogFragment showLoadingDialog;
+    private String showLoadingDialogTag = "ShowLoadingDialogTag";
 
     // public properties
     public boolean gamePause = false;
@@ -84,33 +82,17 @@ public class MainActivity extends AppCompatActivity {
             setTheme(R.style.AppThemeTextSize30);
         }
 
+        String loadingString = getString(R.string.loadingString);
+        showLoadingDialog = AlertDialogFragment.newInstance(loadingString, textFontSize, Color.RED, 0, 0, true);
+
         setContentView(R.layout.activity_main);
 
         gamePause = false;
         activityHandler = new Handler();
 
-        Point size = new Point();
-        ScreenUtl.getScreenSize(this, size);
-        screenWidth  = size.x;
-        screenHeight = size.y;
-
-        int statusBarHeight = ScreenUtl.getStatusBarHeight(this);
-        int actionBarHeight = ScreenUtl.getActionBarHeight(this);
-
-        LinearLayout mainUiLayout = findViewById(R.id.mainUiLayout);
-        float weightSum = mainUiLayout.getWeightSum();
-        if (weightSum == 0.0f) {
-            weightSum = 20.0f;  // default weight sum
-        }
-
-        int realHeight = screenHeight - actionBarHeight;
-
         // game view
         gameLayout = findViewById(R.id.layoutForGameView);
         LinearLayout.LayoutParams fLp = (LinearLayout.LayoutParams) gameLayout.getLayoutParams();
-        float gameWeight = fLp.weight;
-        gameViewWidth = screenWidth;
-        gameViewHeight = (int)((float)realHeight * (gameWeight/weightSum) );
 
         gameView = new GameView(this);   // create a gameView
         gameLayout.addView(gameView);
@@ -305,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void getLocalTop10ScoreList() {
         // showing loading message
-        // showLoadingMessage();
+        showLoadingDialog.show(getSupportFragmentManager(), showLoadingDialogTag);
 
         Intent serviceIntent = new Intent(BouncyBallApp.AppContext, LocalTop10IntentService.class);
         startService(serviceIntent);
@@ -313,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void getGlobalTop10ScoreList() {
         // showing loading message
-        // showLoadingMessage();
+        showLoadingDialog.show(getSupportFragmentManager(), showLoadingDialogTag);
 
         Intent serviceIntent = new Intent(BouncyBallApp.AppContext, GlobalTop10IntentService.class);
         String webUrl = BouncyBallApp.REST_Website + "/GetTop10PlayerscoresREST";  // ASP.NET Core
@@ -327,6 +309,8 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+
+            showLoadingDialog.dismissAllowingStateLoss();
 
             if (intent == null) {
                 return;

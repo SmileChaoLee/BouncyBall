@@ -16,8 +16,8 @@ android {
         applicationId "com.smile.bouncyball"
         minSdkVersion 15
         targetSdkVersion 28
-        versionCode 26
-        versionName "2.6"
+        versionCode 30
+        versionName "3.0"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         signingConfig signingConfigs.config
