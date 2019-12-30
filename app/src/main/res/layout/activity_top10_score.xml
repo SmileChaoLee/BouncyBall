@@ -10,8 +10,6 @@
         android:id="@+id/top10TitleTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="40sp"
-        android:textScaleX="1.0"
         android:textColor="#ff0000ff"
         android:layout_gravity="center_horizontal"
         android:text="@string/local_top_10_score_title" />

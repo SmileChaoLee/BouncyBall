@@ -1,9 +1,8 @@
 package com.smile.bouncyball;
 import android.graphics.PixelFormat;
 import android.graphics.RectF;
-import android.support.v7.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -13,11 +12,9 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
-import android.os.Bundle;
 import android.os.Looper;
-import android.support.v7.app.ActionBar;
+import androidx.appcompat.app.ActionBar;
 import android.util.Log;
-import android.util.Pair;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -32,12 +29,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.smile.bouncyball.Service.GlobalTop10IntentService;
-import com.smile.bouncyball.Service.LocalTop10IntentService;
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
-import com.smile.smilepublicclasseslibrary.player_record_rest.PlayerRecordRest;
-import com.smile.smilepublicclasseslibrary.showing_instertitial_ads_utility.ShowingInterstitialAdsUtil;
+import com.smile.smilelibraries.player_record_rest.PlayerRecordRest;
+import com.smile.smilelibraries.showing_instertitial_ads_utility.ShowingInterstitialAdsUtil;
+import com.smile.smilelibraries.utilities.ScreenUtil;
 
 import org.json.JSONObject;
 
@@ -146,12 +142,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
     private GameViewDrawThread gameViewDrawThread = null;
     private Vector<ObstacleThread> obstacleThreads = null;
 
-    private boolean dialogFinished = false;
+    private float textFontSize;
 
-	public GameView(MainActivity mainActivity) {
+	public GameView(MainActivity mainActivity, float textFontSize) {
 		super(mainActivity);
 
         this.mainActivity = mainActivity;
+        this.textFontSize = textFontSize;
 
         ActionBar actionBar = mainActivity.getSupportActionBar();
         // actionBar.setDisplayShowTitleEnabled(false);
@@ -162,6 +159,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         View actionBarView = actionBar.getCustomView();
 
         stageName = (TextView)actionBarView.findViewById(R.id.stageName);
+        ScreenUtil.resizeTextSize(stageName, textFontSize, BouncyBallApp.FontSize_Scale_Type);
         scoreImage0 = (ImageView)actionBarView.findViewById(R.id.scoreView0);
         scoreImage1 = (ImageView)actionBarView.findViewById(R.id.scoreView1);
         scoreImage2 = (ImageView)actionBarView.findViewById(R.id.scoreView2);
@@ -196,18 +194,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         // setWillNotDraw(false);  // added on 2017-11-07 to activate onDraw() of SurfaceView
         // if set it to false, then the drawing might have to go through by onDraw() all the time
         setWillNotDraw(true);   // added on 2017-11-07 for just in case, the default is false
-
-        // the followings were moved to surfaceCreated()
-        /*
-        initBitmapAndModels();
-        // obstacleThreads must be created before ballGoThread
-        obstacleThreads = new Vector<ObstacleThread>();
-        // ballGoThread must be created before other threads except obstacleThreads
-        ballGoThread = new BallGoThread(this);
-        gameViewDrawThread = new GameViewDrawThread(this);
-        buttonHoldThread = new ButtonHoldThread(this);
-        buttonHoldThread.start();
-        */
 
         System.out.println("GameView-->Constructor\n");
 	}
@@ -420,7 +406,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                     @Override
                     public void run() {
                         final TextView tv = new TextView(mainActivity);
-                        tv.setTextSize(40);
+                        // tv.setTextSize(40);
+                        ScreenUtil.resizeTextSize(tv, textFontSize, BouncyBallApp.FontSize_Scale_Type);
                         tv.setTextColor(Color.BLUE);
                         tv.setTypeface(Typeface.DEFAULT);
                         if (status == failedStatus) {
@@ -622,8 +609,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         if (BouncyBallApp.InterstitialAd != null) {
             int entryPoint = 0; //  no used
             ShowingInterstitialAdsUtil.ShowAdAsyncTask showAdsAsyncTask =
-                    BouncyBallApp.InterstitialAd.new ShowAdAsyncTask(mainActivity
-                            , entryPoint
+                    BouncyBallApp.InterstitialAd.new ShowAdAsyncTask(entryPoint
                             , new ShowingInterstitialAdsUtil.AfterDismissFunctionOfShowAd() {
                         @Override
                         public void executeAfterDismissAds(int endPoint) {
@@ -831,9 +817,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         dlg.getWindow().setLayout(WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT);
         dlg.getWindow().setBackgroundDrawableResource(R.drawable.dialogbackground);
 
-        float fontSize = 20;
+        // float fontSize = 20;
+        float fontSize = textFontSize;
         Button nBtn = dlg.getButton(DialogInterface.BUTTON_NEGATIVE);
-        nBtn.setTextSize(fontSize);
+        ScreenUtil.resizeTextSize(nBtn, fontSize, BouncyBallApp.FontSize_Scale_Type);
         nBtn.setTypeface(Typeface.DEFAULT_BOLD);
         nBtn.setTextColor(Color.RED);
 
@@ -842,7 +829,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         nBtn.setLayoutParams(layoutParams);
 
         Button pBtn = dlg.getButton(DialogInterface.BUTTON_POSITIVE);
-        pBtn.setTextSize(fontSize);
+        ScreenUtil.resizeTextSize(pBtn, fontSize, BouncyBallApp.FontSize_Scale_Type);
         pBtn.setTypeface(Typeface.DEFAULT_BOLD);
         pBtn.setTextColor(Color.rgb(0x00,0x64,0x00));
         pBtn.setLayoutParams(layoutParams);
@@ -854,7 +841,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
             @Override
             public void run() {
                 final EditText et = new EditText(mainActivity);
-                et.setTextSize(24);
+                // et.setTextSize(24);
+                ScreenUtil.resizeTextSize(et, textFontSize, BouncyBallApp.FontSize_Scale_Type);
                 // et.setHeight(200);
                 et.setTextColor(Color.BLUE);
                 // et.setBackground(new ColorDrawable(Color.TRANSPARENT));

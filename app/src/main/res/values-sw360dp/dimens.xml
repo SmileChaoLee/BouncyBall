@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- for Nexus 5 API 23 -->
+    <dimen name="actionButtonTextSize">20dp</dimen>
+</resources>

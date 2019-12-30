@@ -1,13 +1,14 @@
 package com.smile.bouncyball;
 
+import androidx.appcompat.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -16,6 +17,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.smile.smilelibraries.utilities.ScreenUtil;
 
 import java.util.ArrayList;
 
@@ -33,6 +36,11 @@ public class Top10ScoreActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
+
         textFontSize = 30;
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -42,23 +50,16 @@ public class Top10ScoreActivity extends AppCompatActivity {
             textFontSize = extras.getFloat("TextFontSize");
         }
 
-        if (textFontSize == 50) {
-            // not a cell phone, it is a tablet
-            setTheme(R.style.AppThemeTextSize50);
-        } else {
-            setTheme(R.style.AppThemeTextSize30);
-        }
-
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_top10_score);
 
         TextView titleTextView = findViewById(R.id.top10TitleTextView);
-        titleTextView.setTextSize(textFontSize);
+        ScreenUtil.resizeTextSize(titleTextView, textFontSize, BouncyBallApp.FontSize_Scale_Type);
         titleTextView.setText(top10TitleName);
 
         Button okButton = (Button)findViewById(R.id.top10OkButton);
-        // okButton.setTextSize(textFontSize);
+        ScreenUtil.resizeTextSize(okButton, textFontSize, BouncyBallApp.FontSize_Scale_Type);
         okButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -164,9 +165,9 @@ public class Top10ScoreActivity extends AppCompatActivity {
             // view.setLayoutParams(layoutParams);  // no needed
 
             TextView pTextView = view.findViewById(R.id.playerTextView);
-            pTextView.setTextSize(textFontSize);
+            ScreenUtil.resizeTextSize(pTextView, textFontSize, BouncyBallApp.FontSize_Scale_Type);
             TextView sTextView = view.findViewById(R.id.scoreTextView);
-            sTextView.setTextSize(textFontSize);
+            ScreenUtil.resizeTextSize(sTextView, textFontSize, BouncyBallApp.FontSize_Scale_Type);
             ImageView medalImage = view.findViewById(R.id.medalImage);
 
             pTextView.setText(players.get(position));
