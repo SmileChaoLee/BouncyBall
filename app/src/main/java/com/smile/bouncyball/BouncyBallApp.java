@@ -5,9 +5,12 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.facebook.ads.AudienceNetworkAds;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.smile.smilelibraries.facebook_ads_util.FacebookInterstitialAds;
 import com.smile.smilelibraries.google_admob_ads_util.GoogleAdMobInterstitial;
 import com.smile.smilelibraries.scoresqlite.ScoreSQLite;
@@ -31,6 +34,8 @@ public class BouncyBallApp extends Application {
     private static FacebookInterstitialAds facebookAds;
     private static GoogleAdMobInterstitial googleInterstitialAd;
 
+    private static final String TAG = new String("BouncyBallApp");
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -46,11 +51,17 @@ public class BouncyBallApp extends Application {
         // Google AdMob
         String googleAdMobAppID = getString(R.string.google_AdMobAppID);
         String googleAdMobInterstitialID = "ca-app-pub-8354869049759576/8555812568";
-        MobileAds.initialize(AppContext, googleAdMobAppID);
+        MobileAds.initialize(AppContext, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+                Log.d(TAG, "Google AdMob was initialized successfully.");
+            }
+
+        });
         googleInterstitialAd = new GoogleAdMobInterstitial(AppContext, googleAdMobInterstitialID);
         googleAdMobBannerID = "ca-app-pub-8354869049759576/7770302361";
 
-        InterstitialAd = new ShowingInterstitialAdsUtil(facebookAds, googleInterstitialAd);
+        InterstitialAd = new ShowingInterstitialAdsUtil(AppContext, facebookAds, googleInterstitialAd);
 
         final Handler adHandler = new Handler(Looper.getMainLooper());
         final Runnable adRunnable = new Runnable() {

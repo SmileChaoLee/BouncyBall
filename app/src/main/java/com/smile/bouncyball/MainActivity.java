@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.os.Handler;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
+import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
@@ -135,18 +136,18 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "Showing Ad from AdMob or Facebook");
                 if (BouncyBallApp.InterstitialAd != null) {
                     int entryPoint = 0; //  no used
-                    ShowingInterstitialAdsUtil.ShowAdAsyncTask showAdAsyncTask =
-                            BouncyBallApp.InterstitialAd.new ShowAdAsyncTask(entryPoint);
-                    showAdAsyncTask.execute();
+                    ShowingInterstitialAdsUtil.ShowInterstitialAdThread showInterstitialAdThread =
+                            BouncyBallApp.InterstitialAd.new ShowInterstitialAdThread(entryPoint);
+                    showInterstitialAdThread.startShowAd();
                 }
                 break;
             case GlobalTop10RequestCode:
                 Log.i(TAG, "Showing Ad from AdMob or Facebook");
                 if (BouncyBallApp.InterstitialAd != null) {
                     int entryPoint = 0; //  no used
-                    ShowingInterstitialAdsUtil.ShowAdAsyncTask showAdsAsyncTask =
-                            BouncyBallApp.InterstitialAd.new ShowAdAsyncTask(entryPoint);
-                    showAdsAsyncTask.execute();
+                    ShowingInterstitialAdsUtil.ShowInterstitialAdThread showInterstitialAdThread =
+                            BouncyBallApp.InterstitialAd.new ShowInterstitialAdThread(entryPoint);
+                    showInterstitialAdThread.startShowAd();
                 }
                 break;
         }
@@ -224,8 +225,10 @@ public class MainActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
+        final Context wrapper = new ContextThemeWrapper(this, R.style.menu_text_style);
+
         // according to the above explanations, the following statement will fit every situation
-        ScreenUtil.resizeMenuTextSize(menu, fontScale);
+        ScreenUtil.resizeMenuTextIconSize(wrapper, menu, fontScale);
 
         return true;
     }
@@ -265,15 +268,15 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Showing Ad from AdMob or Facebook");
         if (BouncyBallApp.InterstitialAd != null) {
             int entryPoint = 0; //  no used
-            ShowingInterstitialAdsUtil.ShowAdAsyncTask showAdsAsyncTask =
-                    BouncyBallApp.InterstitialAd.new ShowAdAsyncTask(entryPoint
+            ShowingInterstitialAdsUtil.ShowInterstitialAdThread showInterstitialAdThread =
+                    BouncyBallApp.InterstitialAd.new ShowInterstitialAdThread(entryPoint
                             , new ShowingInterstitialAdsUtil.AfterDismissFunctionOfShowAd() {
                         @Override
                         public void executeAfterDismissAds(int endPoint) {
                             quitApplication();
                         }
                     });
-            showAdsAsyncTask.execute();
+            showInterstitialAdThread.startShowAd();
         }
     }
 

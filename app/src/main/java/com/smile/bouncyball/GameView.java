@@ -608,15 +608,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         Log.i(TAG, "Showing Ad from AdMob or Facebook");
         if (BouncyBallApp.InterstitialAd != null) {
             int entryPoint = 0; //  no used
-            ShowingInterstitialAdsUtil.ShowAdAsyncTask showAdsAsyncTask =
-                    BouncyBallApp.InterstitialAd.new ShowAdAsyncTask(entryPoint
+            ShowingInterstitialAdsUtil.ShowInterstitialAdThread showInterstitialAdThread =
+                    BouncyBallApp.InterstitialAd.new ShowInterstitialAdThread(entryPoint
                             , new ShowingInterstitialAdsUtil.AfterDismissFunctionOfShowAd() {
                         @Override
                         public void executeAfterDismissAds(int endPoint) {
                             renewGame();
                         }
                     });
-            showAdsAsyncTask.execute();
+            showInterstitialAdThread.startShowAd();
         }
     }
 
