@@ -31,8 +31,8 @@ public class BouncyBallApp extends Application {
     public static ShowingInterstitialAdsUtil InterstitialAd;
     public static String googleAdMobBannerID = "";
 
-    private static FacebookInterstitialAds facebookAds;
-    private static GoogleAdMobInterstitial googleInterstitialAd;
+    public static FacebookInterstitialAds facebookAds;
+    public static GoogleAdMobInterstitial googleInterstitialAd;
 
     private static final String TAG = new String("BouncyBallApp");
 
@@ -61,15 +61,19 @@ public class BouncyBallApp extends Application {
         googleInterstitialAd = new GoogleAdMobInterstitial(AppContext, googleAdMobInterstitialID);
         googleAdMobBannerID = "ca-app-pub-8354869049759576/7770302361";
 
-        InterstitialAd = new ShowingInterstitialAdsUtil(AppContext, facebookAds, googleInterstitialAd);
+        // InterstitialAd = new ShowingInterstitialAdsUtil(AppContext, facebookAds, googleInterstitialAd);
 
         final Handler adHandler = new Handler(Looper.getMainLooper());
         final Runnable adRunnable = new Runnable() {
             @Override
             public void run() {
                 adHandler.removeCallbacksAndMessages(null);
-                googleInterstitialAd.loadAd(); // load first google ad
-                facebookAds.loadAd();   // load first facebook ad
+                if (googleInterstitialAd != null) {
+                    googleInterstitialAd.loadAd(); // load first google ad
+                }
+                if (facebookAds != null) {
+                    facebookAds.loadAd();   // load first facebook ad
+                }
             }
         };
         adHandler.postDelayed(adRunnable, 1000);

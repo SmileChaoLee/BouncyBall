@@ -62,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        BouncyBallApp.InterstitialAd = new ShowingInterstitialAdsUtil(this, BouncyBallApp.facebookAds, BouncyBallApp.googleInterstitialAd);
+
         System.out.println("onCreate() is called.");
 
         /*
