@@ -7,9 +7,9 @@
       <root url="file://$PROJECT_DIR$/caches/transforms-2/files-2.1/8b5d0dbd0688b76552bce20e14821d96/smilelibraries-release/res" />
       <root url="jar://$PROJECT_DIR$/caches/transforms-2/files-2.1/8b5d0dbd0688b76552bce20e14821d96/smilelibraries-release/jars/classes.jar!/" />
       <root url="file://$PROJECT_DIR$/caches/transforms-2/files-2.1/8b5d0dbd0688b76552bce20e14821d96/smilelibraries-release/AndroidManifest.xml" />
-      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/8b5d0dbd0688b76552bce20e14821d96/jetified-smilelibraries-release/res" />
-      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/8b5d0dbd0688b76552bce20e14821d96/jetified-smilelibraries-release/jars/classes.jar!/" />
-      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/8b5d0dbd0688b76552bce20e14821d96/jetified-smilelibraries-release/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/6bd79f4f3aeda9f8304557a807a91308/jetified-smilelibraries-release/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/6bd79f4f3aeda9f8304557a807a91308/jetified-smilelibraries-release/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/6bd79f4f3aeda9f8304557a807a91308/jetified-smilelibraries-release/AndroidManifest.xml" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
