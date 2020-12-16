@@ -1,0 +1,17 @@
+<component name="libraryTable">
+  <library name="Gradle: com.google.firebase:firebase-ads:19.3.0@aar">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/88c4e0edde5b6121380f709d4cc1ed53/jetified-firebase-ads-19.3.0/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/88c4e0edde5b6121380f709d4cc1ed53/jetified-firebase-ads-19.3.0/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/88c4e0edde5b6121380f709d4cc1ed53/jetified-firebase-ads-19.3.0/res" />
+      <root url="file://$PROJECT_DIR$/caches/transforms-2/files-2.1/a84f06fcb573418c6792153df1da5764/firebase-ads-19.3.0/res" />
+      <root url="file://$PROJECT_DIR$/caches/transforms-2/files-2.1/e6243bf50c0037eed351dd6dd463f06e/firebase-ads-19.3.0/AndroidManifest.xml" />
+      <root url="jar://$PROJECT_DIR$/caches/transforms-2/files-2.1/e6243bf50c0037eed351dd6dd463f06e/firebase-ads-19.3.0/jars/classes.jar!/" />
+      <root url="file://$PROJECT_DIR$/caches/transforms-2/files-2.1/e6243bf50c0037eed351dd6dd463f06e/firebase-ads-19.3.0/res" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/caches/modules-2/files-2.1/com.google.firebase/firebase-ads/19.3.0/3595118ed0ead1cee5178fbd6258f9199eb969a5/firebase-ads-19.3.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>

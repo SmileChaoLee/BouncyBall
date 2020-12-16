@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Gradle: :smilelibraries-release:@aar">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/588dcc586e643a6bb7b0b28367d373f2/jetified-smilelibraries-release/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/588dcc586e643a6bb7b0b28367d373f2/jetified-smilelibraries-release/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/588dcc586e643a6bb7b0b28367d373f2/jetified-smilelibraries-release/res" />
+      <root url="file://$PROJECT_DIR$/caches/transforms-2/files-2.1/8b5d0dbd0688b76552bce20e14821d96/smilelibraries-release/res" />
+      <root url="jar://$PROJECT_DIR$/caches/transforms-2/files-2.1/8b5d0dbd0688b76552bce20e14821d96/smilelibraries-release/jars/classes.jar!/" />
+      <root url="file://$PROJECT_DIR$/caches/transforms-2/files-2.1/8b5d0dbd0688b76552bce20e14821d96/smilelibraries-release/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

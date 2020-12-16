@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="Gradle: com.google.android.gms:play-services-ads-lite:19.3.0@aar">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/126bbfced9c6c62db1f89452f5e72f61/jetified-play-services-ads-lite-19.3.0/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/126bbfced9c6c62db1f89452f5e72f61/jetified-play-services-ads-lite-19.3.0/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/126bbfced9c6c62db1f89452f5e72f61/jetified-play-services-ads-lite-19.3.0/res" />
+      <root url="jar://$PROJECT_DIR$/caches/transforms-2/files-2.1/7f2205b0e06756e221b80de9927d26ea/play-services-ads-lite-19.3.0/jars/classes.jar!/" />
+      <root url="file://$PROJECT_DIR$/caches/transforms-2/files-2.1/7f2205b0e06756e221b80de9927d26ea/play-services-ads-lite-19.3.0/res" />
+      <root url="file://$PROJECT_DIR$/caches/transforms-2/files-2.1/7f2205b0e06756e221b80de9927d26ea/play-services-ads-lite-19.3.0/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/caches/modules-2/files-2.1/com.google.android.gms/play-services-ads-lite/19.3.0/36aa523c37c86e6acd7c76da810c89a204e48e30/play-services-ads-lite-19.3.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>

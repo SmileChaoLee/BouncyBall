@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/BouncyBall.iml" filepath="$PROJECT_DIR$/BouncyBall.iml" group="BouncyBall" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="BouncyBall/app" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/BouncyBall.iml" filepath="$PROJECT_DIR$/.idea/modules/BouncyBall.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BouncyBall.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BouncyBall.app.iml" />
     </modules>
   </component>
 </project>
