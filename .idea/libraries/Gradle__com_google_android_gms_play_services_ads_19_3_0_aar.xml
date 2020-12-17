@@ -7,9 +7,9 @@
       <root url="file://$PROJECT_DIR$/caches/transforms-2/files-2.1/61c0de87d2ede79224628369fb4151ab/play-services-ads-19.3.0/AndroidManifest.xml" />
       <root url="jar://$PROJECT_DIR$/caches/transforms-2/files-2.1/61c0de87d2ede79224628369fb4151ab/play-services-ads-19.3.0/jars/classes.jar!/" />
       <root url="file://$PROJECT_DIR$/caches/transforms-2/files-2.1/61c0de87d2ede79224628369fb4151ab/play-services-ads-19.3.0/res" />
-      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/96813a82384a1a3d29495e1747b170b2/jetified-play-services-ads-19.3.0/jars/classes.jar!/" />
-      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/96813a82384a1a3d29495e1747b170b2/jetified-play-services-ads-19.3.0/AndroidManifest.xml" />
-      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/96813a82384a1a3d29495e1747b170b2/jetified-play-services-ads-19.3.0/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/e73fbdb9a21de41c0d7bf24a3add7f30/jetified-play-services-ads-19.3.0/AndroidManifest.xml" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/e73fbdb9a21de41c0d7bf24a3add7f30/jetified-play-services-ads-19.3.0/res" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/e73fbdb9a21de41c0d7bf24a3add7f30/jetified-play-services-ads-19.3.0/jars/classes.jar!/" />
     </CLASSES>
     <JAVADOC>
       <root url="jar://$PROJECT_DIR$/caches/modules-2/files-2.1/com.google.android.gms/play-services-ads/19.3.0/3595118ed0ead1cee5178fbd6258f9199eb969a5/play-services-ads-19.3.0-javadoc.jar!/" />
