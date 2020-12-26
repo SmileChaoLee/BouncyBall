@@ -10,6 +10,9 @@
       <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/ec0f34ef8f5d7122d9ed8c91db0fd5aa/jetified-smilelibraries-release/jars/classes.jar!/" />
       <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/ec0f34ef8f5d7122d9ed8c91db0fd5aa/jetified-smilelibraries-release/AndroidManifest.xml" />
       <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/ec0f34ef8f5d7122d9ed8c91db0fd5aa/jetified-smilelibraries-release/res" />
+      <root url="file://$APPLICATION_HOME_DIR$/plugins/gradle/caches/transforms-2/files-2.1/ec0f34ef8f5d7122d9ed8c91db0fd5aa/jetified-smilelibraries-release/AndroidManifest.xml" />
+      <root url="jar://$APPLICATION_HOME_DIR$/plugins/gradle/caches/transforms-2/files-2.1/ec0f34ef8f5d7122d9ed8c91db0fd5aa/jetified-smilelibraries-release/jars/classes.jar!/" />
+      <root url="file://$APPLICATION_HOME_DIR$/plugins/gradle/caches/transforms-2/files-2.1/ec0f34ef8f5d7122d9ed8c91db0fd5aa/jetified-smilelibraries-release/res" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
