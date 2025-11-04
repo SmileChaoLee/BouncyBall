@@ -1,5 +1,6 @@
 package com.smile.bouncyball;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,12 +19,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewConfiguration;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
@@ -31,15 +27,14 @@ import com.google.android.gms.ads.AdView;
 import com.smile.bouncyball.Service.GlobalTop10IntentService;
 import com.smile.bouncyball.Service.LocalTop10IntentService;
 import com.smile.smilelibraries.alertdialogfragment.AlertDialogFragment;
-import com.smile.smilelibraries.showing_instertitial_ads_utility.ShowingInterstitialAdsUtil;
+import com.smile.smilelibraries.interfaces.DismissFunction;
+import com.smile.smilelibraries.show_interstitial_ads.ShowInterstitial;
 import com.smile.smilelibraries.utilities.ScreenUtil;
-
-import java.lang.reflect.Field;
 
 public class MainActivity extends AppCompatActivity {
 
     // private properties
-    private static final String TAG = new String("com.smile.bouncyball.MainActivity");
+    private static final String TAG = "MainActivity";
 
     private float textFontSize;
     private float fontScale;
@@ -47,11 +42,11 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout bannerLinearLayout = null;
     private AdView bannerAdView = null;
     private AlertDialogFragment showLoadingDialog;
-    private String showLoadingDialogTag = "ShowLoadingDialogTag";
+    private final String showLoadingDialogTag = "ShowLoadingDialogTag";
 
     // public properties
     public boolean gamePause = false;
-    public Handler activityHandler = null;
+    public final Handler activityHandler = new Handler();
     public LinearLayout gameLayout = null;
 
     private final int LocalTop10RequestCode = 1;
@@ -62,7 +57,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        BouncyBallApp.InterstitialAd = new ShowingInterstitialAdsUtil(this, BouncyBallApp.facebookAds, BouncyBallApp.googleInterstitialAd);
+        BouncyBallApp.InterstitialAd = new ShowInterstitial(this, BouncyBallApp.facebookAds,
+                BouncyBallApp.googleInterstitialAd);
 
         System.out.println("onCreate() is called.");
 
@@ -73,9 +69,10 @@ public class MainActivity extends AppCompatActivity {
         */
 
         // for adding three dots on actionbar on some android devices
+        /*
         try {
             ViewConfiguration config = ViewConfiguration.get(this);
-            Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            @SuppressLint("SoonBlockedPrivateApi") Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
             if(menuKeyField != null) {
                 menuKeyField.setAccessible(true);
                 menuKeyField.setBoolean(config, false);
@@ -83,26 +80,27 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception ex) {
             // Ignore
         }
+        */
         //
 
-        if (getResources().getConfiguration().orientation != Configuration.ORIENTATION_PORTRAIT) {
+        if (getResources().getConfiguration().orientation
+                != Configuration.ORIENTATION_PORTRAIT) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
 
-        float defaultTextFontSize = ScreenUtil.getDefaultTextSizeFromTheme(this, BouncyBallApp.FontSize_Scale_Type, null);
-        textFontSize = ScreenUtil.suitableFontSize(this, defaultTextFontSize, BouncyBallApp.FontSize_Scale_Type, 0.0f);
-        fontScale = ScreenUtil.suitableFontScale(this, BouncyBallApp.FontSize_Scale_Type, 0.0f);
+        textFontSize = ScreenUtil.getPxTextFontSizeNeeded(this);
+        fontScale = ScreenUtil.getPxFontScale(this);
 
         String loadingString = getString(R.string.loadingString);
         showLoadingDialog = AlertDialogFragment.newInstance(loadingString, BouncyBallApp.FontSize_Scale_Type, textFontSize, Color.RED, 0, 0, true);
         setContentView(R.layout.activity_main);
 
         gamePause = false;
-        activityHandler = new Handler();
+        // activityHandler = new Handler();
 
         // game view
         gameLayout = findViewById(R.id.layoutForGameView);
-        LinearLayout.LayoutParams fLp = (LinearLayout.LayoutParams) gameLayout.getLayoutParams();
+        // LinearLayout.LayoutParams fLp = (LinearLayout.LayoutParams) gameLayout.getLayoutParams();
 
         gameView = new GameView(this, textFontSize);   // create a gameView
         gameLayout.addView(gameView);
@@ -138,18 +136,18 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "Showing Ad from AdMob or Facebook");
                 if (BouncyBallApp.InterstitialAd != null) {
                     int entryPoint = 0; //  no used
-                    ShowingInterstitialAdsUtil.ShowInterstitialAdThread showInterstitialAdThread =
-                            BouncyBallApp.InterstitialAd.new ShowInterstitialAdThread(entryPoint);
-                    showInterstitialAdThread.startShowAd();
+                    ShowInterstitial.ShowAdThread showInterstitialAdThread =
+                            BouncyBallApp.InterstitialAd.new ShowAdThread();
+                    showInterstitialAdThread.startShowAd(0);    // AdMob first
                 }
                 break;
             case GlobalTop10RequestCode:
                 Log.i(TAG, "Showing Ad from AdMob or Facebook");
                 if (BouncyBallApp.InterstitialAd != null) {
                     int entryPoint = 0; //  no used
-                    ShowingInterstitialAdsUtil.ShowInterstitialAdThread showInterstitialAdThread =
-                            BouncyBallApp.InterstitialAd.new ShowInterstitialAdThread(entryPoint);
-                    showInterstitialAdThread.startShowAd();
+                    ShowInterstitial.ShowAdThread showInterstitialAdThread =
+                            BouncyBallApp.InterstitialAd.new ShowAdThread();
+                    showInterstitialAdThread.startShowAd(0);
                 }
                 break;
         }
@@ -219,6 +217,7 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         // capture the event of back button when it is pressed
         // change back button behavior
+        super.onBackPressed();
         quitGame();
     }
 
@@ -270,15 +269,24 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Showing Ad from AdMob or Facebook");
         if (BouncyBallApp.InterstitialAd != null) {
             int entryPoint = 0; //  no used
-            ShowingInterstitialAdsUtil.ShowInterstitialAdThread showInterstitialAdThread =
-                    BouncyBallApp.InterstitialAd.new ShowInterstitialAdThread(entryPoint
-                            , new ShowingInterstitialAdsUtil.AfterDismissFunctionOfShowAd() {
+            ShowInterstitial.ShowAdThread showInterstitialAdThread =
+                    BouncyBallApp.InterstitialAd.new ShowAdThread(new DismissFunction() {
                         @Override
-                        public void executeAfterDismissAds(int endPoint) {
+                        public void backgroundWork() {
+
+                        }
+
+                        @Override
+                        public void executeDismiss() {
                             quitApplication();
                         }
+
+                        @Override
+                        public void afterFinished(boolean isAdShown) {
+                            if (!isAdShown) quitApplication();
+                        }
                     });
-            showInterstitialAdThread.startShowAd();
+            showInterstitialAdThread.startShowAd(0);
         }
     }
 

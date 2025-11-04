@@ -6,7 +6,8 @@ import android.os.Bundle;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.smile.bouncyball.BouncyBallApp;
-import com.smile.smilelibraries.player_record_rest.PlayerRecordRest;
+import com.smile.smilelibraries.models.Player;
+import com.smile.smilelibraries.player_record_rest.httpUrl.PlayerRecordRest;
 
 import java.util.ArrayList;
 
@@ -25,7 +26,14 @@ public class LocalTop10IntentService extends IntentService {
         ArrayList<String> playerNames = new ArrayList<>();
         ArrayList<Integer> playerScores = new ArrayList<>();
 
-        String status = PlayerRecordRest.GetLocalTop10Scores(BouncyBallApp.ScoreSQLiteDB, playerNames, playerScores);
+        ArrayList<Player> players = PlayerRecordRest.GetLocalTop10(BouncyBallApp.ScoreSQLiteDB);
+        if (players.isEmpty()) {
+            players = new ArrayList<>();
+        }
+        for (Player p : players) {
+            playerNames.add(p.getPlayerName());
+            playerScores.add(p.getScore());
+        }
 
         Intent notificationIntent = new Intent(Action_Name);
         Bundle extras = new Bundle();

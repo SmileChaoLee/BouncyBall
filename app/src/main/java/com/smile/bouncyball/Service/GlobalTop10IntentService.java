@@ -5,7 +5,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.smile.smilelibraries.player_record_rest.PlayerRecordRest;
+import com.smile.bouncyball.BouncyBallApp;
+import com.smile.smilelibraries.models.Player;
+import com.smile.smilelibraries.player_record_rest.httpUrl.PlayerRecordRest;
 
 import java.util.ArrayList;
 
@@ -25,9 +27,14 @@ public class GlobalTop10IntentService extends IntentService {
         ArrayList<String> playerNames = new ArrayList<>();
         ArrayList<Integer> playerScores = new ArrayList<>();
 
-        String webUrl = intent.getStringExtra("WebUrl");
-
-        String status = PlayerRecordRest.GetGlobalTop10Scores(webUrl, playerNames, playerScores);
+        ArrayList<Player> players = PlayerRecordRest.GetGlobalTop10(BouncyBallApp.GameId);
+        if (players.isEmpty()) {
+            players = new ArrayList<>();
+        }
+        for (Player p : players) {
+            playerNames.add(p.getPlayerName());
+            playerScores.add(p.getScore());
+        }
 
         Intent notificationIntent = new Intent(Action_Name);
         Bundle notificationExtras = new Bundle();

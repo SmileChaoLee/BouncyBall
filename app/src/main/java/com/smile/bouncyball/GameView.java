@@ -31,8 +31,9 @@ import android.widget.TextView;
 
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
-import com.smile.smilelibraries.player_record_rest.PlayerRecordRest;
-import com.smile.smilelibraries.showing_instertitial_ads_utility.ShowingInterstitialAdsUtil;
+import com.smile.smilelibraries.interfaces.DismissFunction;
+import com.smile.smilelibraries.player_record_rest.httpUrl.PlayerRecordRest;
+import com.smile.smilelibraries.show_interstitial_ads.ShowInterstitial;
 import com.smile.smilelibraries.utilities.ScreenUtil;
 
 import org.json.JSONObject;
@@ -608,15 +609,24 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
         Log.i(TAG, "Showing Ad from AdMob or Facebook");
         if (BouncyBallApp.InterstitialAd != null) {
             int entryPoint = 0; //  no used
-            ShowingInterstitialAdsUtil.ShowInterstitialAdThread showInterstitialAdThread =
-                    BouncyBallApp.InterstitialAd.new ShowInterstitialAdThread(entryPoint
-                            , new ShowingInterstitialAdsUtil.AfterDismissFunctionOfShowAd() {
+            ShowInterstitial.ShowAdThread showInterstitialAdThread =
+                    BouncyBallApp.InterstitialAd.new ShowAdThread(new DismissFunction() {
                         @Override
-                        public void executeAfterDismissAds(int endPoint) {
+                        public void backgroundWork() {
+
+                        }
+
+                        @Override
+                        public void executeDismiss() {
                             renewGame();
                         }
+
+                        @Override
+                        public void afterFinished(boolean isAdShown) {
+                            if (!isAdShown) renewGame();
+                        }
                     });
-            showInterstitialAdThread.startShowAd();
+            showInterstitialAdThread.startShowAd(0);
         }
     }
 
@@ -876,15 +886,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback{
                             @Override
                             public void run() {
                                 try {
-                                    String webUrl = new String(BouncyBallApp.REST_Website + "/AddOneRecordREST");   // ASP.NET Cor
                                     JSONObject jsonObject = new JSONObject();
                                     jsonObject.put("PlayerName", et.getText().toString());
                                     jsonObject.put("Score", score);
                                     jsonObject.put("GameId", BouncyBallApp.GameId);
-                                    PlayerRecordRest.addOneRecord(webUrl, jsonObject);
+                                    PlayerRecordRest.addOneRecord(jsonObject);
                                 } catch (Exception ex) {
-                                    ex.printStackTrace();
-                                    Log.d(TAG, "Failed to add one record to Playerscore table.");
+                                    Log.e(TAG, "Failed to add one record to Playerscore table.", ex);
                                 }
                             }
                         };
