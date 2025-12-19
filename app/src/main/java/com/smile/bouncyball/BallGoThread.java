@@ -14,13 +14,13 @@ import java.util.Vector;
 
 public class BallGoThread extends Thread {
     private final static String TAG = "BallGoThread";
-    private MainActivity mainActivity = null;
 	private GameView gameView = null;
 	private Vector<ObstacleThread> obstacleThreads = null;
 	private int gameViewWidth = 0;
     private int synchronizeTime = 70;
     private boolean flag = true;        // flag = true -> move ball
-    private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
+    // keepRunning = true -> loop in run() still going
+    private volatile boolean keepRunning = true;
     private Random random = null;
     private int bottomY = 0;
     private BouncyBall bouncyBall = null;
@@ -32,7 +32,6 @@ public class BallGoThread extends Thread {
 	public BallGoThread(GameView gView) {
 
 		gameView = gView;
-        mainActivity = gView.getMainActivity();
         obstacleThreads = gameView.getObstacleThreads();
         // obstacleThreads must not be null
         if (obstacleThreads == null) {
@@ -70,13 +69,11 @@ public class BallGoThread extends Thread {
     }
 
 	public void run() {
-
 	    status = GameView.FIRST_STAGE; // start running is first stage
-
 		while(keepRunning) {
             synchronized (gameView.mainLock) {
                 // for application's (Main activity) synchronizing
-                while (mainActivity.gamePause) {
+                while (!gameView.isGameVisible) {
                     try {
                         gameView.mainLock.wait();
                     } catch (InterruptedException ex) {
@@ -84,10 +81,9 @@ public class BallGoThread extends Thread {
                     }
                 }
             }
-
             synchronized (gameView.gameLock) {
                 // for GameView's synchronizing
-                while (gameView.gameViewPause) {
+                while (gameView.isPausedByUser) {
                     try {
                         gameView.gameLock.wait();
                     } catch (InterruptedException ex) {
@@ -95,7 +91,6 @@ public class BallGoThread extends Thread {
                     }
                 }
             }
-
             if (flag) {
                 // 2017-11-19
                 checkCollision();   // collision with banner or walls
@@ -111,7 +106,6 @@ public class BallGoThread extends Thread {
                     }
                 }
             }
-
             SystemClock.sleep(synchronizeTime);
 		}
 	}

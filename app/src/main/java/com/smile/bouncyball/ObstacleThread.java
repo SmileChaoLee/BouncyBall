@@ -27,8 +27,8 @@ public class ObstacleThread extends Thread {
     private MainActivity mainActivity = null;
     private GameView gameView = null;
     private int synchronizeTime = 70;
-
-    private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
+    // keepRunning = true -> loop in run() still going
+    private volatile boolean keepRunning = true;
     private int direction = 1;  // 1->left, 2->right, 3->up, 4->down
     private int speed = 0;  // no moving, moving speed (left, right, up, or down)
     private int color = Color.BLACK;    // the color of obstacle
@@ -79,7 +79,7 @@ public class ObstacleThread extends Thread {
         while (keepRunning) {
             synchronized (gameView.mainLock) {
                 // for application's (Main activity) synchronizing
-                while (mainActivity.gamePause) {
+                while (!gameView.isGameVisible) {
                     try {
                         gameView.mainLock.wait();
                     } catch (InterruptedException ex) {
@@ -87,10 +87,9 @@ public class ObstacleThread extends Thread {
                     }
                 }
             }
-
             synchronized (gameView.gameLock) {
                 // for GameView's synchronizing
-                while (gameView.gameViewPause) {
+                while (gameView.isPausedByUser) {
                     try {
                         gameView.gameLock.wait();
                     } catch (InterruptedException ex) {
@@ -98,10 +97,8 @@ public class ObstacleThread extends Thread {
                     }
                 }
             }
-
             // move the obstacle
             moveObstacle();
-            // isHitBouncyBall();   // moved to BallGoThread on 2017-11-19
             SystemClock.sleep(synchronizeTime);
         }
     }

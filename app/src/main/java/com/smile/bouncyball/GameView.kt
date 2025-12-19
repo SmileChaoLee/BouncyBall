@@ -58,8 +58,11 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
         private const val BANNER_WIDTH_RATIO = 1.0f / 4.0f
         private const val BANNER_HEIGHT_RATIO = 1.0f / 10.0f
     }
+
     @JvmField
-    var gameViewPause: Boolean = false // for synchronizing
+    var isGameVisible = true
+    @JvmField
+    var isPausedByUser = false
     // for running a thread when arrow button (left arrow or right arrow) is held
     var buttonHoldThread: ButtonHoldThread? = null
     var mainActivity: MainActivity? = null //Activity
@@ -135,9 +138,9 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
     val gameLock = Object() // for synchronizing
 
     init {
+        isGameVisible = true
         this.mainActivity = mainActivity
         this.textFontSize = textFontSize
-
         val actionBar = mainActivity.supportActionBar
         // actionBar.setDisplayShowTitleEnabled(false);
         actionBar?.let { abIt ->
@@ -164,7 +167,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
         gameOverStr = resources.getString(R.string.gameOver_string)
         winStr = resources.getString(R.string.win_string)
 
-        gameViewPause = false // for synchronizing
+        isPausedByUser = false // for synchronizing
 
         setZOrderOnTop(true)
         surfaceHolder = holder
@@ -289,12 +292,13 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
         }
     }
 
-    public override fun onDraw(canvas: Canvas) {
+    override fun onDraw(canvas: Canvas) {
         LogUtil.d(TAG, "onDraw")
         doDraw(canvas)
     }
 
     fun doDraw(canvas: Canvas) {
+        LogUtil.d(TAG, "doDraw")
         // clear the background
         val sPoint = Point(0, 0)
         val rect2 = Rect(0, 0, 0, 0)
@@ -378,7 +382,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
                 canvas.drawBitmap(it, null, startRect, null)
             }
         } else {
-            if (gameViewPause) {
+            if (isPausedByUser) {
                 // under pause status. show resume button
                 iResume?.let {
                     canvas.drawBitmap(it, null, startRect, null)
@@ -448,7 +452,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
             MotionEvent.ACTION_MOVE ->
                 if ((status >= FIRST_STAGE) && (status < FINISHED_STATUS)) {
                     val bn = banner?: return false
-                    if (!gameViewPause) {
+                    if (!isPausedByUser) {
                         if ((y >= (bottomY - 20)) && (y <= (bottomY + 20 + bn.bannerHeight))) {
                             // Y - coordinate is inside the area and add 20 extra pixels
                             bn.bannerX = x
@@ -469,24 +473,24 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
             } else if ((status >= FIRST_STAGE) && (status < FINISHED_STATUS)) {
                 // in playing status
                 if (startRect.contains(x, y)) {
-                    if (!gameViewPause) {  // not in pause status
+                    if (!isPausedByUser) {  // not in pause status
                         // pause button was pressed
                         synchronized(gameLock) {
-                            gameViewPause = true
+                            isPausedByUser = true
                         }
                         // draw resume bitmap using redraw the whole screen of game view
                         drawGameScreen()
                     } else {
                         // resume button was pressed
                         synchronized(gameLock) {
-                            gameViewPause = false
+                            isPausedByUser = false
                             gameLock.notifyAll()
                         }
                         // draw pause bitmap using redraw the whole screen of game view
                         // drawGameScreen();// no need to do it because it will be done in doDraw() when threads start running
                     }
                 }
-                if (!gameViewPause) {
+                if (!isPausedByUser) {
                     // int xSpeed = 6; // 6 pixels  original
                     val xSpeed = 8 //  8 pixels
                     // not in pause status
@@ -550,50 +554,62 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         // destroy and release the process
-        println("SurfaceView being destroyed")
+        LogUtil.d(TAG, "SurfaceView being destroyed")
     }
 
     fun newGame() {
         renewGame()
     }
 
+    fun gameBecomeInvisible() {
+        synchronized(mainLock) {
+            isGameVisible = false
+        }
+    }
+
+    fun gameBecomeVisible() {
+        synchronized(mainLock) {
+            isGameVisible = true
+            mainLock.notifyAll()
+        }
+    }
+
     fun releaseSync() {
-        mainActivity?.let {
-            if (it.gamePause) {
-                // in pause status
-                synchronized(mainLock) {
-                    it.gamePause = false
-                    mainLock.notifyAll()
-                }
+        if (!isGameVisible) {
+            // in pause status
+            synchronized(mainLock) {
+                isGameVisible = true
+                mainLock.notifyAll()
             }
         }
 
-        if (gameViewPause) {
+        if (isPausedByUser) {
             // GameView in pause status
             synchronized(gameLock) {
-                gameViewPause = false
+                isPausedByUser = false
                 gameLock.notifyAll()
             }
         }
     }
 
     fun stopThreads() {    // executed when user failed or won
+        LogUtil.d(TAG, "stopThreads")
         ballGoThread?.flag = false // stop moving
-
         var retry: Boolean
         gameViewDrawThread?.let {
             it.setKeepRunning(false)
             retry = true
             while (retry) {
                 try {
-                    it.join()
                     LogUtil.d(TAG, "stopThreads.gameViewDrawThread.Join()")
+                    it.join()
                     retry = false
                 } catch (ex: InterruptedException) {
                     LogUtil.e(TAG, "stopThreads.gameViewDrawThread.InterruptedException", ex)
                 } // continue processing until the thread ends
             }
         }
+        LogUtil.d(TAG, "stopThreads.gameViewDrawThread.stopped")
 
         obstacleThreads?.let {
             for (obstacleThread in it) {
@@ -602,8 +618,8 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
                     retry = true
                     while (retry) {
                         try {
-                            obstacleThread.join()
                             LogUtil.d(TAG, "stopThreads.obstacleThread.Join()")
+                            obstacleThread.join()
                             retry = false
                         } catch (ex: InterruptedException) {
                             LogUtil.e(TAG, "stopThreads.obstacleThreads.InterruptedException", ex)
@@ -613,6 +629,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
             }
             it.clear()
         }
+        LogUtil.d(TAG, "stopThreads.obstacleThreads.stopped")
 
         buttonHoldThread?.let {
             it.setIsButtonHold(false)
@@ -620,29 +637,30 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
             retry = true
             while (retry) {
                 try {
-                    it.join()
                     LogUtil.d(TAG, "stopThreads.buttonHoldThread.Join()")
+                    it.join()
                     retry = false
                 } catch (ex: InterruptedException) {
                     LogUtil.e(TAG, "stopThreads.buttonHoldThread.InterruptedException", ex)
                 } // continue processing until the thread ends
             }
         }
+        LogUtil.d(TAG, "stopThreads.buttonHoldThread.stopped")
 
         ballGoThread?.let {
             it.setKeepRunning(false)
             retry = true
             while (retry) {
                 try {
-                    it.join()
                     LogUtil.d(TAG, "stopThreads.ballGoThread.Join()")
+                    it.join()
                     retry = false
                 } catch (ex: InterruptedException) {
-                    ex.printStackTrace()
                     LogUtil.e(TAG, "stopThreads.ballGoThread.InterruptedException", ex)
                 } // continue processing until the thread ends
             }
         }
+        LogUtil.d(TAG, "stopThreads.ballGoThread.stopped")
     }
 
     private fun renewGame() {
@@ -655,6 +673,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
             it.clear()
         }
 
+        // stopThreads()
         initBallAndBanner()
         score = 0
         status = START_STATUS
@@ -737,7 +756,6 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
                 }
             } catch (e: Exception) {
                 LogUtil.e(TAG, "drawGameScreen.Exception: ", e)
-                e.printStackTrace()
             } finally {
                 if (canvas != null) {
                     it.unlockCanvasAndPost(canvas)

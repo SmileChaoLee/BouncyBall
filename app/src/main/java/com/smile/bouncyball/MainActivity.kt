@@ -28,8 +28,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object  {
         private const val TAG = "MainActivity"
-        // @JvmField
-        // val mLock = Object()
     }
 
     private var textFontSize = 0f
@@ -40,8 +38,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var topScoreLauncher: ActivityResultLauncher<Intent>
 
     // public properties
-    @JvmField
-    var gamePause: Boolean = false
     var gameLayout: LinearLayout? = null
 
     @SuppressLint("SourceLockedOrientationActivity")
@@ -61,7 +57,6 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-        gamePause = false
         gameView = GameView(this@MainActivity, textFontSize) // create a gameView
         gameLayout = findViewById(R.id.layoutForGameView)
         gameLayout?.addView(gameView)
@@ -107,18 +102,13 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         LogUtil.d(TAG, "onResume")
-        synchronized(gameView.mainLock) {
-            gamePause = false
-            gameView.mainLock.notifyAll()
-        }
+        gameView.gameBecomeVisible()
     }
 
     override fun onPause() {
         super.onPause()
         LogUtil.d(TAG, "onPause")
-        synchronized(gameView.mainLock) {
-            gamePause = true
-        }
+        gameView.gameBecomeInvisible()
     }
 
     override fun onStop() {

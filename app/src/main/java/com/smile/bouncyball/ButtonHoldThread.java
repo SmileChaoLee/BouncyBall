@@ -13,15 +13,13 @@ public class ButtonHoldThread extends Thread {
     private final static String TAG = "ButtonHoldThread";
 
     private GameView gameView = null;
-    private MainActivity mainActivity = null;
-    private boolean keepRunning = true;
+    private volatile boolean keepRunning = true;
     private Banner banner = null;
-    private boolean isButtonHold = false;
+    private volatile boolean isButtonHold = false;
     private int bannerMoveSpeed = 0;
 
     public ButtonHoldThread(GameView gameView) {
         this.gameView = gameView;
-        this.mainActivity = this.gameView.getMainActivity();
         this.banner = this.gameView.getBanner();
         this.keepRunning = true;
         this.isButtonHold = false;
@@ -39,10 +37,10 @@ public class ButtonHoldThread extends Thread {
     }
 
     public void run() {
-        while (keepRunning) {
+        while(keepRunning) {
             synchronized (gameView.mainLock) {
                 // for application's (Main activity) synchronizing
-                while (mainActivity.gamePause) {
+                while (!gameView.isGameVisible) {
                     try {
                         gameView.mainLock.wait();
                     } catch (InterruptedException ex) {
@@ -50,10 +48,9 @@ public class ButtonHoldThread extends Thread {
                     }
                 }
             }
-
             synchronized (gameView.gameLock) {
                 // for GameView's synchronizing
-                while (gameView.gameViewPause) {
+                while (gameView.isPausedByUser) {
                     try {
                         gameView.gameLock.wait();
                     } catch (InterruptedException ex) {
@@ -61,7 +58,6 @@ public class ButtonHoldThread extends Thread {
                     }
                 }
             }
-
             // do the work of holding button
             while (isButtonHold) {
                 int bannerX = banner.getBannerX();
@@ -74,10 +70,8 @@ public class ButtonHoldThread extends Thread {
                 }
                 // set position of banner
                 banner.setBannerX(bannerX);
-                SystemClock.sleep(20);
             }
-
-            SystemClock.sleep(2);
+            SystemClock.sleep(20);
         }
     }
 }

@@ -9,15 +9,14 @@ import com.smile.bouncyball.tools.LogUtil;
 public class GameViewDrawThread extends Thread {
 
     private final static String TAG = "GameViewDrawThread";
-    private MainActivity mainActivity = null;
     private GameView gameView = null;
-    private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
+    // keepRunning = true -> loop in run() still going
+    private volatile boolean keepRunning = true;
     private SurfaceHolder surfaceHolder = null;
     private int synchronizeTime = 70;
 
     public GameViewDrawThread(GameView gView) {
         this.gameView = gView;
-        this.mainActivity = gView.getMainActivity();
         this.surfaceHolder = gView.getSurfaceHolder();
         this.synchronizeTime  = gView.synchronizeTime;
     }
@@ -26,7 +25,7 @@ public class GameViewDrawThread extends Thread {
         while (keepRunning) {
             synchronized (gameView.mainLock) {
                 // for application's (Main activity) synchronizing
-                while (mainActivity.gamePause) {
+                while (!gameView.isGameVisible) {
                     try {
                         gameView.mainLock.wait();
                     } catch (InterruptedException e) {
@@ -34,10 +33,9 @@ public class GameViewDrawThread extends Thread {
                     }
                 }
             }
-
             synchronized (gameView.gameLock) {
                 // for GameView's synchronizing
-                while (gameView.gameViewPause) {
+                while (gameView.isPausedByUser) {
                     try {
                         gameView.gameLock.wait();
                     } catch (InterruptedException e) {
@@ -45,7 +43,6 @@ public class GameViewDrawThread extends Thread {
                     }
                 }
             }
-
             // start drawing
             Canvas c;
             c = null;
@@ -66,7 +63,6 @@ public class GameViewDrawThread extends Thread {
                     surfaceHolder.unlockCanvasAndPost(c);
                 }
             }
-
             SystemClock.sleep(synchronizeTime);
         }
     }
