@@ -3,15 +3,15 @@ package com.smile.bouncyball.models;
 import android.graphics.Bitmap;
 
 /**
- * Created by chaolee on 2017-11-15.
+ * Created by Chao Lee on 2017-11-15.
  */
 
 public class Banner {
     private int bannerX;     //  the coordinate (x-axis) of the banner
     private int bannerY;     //  the coordinate (y-axis) of the banner
-    private int bannerWidth=40;       // width of the banner
-    private int bannerHeight=6;       // height of the banner
-    private Bitmap bitmap = null;
+    private int bannerWidth;       // width of the banner
+    private int bannerHeight;       // height of the banner
+    private Bitmap bitmap;
 
     public Banner(int bannerX, int bannerY, int bannerWidth, int bannerHeight, Bitmap bitmap) {
         this.bannerX = bannerX;

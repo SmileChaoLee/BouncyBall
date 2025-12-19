@@ -3,15 +3,15 @@ package com.smile.bouncyball.models;
 import android.graphics.Bitmap;
 
 /**
- * Created by chaolee on 2017-11-15.
+ * Created by Chao Lee on 2017-11-15.
  */
 
 public class BouncyBall {
     private int ballX;       //  coordinate (x-axis) of the ball
     private int ballY;       //  coordinate (y-axis) of the ball
-    private int ballSize = 16;          // size of the ball
-    private int ballRadius = ballSize/2;
-    private int ballSpan = 8;           // speed of the ball
+    private int ballSize;          // size of the ball
+    private int ballRadius;
+    private int ballSpan;           // speed of the ball
     private int direction = 0;
     private Bitmap bitmap = null;
 

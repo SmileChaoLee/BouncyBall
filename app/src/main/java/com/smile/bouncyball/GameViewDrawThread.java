@@ -1,11 +1,14 @@
 package com.smile.bouncyball;
 
 import android.graphics.Canvas;
+import android.os.SystemClock;
 import android.view.SurfaceHolder;
-import java.io.InterruptedIOException;
+
+import com.smile.bouncyball.tools.LogUtil;
 
 public class GameViewDrawThread extends Thread {
 
+    private final static String TAG = "GameViewDrawThread";
     private MainActivity mainActivity = null;
     private GameView gameView = null;
     private boolean keepRunning = true; // keepRunning = true -> loop in run() still going
@@ -16,27 +19,29 @@ public class GameViewDrawThread extends Thread {
         this.gameView = gView;
         this.mainActivity = gView.getMainActivity();
         this.surfaceHolder = gView.getSurfaceHolder();
-        this.synchronizeTime  = gView.getSynchronizeTime();
+        this.synchronizeTime  = gView.synchronizeTime;
     }
 
     public void run() {
         while (keepRunning) {
-            synchronized (mainActivity.activityHandler) {
+            synchronized (gameView.mainLock) {
                 // for application's (Main activity) synchronizing
                 while (mainActivity.gamePause) {
                     try {
-                        mainActivity.activityHandler.wait();
+                        gameView.mainLock.wait();
                     } catch (InterruptedException e) {
+                        LogUtil.e(TAG, "run.mainLock.InterruptedException", e);
                     }
                 }
             }
 
-            synchronized (gameView.gameViewHandler) {
+            synchronized (gameView.gameLock) {
                 // for GameView's synchronizing
                 while (gameView.gameViewPause) {
                     try {
-                        gameView.gameViewHandler.wait();
+                        gameView.gameLock.wait();
                     } catch (InterruptedException e) {
+                        LogUtil.e(TAG, "run.gameLock.InterruptedException", e);
                     }
                 }
             }
@@ -51,10 +56,9 @@ public class GameViewDrawThread extends Thread {
                     // synchronized (gView.surfaceHolder) {
                     synchronized (surfaceHolder) {
                         gameView.doDraw(c); // draw
-                        // System.out.println("Drawing .............");
                     }
                 } else {
-                    System.out.println("Canvas = null.");
+                    LogUtil.d(TAG, "run.lockCanvas.Canvas = null.");
                 }
             } finally {
                 if (c != null) {
@@ -63,8 +67,7 @@ public class GameViewDrawThread extends Thread {
                 }
             }
 
-            try{Thread.sleep(synchronizeTime);}
-            catch(Exception e){e.printStackTrace();}
+            SystemClock.sleep(synchronizeTime);
         }
     }
 

@@ -5,18 +5,21 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.SystemClock;
 
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.models.BouncyBall;
+import com.smile.bouncyball.tools.LogUtil;
 
 import java.util.Random;
 
 /**
- * Created by chaolee on 2017-11-14.
+ * Created by Chao Lee on 2017-11-14.
  */
 
-public class ObstacleThread extends Thread{
+public class ObstacleThread extends Thread {
 
+    private final static String TAG = "ObstacleThread";
     private final int[] obsColor = {Color.BLACK, Color.DKGRAY, Color.RED, Color.GREEN, Color.MAGENTA,Color.CYAN};
     private int obstacleWidth = 100;
     private int obstacleHeight = 20;
@@ -43,7 +46,7 @@ public class ObstacleThread extends Thread{
 
         this.gameView = gView;
         this.mainActivity = gameView.getMainActivity();
-        this.synchronizeTime  = gView.getSynchronizeTime();
+        this.synchronizeTime  = gView.synchronizeTime;
         this.xRangeOfObstacle = gameView.getGameViewWidth();
         this.yRangeOfObstacle = gameView.getGameViewHeight() / 3;    // one-third of the height of Game View
         this.bouncyBall = gameView.getBouncyBall();
@@ -74,21 +77,24 @@ public class ObstacleThread extends Thread{
 
     public void run () {
         while (keepRunning) {
-            synchronized (mainActivity.activityHandler) {
+            synchronized (gameView.mainLock) {
                 // for application's (Main activity) synchronizing
                 while (mainActivity.gamePause) {
                     try {
-                        mainActivity.activityHandler.wait();
-                    } catch (InterruptedException ex) {}
+                        gameView.mainLock.wait();
+                    } catch (InterruptedException ex) {
+                        LogUtil.e(TAG, "run.mainLock.InterruptedException", ex);
+                    }
                 }
             }
 
-            synchronized (gameView.gameViewHandler) {
+            synchronized (gameView.gameLock) {
                 // for GameView's synchronizing
                 while (gameView.gameViewPause) {
                     try {
-                        gameView.gameViewHandler.wait();
-                    } catch (InterruptedException e) {
+                        gameView.gameLock.wait();
+                    } catch (InterruptedException ex) {
+                        LogUtil.e(TAG, "run.gameLock.InterruptedException", ex);
                     }
                 }
             }
@@ -96,9 +102,7 @@ public class ObstacleThread extends Thread{
             // move the obstacle
             moveObstacle();
             // isHitBouncyBall();   // moved to BallGoThread on 2017-11-19
-
-            try{Thread.sleep(synchronizeTime);}
-            catch(Exception e){e.printStackTrace();}
+            SystemClock.sleep(synchronizeTime);
         }
     }
 
@@ -135,7 +139,7 @@ public class ObstacleThread extends Thread{
             x += speed;
             if (x>xRangeOfObstacle) {
                 x = xRangeOfObstacle;
-                // right then chage to left
+                // right then change to left
                 direction = 1;
             }
         } else if (direction == 3) {
@@ -156,63 +160,6 @@ public class ObstacleThread extends Thread{
             }
         }
         position.set(x,y);
-    }
-
-    private boolean isHitBouncyBall() { // no longer used, it has been moved to BallGoThread that named isHitObstacle()
-
-        int ballCenterX = bouncyBall.getBallX();
-        int ballCenterY = bouncyBall.getBallY();
-        int radius = bouncyBall.getBallRadius();
-
-        int ballLeft = ballCenterX - radius;
-        int ballRight = ballCenterX + radius;
-        int ballTop = ballCenterY - radius;
-        int ballBottom = ballCenterY + radius;
-
-        int obstacleLeft = position.x - obstacleWidth/2;
-        int obstacleRight = position.x + obstacleWidth/2;
-        int obstacleTop = position.y - obstacleHeight/2;
-        int obstacleBottom = position.y + obstacleHeight/2;
-
-        boolean isHit = false;
-        if ( (ballRight >= obstacleLeft) && (ballLeft <= obstacleRight) ) {
-            // center point is inside the range of the obstacle
-            int ballDirection = bouncyBall.getDirection();
-            switch (ballDirection) {
-                case GameView.BouncyBall_RIGHT_TOP:
-                    if ((ballTop >= obstacleTop) && (ballTop <= obstacleBottom)) {
-                        // hit
-                        bouncyBall.setDirection(GameView.BouncyBall_RIGHT_BOTTOM);
-                        bouncyBall.setBallY(obstacleBottom + radius);
-                        isHit = true;
-                    }
-                    break;
-                case GameView.BouncyBall_LEFT_TOP:
-                    if ((ballTop >= obstacleTop) && (ballTop <= obstacleBottom)) {
-                        // hit
-                        bouncyBall.setDirection(GameView.BouncyBall_LEFT_BOTTOM);
-                        bouncyBall.setBallY(obstacleBottom + radius);
-                        isHit = true;
-                    }
-                    break;
-                case GameView.BouncyBall_RIGHT_BOTTOM:
-                    if ((ballBottom >= obstacleTop) && (ballBottom <= obstacleBottom)) {
-                        bouncyBall.setDirection(GameView.BouncyBall_RIGHT_TOP);
-                        bouncyBall.setBallY(obstacleTop - radius);
-                        isHit = true;
-                    }
-                    break;
-                case GameView.BouncyBall_LEFT_BOTTOM:
-                    if ((ballBottom >= obstacleTop) && (ballBottom <= obstacleBottom)) {
-                        bouncyBall.setDirection(GameView.BouncyBall_LEFT_TOP);
-                        bouncyBall.setBallY(obstacleTop - radius);
-                        isHit = true;
-                    }
-                    break;
-            }
-        }
-
-        return isHit;
     }
 
     public void drawObstacle(Canvas canvas) {

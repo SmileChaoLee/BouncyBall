@@ -5,10 +5,6 @@
         android:title="@string/local_top10_string"
         android:orderInCategory="1"
         app:showAsAction="never" />
-    <item android:id="@+id/global_top_10"
-        android:title="@string/global_top10_string"
-        android:orderInCategory="2"
-        app:showAsAction="never"/>
     <item android:id="@+id/newGame"
         android:title="@string/newGame_string"
         android:orderInCategory="3"

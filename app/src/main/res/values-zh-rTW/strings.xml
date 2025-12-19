@@ -18,8 +18,8 @@
     <string name="quit_string">離開</string>
     <string name="okStr">确定</string>
     <string name="begin_string">按開始按鈕啟動</string>
-    <string name="gameOver_string">你失敗了.\n重玩?</string>
-    <string name="win_string">你贏了.\n重玩?</string>
+    <string name="gameOver_string">遊戲結束</string>
+    <string name="win_string">你贏了</string>
     <string name="cancelStr">取消</string>
     <string name="submitStr">送出</string>
     <string name="nameStr">輸入你的名字</string>

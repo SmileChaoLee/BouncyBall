@@ -1,14 +1,16 @@
 package com.smile.bouncyball;
 
-import com.smile.bouncyball.GameView;
-import com.smile.bouncyball.MainActivity;
+import android.os.SystemClock;
+
 import com.smile.bouncyball.models.Banner;
+import com.smile.bouncyball.tools.LogUtil;
 
 /**
- * Created by chaolee on 2017-11-18.
+ * Created by Chao Lee on 2017-11-18.
  */
 
 public class ButtonHoldThread extends Thread {
+    private final static String TAG = "ButtonHoldThread";
 
     private GameView gameView = null;
     private MainActivity mainActivity = null;
@@ -38,22 +40,24 @@ public class ButtonHoldThread extends Thread {
 
     public void run() {
         while (keepRunning) {
-            synchronized (mainActivity.activityHandler) {
+            synchronized (gameView.mainLock) {
                 // for application's (Main activity) synchronizing
                 while (mainActivity.gamePause) {
                     try {
-                        mainActivity.activityHandler.wait();
-                    } catch (InterruptedException e) {
+                        gameView.mainLock.wait();
+                    } catch (InterruptedException ex) {
+                        LogUtil.e(TAG, "run.mainLock.InterruptedException", ex);
                     }
                 }
             }
 
-            synchronized (gameView.gameViewHandler) {
+            synchronized (gameView.gameLock) {
                 // for GameView's synchronizing
                 while (gameView.gameViewPause) {
                     try {
-                        gameView.gameViewHandler.wait();
-                    } catch (InterruptedException e) {
+                        gameView.gameLock.wait();
+                    } catch (InterruptedException ex) {
+                        LogUtil.e(TAG, "run.gameLock.InterruptedException", ex);
                     }
                 }
             }
@@ -70,12 +74,10 @@ public class ButtonHoldThread extends Thread {
                 }
                 // set position of banner
                 banner.setBannerX(bannerX);
-                try{Thread.sleep(20);}
-                catch(Exception e){e.printStackTrace();}
+                SystemClock.sleep(20);
             }
 
-            try{Thread.sleep(2);}
-            catch(Exception e){e.printStackTrace();}
+            SystemClock.sleep(2);
         }
     }
 }

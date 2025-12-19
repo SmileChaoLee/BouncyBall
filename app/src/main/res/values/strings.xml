@@ -16,9 +16,9 @@
     <string name="resume_string">Resume</string>
     <string name="newGame_string">New Game</string>
     <string name="quit_string">Quit</string>
-    <string name="okStr">Ok</string>
+    <string name="okStr">OK</string>
     <string name="begin_string">Start button to begin</string>
-    <string name="gameOver_string">You failed.\nReplay?</string>
+    <string name="gameOver_string">Game Over.</string>
     <string name="win_string">You won.\nReplay?</string>
     <string name="cancelStr">Cancel</string>
     <string name="submitStr">Send</string>
