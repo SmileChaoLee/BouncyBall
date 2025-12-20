@@ -457,10 +457,10 @@ class GameView(private val mainActivity: MainActivity)
                 if ((status >= FIRST_STAGE) && (status < FINISHED_STATUS)) {
                     val bn = banner?: return false
                     if (!isPausedByUser) {
-                        if ((y >= (bottomY - 20)) && (y <= (bottomY + 20 + bn.bannerHeight))) {
+                        // if ((y >= (bottomY - 20)) && (y <= (bottomY + 20 + bn.bannerHeight))) {
                             // Y - coordinate is inside the area and add 20 extra pixels
                             bn.bannerX = x
-                        }
+                        // }
                     }
                 }
             MotionEvent.ACTION_BUTTON_PRESS, MotionEvent.ACTION_DOWN -> if (status == START_STATUS) {
