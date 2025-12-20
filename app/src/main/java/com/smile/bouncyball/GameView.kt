@@ -26,6 +26,11 @@ import com.smile.bouncyball.tools.LogUtil
 import com.smile.smilelibraries.utilities.ScreenUtil
 import java.util.Vector
 import androidx.core.graphics.drawable.toDrawable
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @SuppressLint("ViewConstructor")
 class GameView(mainActivity: MainActivity, textFontSize: Float)
@@ -80,12 +85,14 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
     var bottomY: Int = 0 // the coordinate of Y-axis hitting the banner;
         private set
     private val iBeginRect = Rect(0, 0, 0, 0) // rectangle area for hint to start
+    private val iGOverRect = Rect(0, 0, 0, 0) // rectangle area for gae over
     private val startRect = Rect(0, 0, 0, 0) // rectangle area for start game
     private val rightArrowRect = Rect(0, 0, 0, 0) // rectangle area for right arrow
     private val leftArrowRect = Rect(0, 0, 0, 0) // rectangle area for left arrow
     private var iBack: Bitmap? = null // background picture
     private var iBanner: Bitmap? = null // banner picture
     private var iBegin: Bitmap? = null //  begin picture
+    private var iGameOver: Bitmap? = null //  game over picture
     private var iLeftArrow: Bitmap? = null // left arrow picture
     private var iStart: Bitmap? = null // start picture
     private var iPause: Bitmap? = null // pause picture
@@ -150,7 +157,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
             abIt.setCustomView(R.layout.action_bar_layout)
             val actionBarView = abIt.customView
             actionBarView.let { abV ->
-                stageName = abV.findViewById<View?>(R.id.stageName) as TextView
+                stageName = abV.findViewById<TextView?>(R.id.stageName)
                 ScreenUtil.resizeTextSize(stageName, textFontSize)
                 scoreImage0 = abV.findViewById(R.id.scoreView0)
                 scoreImage1 = abV.findViewById(R.id.scoreView1)
@@ -206,7 +213,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
         }
         val iBall = BitmapFactory.decodeResource(resources, R.drawable.ball) // ball picture
         iBanner = BitmapFactory.decodeResource(resources, R.drawable.banner)
-        iBegin = BitmapFactory.decodeResource(resources, R.drawable.begin)
+        // iBegin = BitmapFactory.decodeResource(resources, R.drawable.begin)
 
         val bannerWidth = (gameViewWidth.toFloat() * BANNER_WIDTH_RATIO).toInt() // width of the banner
         // width of the banner
@@ -237,6 +244,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
             getBitmapFromResourceWithText(R.drawable.rightarrow, "", Color.RED) // no string
 
         iBegin = getBitmapFromResourceWithText(R.drawable.begin, beginStr, Color.BLUE)
+        iGameOver = getBitmapFromResourceWithText(R.drawable.begin, gameOverStr, Color.RED)
 
         val biasX = 10
         val biasY = 10
@@ -263,6 +271,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
 
         sPoint.set((gameViewWidth - beginWidth) / 2, (bottomY - beginHeight) / 2)
         iBeginRect.set(sPoint.x, sPoint.y, sPoint.x + beginWidth, sPoint.y + beginHeight)
+        iGOverRect.set(sPoint.x, sPoint.y, sPoint.x + beginWidth, sPoint.y + beginHeight)
 
         val ballSpan = ballRadius
         // initialize the coordinates of the ball and the banner
@@ -408,6 +417,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
                     }
                 }
             } else if ((status == FAILED_STATUS) || (status == FINISHED_STATUS)) {
+                //  game over
                 ballGoThread?.setKeepRunning(false) // stop running the BallGoThread, added on 2017-11-07
                 gameViewDrawThread?.setKeepRunning(false) // added on 2017-11-07
                 obstacleThreads?.let {
@@ -416,28 +426,26 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
                     }
                     it.clear()
                 }
-
-                //  game over
-                mainActivity?.runOnUiThread {
-                    val tv = TextView(mainActivity)
-                    // tv.setTextSize(40);
-                    ScreenUtil.resizeTextSize(tv, textFontSize)
-                    tv.setTextColor(Color.BLUE)
-                    tv.setTypeface(Typeface.DEFAULT)
-                    if (status == FAILED_STATUS) {
-                        // failed
-                        tv.text = gameOverStr
-                    } else {
-                        // won
-                        tv.text = winStr
+                iGameOver?.let {
+                    LogUtil.d(TAG, "doDraw.iGameOver.iGOverRect")
+                    canvas.drawBitmap(it, null, iGOverRect, null)
+                }
+                mainActivity?.let { act ->
+                    act.lifecycleScope.launch(Dispatchers.IO) {
+                        // record currentScore as a score in database
+                        // no more sending score to the cloud
+                        BouncyBallApp.ScoreSQLiteDB.addScore("", score)
+                        BouncyBallApp.ScoreSQLiteDB.deleteAllAfterTop10()
+                        delay(3000)
+                        withContext(Dispatchers.Main) {
+                            releaseSync()
+                            renewGame() // no showing for ad
+                        }
                     }
-                    tv.setGravity(Gravity.CENTER)
-                    // wait for time to restart a new game
-                    recordScore(score)
                 }
             } else {
                 // first stage, do nothing
-                LogUtil.d(TAG, "doDraw.first stage, do nothing")
+                // LogUtil.d(TAG, "doDraw.first stage, do nothing")
             }
         }
     }
@@ -446,7 +454,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val x = event.x.toInt()
         val y = event.y.toInt()
-
+        LogUtil.d(TAG, "onTouchEvent.x = $x")
         val action = event.action
         when (action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_MOVE ->
@@ -459,8 +467,8 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
                         }
                     }
                 }
-
             MotionEvent.ACTION_BUTTON_PRESS, MotionEvent.ACTION_DOWN -> if (status == START_STATUS) {
+                LogUtil.d(TAG, "onTouchEvent.MotionEvent.ACTION_DOWN")
                 // start button to continue
                 if (startRect.contains(x, y)) {
                     // start button was pressed
@@ -491,8 +499,9 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
                     }
                 }
                 if (!isPausedByUser) {
+                    LogUtil.d(TAG, "onTouchEvent.MotionEvent.ACTION_DOWN")
                     // int xSpeed = 6; // 6 pixels  original
-                    val xSpeed = 8 //  8 pixels
+                    val xSpeed = 10 //  10 pixels
                     // not in pause status
                     if (rightArrowRect.contains(x, y)) {
                         // for new function, right arrow
@@ -511,10 +520,8 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
             } else {
                 // in failed or finished status
             }
-
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
                 buttonHoldThread?.setIsButtonHold(false)
-
             else -> {}
         }
 
@@ -762,14 +769,5 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
                 }
             }
         }
-    }
-
-    private fun recordScore(currentScore: Int) {
-        // record currentScore as a score in database
-        // no more sending score to the cloud
-        BouncyBallApp.ScoreSQLiteDB.addScore("", currentScore)
-        BouncyBallApp.ScoreSQLiteDB.deleteAllAfterTop10() // only keep the top 10
-        releaseSync()
-        renewGame() // no showing for ad
     }
 }

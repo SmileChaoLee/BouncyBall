@@ -70,8 +70,9 @@ public class ButtonHoldThread extends Thread {
                 }
                 // set position of banner
                 banner.setBannerX(bannerX);
+                SystemClock.sleep(20);
             }
-            SystemClock.sleep(20);
+            SystemClock.sleep(2);
         }
     }
 }
