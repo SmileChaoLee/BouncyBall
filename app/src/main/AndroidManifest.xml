@@ -30,17 +30,6 @@
             android:name=".Top10ScoreActivity">
         </activity>
 
-        <service
-            android:name=".Service.GlobalTop10IntentService"
-            android:enabled="true"
-            android:exported="false">
-        </service>
-        <service
-            android:name=".Service.LocalTop10IntentService"
-            android:enabled="true"
-            android:exported="false">
-        </service>
-
     </application>
 
 </manifest>
