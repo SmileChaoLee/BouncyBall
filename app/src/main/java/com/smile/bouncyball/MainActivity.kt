@@ -20,7 +20,6 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.smile.bouncyball.tools.LogUtil
-import com.smile.smilelibraries.show_interstitial_ads.ShowInterstitial
 import com.smile.smilelibraries.utilities.ScreenUtil
 
 class MainActivity : AppCompatActivity() {
@@ -37,10 +36,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         LogUtil.d(TAG, "onCreate")
 
-        BouncyBallApp.InterstitialAd = ShowInterstitial(
-            this, BouncyBallApp.facebookAds,
-            BouncyBallApp.googleInterstitialAd
-        )
+        /*
+        val app = (application as BouncyBallApp)
+        val interstitialAd = ShowInterstitial(
+            this@MainActivity, app.facebookAds,app.googleInterstitialAd)
+        */
+
         if (resources.configuration.orientation != Configuration.ORIENTATION_PORTRAIT) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
@@ -125,7 +126,7 @@ class MainActivity : AppCompatActivity() {
             R.style.menu_text_style)
         // according to the above explanations, the following statement will fit every situation
         val fontScale = ScreenUtil.getPxFontScale(this@MainActivity)
-        ScreenUtil.resizeMenuTextIconSize(wrapper, menu, fontScale)
+        ScreenUtil.resizeMenuTextIconSize(wrapper, menu, fontScale * 1.5f)
         return true
     }
 
@@ -142,12 +143,6 @@ class MainActivity : AppCompatActivity() {
             ).also {
                 topScoreLauncher.launch(it)
             }
-            return true
-        }
-
-        if (id == R.id.newGame) {
-            gameView.releaseSync()
-            gameView.newGame()
             return true
         }
 

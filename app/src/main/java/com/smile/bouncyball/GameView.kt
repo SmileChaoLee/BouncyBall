@@ -24,6 +24,7 @@ import com.smile.smilelibraries.utilities.ScreenUtil
 import java.util.Vector
 import androidx.core.graphics.drawable.toDrawable
 import androidx.lifecycle.lifecycleScope
+import com.smile.smilelibraries.scoresqlite.ScoreSQLite
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -59,6 +60,13 @@ class GameView(private val mainActivity: MainActivity)
         private const val BANNER_HEIGHT_RATIO = 1.0f / 10.0f
     }
 
+
+    @JvmField
+    val mainLock = Object()
+    @JvmField
+    val gameLock = Object() // for synchronizing
+    @JvmField
+    val synchronizeTime = 70
     @JvmField
     var isGameVisible = true
     @JvmField
@@ -108,8 +116,6 @@ class GameView(private val mainActivity: MainActivity)
     private var gameOverStr = ""
     var surfaceHolder: SurfaceHolder? = null
         private set
-    @JvmField
-    val synchronizeTime = 70
 
     private var status = START_STATUS
     private var score = 0 //  score that user got
@@ -131,10 +137,8 @@ class GameView(private val mainActivity: MainActivity)
     var obstacleThreads: Vector<ObstacleThread>? = null
         private set
 
-    @JvmField
-    val mainLock = Object()
-    @JvmField
-    val gameLock = Object() // for synchronizing
+    private val scoreSQLiteDB = ScoreSQLite(mainActivity,
+        BouncyBallApp.DATABASE_NAME)
 
     init {
         val textFontSize = ScreenUtil.getPxTextFontSizeNeeded(mainActivity)
@@ -178,7 +182,7 @@ class GameView(private val mainActivity: MainActivity)
         setWillNotDraw(true) // added on 2017-11-07 for just in case, the default is false
 
         mainActivity.lifecycleScope.launch(Dispatchers.IO) {
-            highestScore = BouncyBallApp.ScoreSQLiteDB.readHighestScore()
+            highestScore = scoreSQLiteDB.readHighestScore()
             withContext(Dispatchers.Main) {
                 highestTextView?.text = highestScore.toString()
             }
@@ -424,9 +428,9 @@ class GameView(private val mainActivity: MainActivity)
                     act.lifecycleScope.launch(Dispatchers.IO) {
                         // store currentScore as a score in database
                         // no more sending score to the cloud
-                        BouncyBallApp.ScoreSQLiteDB.addScore("", score)
-                        BouncyBallApp.ScoreSQLiteDB.deleteAllAfterTop10()
-                        highestScore = BouncyBallApp.ScoreSQLiteDB.readHighestScore()
+                        scoreSQLiteDB.addScore("", score)
+                        scoreSQLiteDB.deleteAllAfterTop10()
+                        highestScore = scoreSQLiteDB.readHighestScore()
                         delay(3000)
                         withContext(Dispatchers.Main) {
                             releaseSync()

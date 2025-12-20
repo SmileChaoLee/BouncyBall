@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.smile.bouncyball.tools.LogUtil
 import com.smile.smilelibraries.player_record_rest.httpUrl.PlayerRecordRest
+import com.smile.smilelibraries.scoresqlite.ScoreSQLite
 import com.smile.smilelibraries.utilities.ScreenUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -60,7 +61,9 @@ class Top10ScoreActivity : AppCompatActivity() {
             })
 
         lifecycleScope.launch(Dispatchers.IO) {
-            val players = PlayerRecordRest.GetLocalTop10(BouncyBallApp.ScoreSQLiteDB)
+            val scoreSQLiteDB = ScoreSQLite(this@Top10ScoreActivity,
+                BouncyBallApp.DATABASE_NAME)
+            val players = PlayerRecordRest.GetLocalTop10(scoreSQLiteDB)
             val size = players.size
             LogUtil.d(TAG, "onCreate.lifecycleScope.size = $size")
             top10Players.clear()
