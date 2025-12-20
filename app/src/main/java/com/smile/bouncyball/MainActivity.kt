@@ -29,15 +29,8 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
     }
 
-    private var textFontSize = 0f
-    private var fontScale = 0f
     private lateinit var gameView: GameView
-    private var bannerLinearLayout: LinearLayout? = null
-    private var bannerAdView: AdView? = null
     private lateinit var topScoreLauncher: ActivityResultLauncher<Intent>
-
-    // public properties
-    var gameLayout: LinearLayout? = null
 
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,30 +44,28 @@ class MainActivity : AppCompatActivity() {
         if (resources.configuration.orientation != Configuration.ORIENTATION_PORTRAIT) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
-        textFontSize = ScreenUtil.getPxTextFontSizeNeeded(this)
-        fontScale = ScreenUtil.getPxFontScale(this)
 
         setContentView(R.layout.activity_main)
 
-        gameView = GameView(this@MainActivity, textFontSize) // create a gameView
-        gameLayout = findViewById(R.id.layoutForGameView)
-        gameLayout?.addView(gameView)
+        gameView = GameView(this@MainActivity) // create a gameView
+        val gameLayout = findViewById<LinearLayout>(R.id.layoutForGameView)
+        gameLayout.addView(gameView)
 
         if (BouncyBallApp.googleAdMobBannerID.isNotEmpty()) {
-            bannerLinearLayout = findViewById(R.id.linearlayout_for_ads_in_myActivity)
-            bannerAdView = AdView(this)
+            val bannerLinearLayout = findViewById<LinearLayout>(R.id.linearlayout_for_ads_in_myActivity)
+            val bannerAdView = AdView(this@MainActivity)
 
             val bannerLp = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT
             )
             bannerLp.gravity = Gravity.CENTER
-            bannerAdView?.setLayoutParams(bannerLp)
-            bannerAdView?.setAdSize(AdSize.BANNER)
-            bannerAdView?.adUnitId = BouncyBallApp.googleAdMobBannerID
-            bannerLinearLayout?.addView(bannerAdView)
+            bannerAdView.setLayoutParams(bannerLp)
+            bannerAdView.setAdSize(AdSize.BANNER)
+            bannerAdView.adUnitId = BouncyBallApp.googleAdMobBannerID
+            bannerLinearLayout.addView(bannerAdView)
             val adRequest = AdRequest.Builder().build()
-            bannerAdView?.loadAd(adRequest)
+            bannerAdView.loadAd(adRequest)
         }
 
         topScoreLauncher = registerForActivityResult(
@@ -130,8 +121,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_main, menu)
-        val wrapper: Context = ContextThemeWrapper(this, R.style.menu_text_style)
+        val wrapper: Context = ContextThemeWrapper(this@MainActivity,
+            R.style.menu_text_style)
         // according to the above explanations, the following statement will fit every situation
+        val fontScale = ScreenUtil.getPxFontScale(this@MainActivity)
         ScreenUtil.resizeMenuTextIconSize(wrapper, menu, fontScale)
         return true
     }

@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @SuppressLint("ViewConstructor")
-class GameView(mainActivity: MainActivity, textFontSize: Float)
+class GameView(private val mainActivity: MainActivity)
     : SurfaceView(mainActivity),
     SurfaceHolder.Callback {
     companion object {
@@ -55,8 +55,6 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
         private const val HINT_HEIGHT_RATIO = 1.0f / 8.0f
         private const val BUTTON_WIDTH_RATIO = 1.0f / 4.0f
         private const val BUTTON_HEIGHT_RATIO = 1.0f / 12.0f
-        private const val SORE_WIDTH_RATIO = 1.0f / 12.0f
-        private const val SCORE_HEIGHT_RATIO = 1.0f / 20.0f
         private const val BANNER_WIDTH_RATIO = 1.0f / 4.0f
         private const val BANNER_HEIGHT_RATIO = 1.0f / 10.0f
     }
@@ -67,19 +65,18 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
     var isPausedByUser = false
     // for running a thread when arrow button (left arrow or right arrow) is held
     var buttonHoldThread: ButtonHoldThread? = null
-    var mainActivity: MainActivity? = null //Activity
-        private set
-    private var beginWidth = 100 // width of the hint
-    private var beginHeight = 20 // height of the hint
-    private var leftArrowWidth = 100
-    private var leftArrowHeight = 20
-    private var startWidth = 100
-    private var startHeight = 20
-    private var rightArrowWidth = 100
-    private var rightArrowHeight = 20
-    private var scoreWidth = 32
-    private var scoreHeight = 32
-    var bottomY: Int = 0 // the coordinate of Y-axis hitting the banner;
+    // private var beginWidth = 100 // width of the hint
+    // private var beginHeight = 20 // height of the hint
+    // private var leftArrowWidth = 100
+    // private var leftArrowHeight = 20
+    // private var startWidth = 100
+    // private var startHeight = 20
+    // private var rightArrowWidth = 100
+    // private var rightArrowHeight = 20
+    // private var scoreWidth = 32
+    // private var scoreHeight = 32
+    // the coordinate of Y-axis hitting the banner
+    var bottomY: Int = 0
         private set
     private val iBeginRect = Rect(0, 0, 0, 0) // rectangle area for hint to start
     private val iGOverRect = Rect(0, 0, 0, 0) // rectangle area for gae over
@@ -97,26 +94,26 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
     private var iRightArrow: Bitmap? = null // right arrow picture
     private val iScore = arrayOfNulls<Bitmap>(10) // score pictures (pictures for numbers)
 
-    private var stageName: TextView? = null
+    private var highestTextView: TextView? = null
     private var scoreImage0: ImageView? = null
     private var scoreImage1: ImageView? = null
     private var scoreImage2: ImageView? = null
 
     // string resources
-    private var stageLevels: Array<String>? = null
+    // private var stageLevels: Array<String>? = null
     private var startStr = ""
     private var pauseStr = ""
     private var resumeStr = ""
     private var beginStr = ""
     private var gameOverStr = ""
-    private var winStr = ""
     var surfaceHolder: SurfaceHolder? = null
         private set
     @JvmField
-    val synchronizeTime: Int = 70
+    val synchronizeTime = 70
 
-    private var status: Int = START_STATUS
+    private var status = START_STATUS
     private var score = 0 //  score that user got
+    private var highestScore = 0
 
     var gameViewWidth: Int = 0
         private set
@@ -134,17 +131,14 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
     var obstacleThreads: Vector<ObstacleThread>? = null
         private set
 
-    private val textFontSize: Float
-
     @JvmField
     val mainLock = Object()
     @JvmField
     val gameLock = Object() // for synchronizing
 
     init {
+        val textFontSize = ScreenUtil.getPxTextFontSizeNeeded(mainActivity)
         isGameVisible = true
-        this.mainActivity = mainActivity
-        this.textFontSize = textFontSize
         val actionBar = mainActivity.supportActionBar
         // actionBar.setDisplayShowTitleEnabled(false);
         actionBar?.let { abIt ->
@@ -153,14 +147,13 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
             abIt.setBackgroundDrawable(Color.LTGRAY.toDrawable())
             abIt.setCustomView(R.layout.action_bar_layout)
             val actionBarView = abIt.customView
-            actionBarView.let { abV ->
-                stageName = abV.findViewById<TextView?>(R.id.stageName)
-                ScreenUtil.resizeTextSize(stageName, textFontSize)
+            actionBarView?.let { abV ->
+                highestTextView = abV.findViewById<TextView?>(R.id.highestTextView)
+                ScreenUtil.resizeTextSize(highestTextView, textFontSize * 1.5f)
                 scoreImage0 = abV.findViewById(R.id.scoreView0)
                 scoreImage1 = abV.findViewById(R.id.scoreView1)
                 scoreImage2 = abV.findViewById(R.id.scoreView2)
-                stageLevels = resources.getStringArray(R.array.stageLevels)
-                stageName?.text = stageLevels?.get(0) // start from stage 1
+                // stageLevels = resources.getStringArray(R.array.stageLevels)
             }
         }
 
@@ -169,24 +162,27 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
         resumeStr = resources.getString(R.string.resume_string)
         beginStr = resources.getString(R.string.begin_string)
         gameOverStr = resources.getString(R.string.gameOver_string)
-        winStr = resources.getString(R.string.win_string)
 
         isPausedByUser = false // for synchronizing
 
         setZOrderOnTop(true)
         surfaceHolder = holder
         surfaceHolder?.let { holder ->
-            holder.addCallback(this) // register the interface
+            holder.addCallback(this@GameView) // register the interface
             holder.setFormat(PixelFormat.TRANSLUCENT)
         }
 
-        val highestScore = BouncyBallApp.ScoreSQLiteDB.readHighestScore()
-
         status = START_STATUS // waiting to start
-
         // setWillNotDraw(false);  // added on 2017-11-07 to activate onDraw() of SurfaceView
         // if set it to false, then the drawing might have to go through by onDraw() all the time
         setWillNotDraw(true) // added on 2017-11-07 for just in case, the default is false
+
+        mainActivity.lifecycleScope.launch(Dispatchers.IO) {
+            highestScore = BouncyBallApp.ScoreSQLiteDB.readHighestScore()
+            withContext(Dispatchers.Main) {
+                highestTextView?.text = highestScore.toString()
+            }
+        }
 
         LogUtil.d(TAG, "GameView created")
     }
@@ -219,18 +215,18 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
         val ballSize = (gameViewHeight.toFloat() * BALL_SIZE_RATIO).toInt() // size of the ball
         // size of the ball
         val ballRadius = ballSize / 2
-        beginWidth = (gameViewWidth.toFloat() * HINT_WIDTH_RATIO).toInt() // width of the hint
-        beginHeight = (gameViewHeight.toFloat() * HINT_HEIGHT_RATIO).toInt() // height of the hint
-        leftArrowWidth = (gameViewWidth.toFloat() * BUTTON_WIDTH_RATIO).toInt()
-        leftArrowHeight =
+        val beginWidth = (gameViewWidth.toFloat() * HINT_WIDTH_RATIO).toInt() // width of the hint
+        val beginHeight = (gameViewHeight.toFloat() * HINT_HEIGHT_RATIO).toInt() // height of the hint
+        val leftArrowWidth = (gameViewWidth.toFloat() * BUTTON_WIDTH_RATIO).toInt()
+        val leftArrowHeight =
             (gameViewHeight.toFloat() * BUTTON_HEIGHT_RATIO * 1.5).toInt() // 1.5 * normal button
-        startWidth = (gameViewWidth.toFloat() * BUTTON_WIDTH_RATIO).toInt()
-        startHeight = (gameViewHeight.toFloat() * BUTTON_HEIGHT_RATIO).toInt()
-        rightArrowWidth = (gameViewWidth.toFloat() * BUTTON_WIDTH_RATIO).toInt()
-        rightArrowHeight =
+        val startWidth = (gameViewWidth.toFloat() * BUTTON_WIDTH_RATIO).toInt()
+        val startHeight = (gameViewHeight.toFloat() * BUTTON_HEIGHT_RATIO).toInt()
+        val rightArrowWidth = (gameViewWidth.toFloat() * BUTTON_WIDTH_RATIO).toInt()
+        val rightArrowHeight =
             (gameViewHeight.toFloat() * BUTTON_HEIGHT_RATIO * 1.5).toInt() // 1.5 * normal button
-        scoreWidth = (gameViewWidth.toFloat() * SORE_WIDTH_RATIO).toInt()
-        scoreHeight = (gameViewHeight.toFloat() * SCORE_HEIGHT_RATIO).toInt()
+        // val scoreWidth = (gameViewWidth.toFloat() * SORE_WIDTH_RATIO).toInt()
+        // val scoreHeight = (gameViewHeight.toFloat() * SCORE_HEIGHT_RATIO).toInt()
 
         iLeftArrow =
             getBitmapFromResourceWithText(R.drawable.leftarrow, "", Color.BLUE) // no string
@@ -361,10 +357,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
         }
 
         // draw score, action bar is on the main UI thread not in the game view
-        mainActivity?.runOnUiThread {
-            if ((status >= START_STATUS) && (status <= FINAL_STAGE)) {
-                stageName?.text = stageLevels?.get(status)
-            }
+        mainActivity.runOnUiThread {
             val scoreStr = StringBuilder(score.toString() + "")
             val loop = 3 - scoreStr.length
             for (i in 0..<loop) {
@@ -427,16 +420,18 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
                     LogUtil.d(TAG, "doDraw.iGameOver.iGOverRect")
                     canvas.drawBitmap(it, null, iGOverRect, null)
                 }
-                mainActivity?.let { act ->
+                mainActivity.let { act ->
                     act.lifecycleScope.launch(Dispatchers.IO) {
-                        // record currentScore as a score in database
+                        // store currentScore as a score in database
                         // no more sending score to the cloud
                         BouncyBallApp.ScoreSQLiteDB.addScore("", score)
                         BouncyBallApp.ScoreSQLiteDB.deleteAllAfterTop10()
+                        highestScore = BouncyBallApp.ScoreSQLiteDB.readHighestScore()
                         delay(3000)
                         withContext(Dispatchers.Main) {
                             releaseSync()
                             renewGame() // no showing for ad
+                            highestTextView?.text = highestScore.toString()
                         }
                     }
                 }

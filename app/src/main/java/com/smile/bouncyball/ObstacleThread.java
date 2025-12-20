@@ -23,8 +23,6 @@ public class ObstacleThread extends Thread {
     private final int[] obsColor = {Color.BLACK, Color.DKGRAY, Color.RED, Color.GREEN, Color.MAGENTA,Color.CYAN};
     private int obstacleWidth = 100;
     private int obstacleHeight = 20;
-
-    private MainActivity mainActivity = null;
     private GameView gameView = null;
     private int synchronizeTime = 70;
     // keepRunning = true -> loop in run() still going
@@ -44,15 +42,14 @@ public class ObstacleThread extends Thread {
 
     public ObstacleThread(GameView gView, int stageNo) {
 
-        this.gameView = gView;
-        this.mainActivity = gameView.getMainActivity();
-        this.synchronizeTime  = gView.synchronizeTime;
-        this.xRangeOfObstacle = gameView.getGameViewWidth();
-        this.yRangeOfObstacle = gameView.getGameViewHeight() / 3;    // one-third of the height of Game View
-        this.bouncyBall = gameView.getBouncyBall();
-        this.obstacleHeight = bouncyBall.getBallRadius();
-        this.banner = gameView.getBanner();
-        this.obstacleWidth = banner.getBannerWidth();
+        gameView = gView;
+        synchronizeTime  = gView.synchronizeTime;
+        xRangeOfObstacle = gameView.getGameViewWidth();
+        yRangeOfObstacle = gameView.getGameViewHeight() / 3;    // one-third of the height of Game View
+        bouncyBall = gameView.getBouncyBall();
+        obstacleHeight = bouncyBall.getBallRadius();
+        banner = gameView.getBanner();
+        obstacleWidth = banner.getBannerWidth();
 
         this.position = new Point();
         this.random = new Random();
