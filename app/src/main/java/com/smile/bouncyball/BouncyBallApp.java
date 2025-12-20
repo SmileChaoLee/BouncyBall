@@ -5,12 +5,12 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import com.facebook.ads.AudienceNetworkAds;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+import com.smile.bouncyball.tools.LogUtil;
 import com.smile.smilelibraries.facebook_ads_util.FacebookInterstitial;
 import com.smile.smilelibraries.google_ads_util.AdMobInterstitial;
 import com.smile.smilelibraries.scoresqlite.ScoreSQLite;
@@ -55,7 +55,7 @@ public class BouncyBallApp extends Application {
         MobileAds.initialize(AppContext, new OnInitializationCompleteListener() {
             @Override
             public void onInitializationComplete(InitializationStatus initializationStatus) {
-                Log.d(TAG, "Google AdMob was initialized successfully.");
+                LogUtil.d(TAG, "Google AdMob was initialized successfully.");
             }
 
         });

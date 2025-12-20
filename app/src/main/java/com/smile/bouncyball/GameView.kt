@@ -11,12 +11,9 @@ import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Typeface
-import android.util.Log
-import android.view.Gravity
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.ActionBar
@@ -195,7 +192,7 @@ class GameView(mainActivity: MainActivity, textFontSize: Float)
     }
 
     fun initBitmapAndModels() {
-        Log.d(TAG, "initBitmapAndModels() is called")
+        LogUtil.d(TAG, "initBitmapAndModels() is called")
         iScore[0] = BitmapFactory.decodeResource(resources, R.drawable.d0)
         iScore[1] = BitmapFactory.decodeResource(resources, R.drawable.d1)
         iScore[2] = BitmapFactory.decodeResource(resources, R.drawable.d2)

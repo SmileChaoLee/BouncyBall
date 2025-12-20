@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -168,7 +167,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun quitGame() {
-        Log.i(TAG, "quitGame")
+        LogUtil.i(TAG, "quitGame")
         finish()
     }
 
