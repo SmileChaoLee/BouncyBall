@@ -34,14 +34,15 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         private set
     private var bouncyBall: BouncyBall? = null
     private var banner: Banner? = null
-    private var obstacleThreads: Vector<ObstacleThread>? = null
+    private val obstacleThreads: Vector<ObstacleThread>
 
     init {
-        obstacleThreads = gameView.obstacleThreads
+        val obsThreads = gameView.obstacleThreads
         // obstacleThreads must not be null
-        if (obstacleThreads == null) {
+        if (obsThreads == null) {
             throw NullPointerException("obstacleThreads must not be null.")
         }
+        obstacleThreads = obsThreads
         gameViewWidth = gameView.gameViewWidth
         synchronizeTime = gameView.synchronizeTime
         bottomY = gameView.bottomY
@@ -50,7 +51,7 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         //   0 or 1  multiple 3 ------>0 or 3
         val direction = random.nextInt(2) * 3
         // direction of bouncy ball
-        bouncyBall!!.direction = direction
+        bouncyBall?.direction = direction
 
         score = 0
         status = GameView.START_STATUS
@@ -92,7 +93,7 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                     keepRunning = false
                 } else {
                     // 2017-11-19 morning
-                    for (obstacleThread in obstacleThreads!!) {
+                    for (obstacleThread in obstacleThreads) {
                         // obstacleThread.isHitBouncyBall();    // removed on 2017-11-19
                         isHitObstacle(obstacleThread)
                     }

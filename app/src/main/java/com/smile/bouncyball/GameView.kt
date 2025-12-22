@@ -117,27 +117,25 @@ class GameView(private val mainActivity: MainActivity)
     private var status = START_STATUS
     private var score = 0 //  score that user got
     private var highestScore = 0
+    private val scoreSQLiteDB = ScoreSQLite(mainActivity,
+        BouncyBallApp.DATABASE_NAME)
     private var isGameJustCreated = true
+
     var surfaceHolder: SurfaceHolder? = null
         private set
     var gameViewWidth: Int = 0
         private set
     var gameViewHeight: Int = 0
         private set
-
     var bouncyBall: BouncyBall? = null
         private set
     var banner: Banner? = null
         private set
-
     var ballGoThread: BallGoThread? = null //BallGoThread
         private set
     private var gameViewDrawThread: GameViewDrawThread? = null
     var obstacleThreads: Vector<ObstacleThread>? = null
         private set
-
-    private val scoreSQLiteDB = ScoreSQLite(mainActivity,
-        BouncyBallApp.DATABASE_NAME)
 
     init {
         val textFontSize = ScreenUtil.getPxTextFontSizeNeeded(mainActivity)
@@ -272,11 +270,11 @@ class GameView(private val mainActivity: MainActivity)
         iBeginRect.set(sPoint.x, sPoint.y, sPoint.x + beginWidth, sPoint.y + beginHeight)
         iGOverRect.set(sPoint.x, sPoint.y, sPoint.x + beginWidth, sPoint.y + beginHeight)
 
-        val ballSpan = ballRadius
+        // val ballSpan = ballRadius
         // initialize the coordinates of the ball and the banner
         val ballX = gameViewWidth / 2 //  coordinate (x-axis) of the ball
         val ballY = bottomY - ballRadius
-        bouncyBall = BouncyBall(ballX, ballY, ballSize, ballSpan, iBall)
+        bouncyBall = BouncyBall(ballX, ballY, ballSize, ballRadius, iBall)
 
         val bannerX = gameViewWidth / 2 //  the coordinate (x-axis) of the banner
         val bannerY = bottomY + (bannerHeight / 2)
@@ -314,7 +312,6 @@ class GameView(private val mainActivity: MainActivity)
         iBack?.let {
             canvas.drawBitmap(it, null, rectF, null)
         }
-
         // draw the banner
         banner?.apply {
             sPoint.set(
@@ -331,37 +328,26 @@ class GameView(private val mainActivity: MainActivity)
         iBanner?.let {
             canvas.drawBitmap(it, null, rect2, null)
         }
-
-        //
         ballGoThread?.drawBouncyBall(canvas)
-
         // draw obstacles
         obstacleThreads?.let {
             for (obstacleThread in it) {
                 obstacleThread.drawObstacle(canvas)
             }
         }
-
         // draw left arrow button
         iLeftArrow?.let {
             canvas.drawBitmap(it, null, leftArrowRect, null)
         }
-
-        //
-
         // draw right Arrow button
         iRightArrow?.let {
             canvas.drawBitmap(it, null, rightArrowRect, null)
         }
-
-        //
-
         // verifying score and status
         ballGoThread?.let {
             score = it.score
             status = it.status
         }
-
         // draw score, action bar is on the main UI thread not in the game view
         mainActivity.runOnUiThread {
             val scoreStr = StringBuilder(score.toString() + "")
@@ -376,7 +362,6 @@ class GameView(private val mainActivity: MainActivity)
             tempScore = scoreStr[0].code - '0'.code
             scoreImage2?.setImageBitmap(iScore[tempScore])
         }
-
         if (status == START_STATUS) {
             // draw the hint of beginning
             iBegin?.let {
