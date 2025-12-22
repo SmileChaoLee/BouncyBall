@@ -1,74 +1,78 @@
-package com.smile.bouncyball.threads;
+package com.smile.bouncyball.threads
 
-import android.graphics.Canvas;
-import android.os.SystemClock;
-import android.view.SurfaceHolder;
+import android.graphics.Canvas
+import android.os.SystemClock
+import android.view.SurfaceHolder
+import com.smile.bouncyball.GameView
+import com.smile.bouncyball.tools.LogUtil
+import kotlin.concurrent.Volatile
 
-import com.smile.bouncyball.GameView;
-import com.smile.bouncyball.tools.LogUtil;
+class GameViewDrawThread(private val gameView: GameView) : Thread() {
 
-public class GameViewDrawThread extends Thread {
-
-    private final static String TAG = "GameViewDrawThread";
-    private GameView gameView = null;
-    // keepRunning = true -> loop in run() still going
-    private volatile boolean keepRunning = true;
-    private SurfaceHolder surfaceHolder = null;
-    private int synchronizeTime = 70;
-
-    public GameViewDrawThread(GameView gView) {
-        this.gameView = gView;
-        this.surfaceHolder = gView.getSurfaceHolder();
-        this.synchronizeTime  = gView.synchronizeTime;
+    companion object {
+        private const val TAG = "GameViewDrawThread"
     }
 
-    public void run() {
+    // keepRunning = true -> loop in run() still going
+    @Volatile
+    private var keepRunning = true
+    private var surfaceHolder: SurfaceHolder? = null
+    private var synchronizeTime = 70
+
+    init {
+        this.surfaceHolder = gameView.surfaceHolder
+        this.synchronizeTime = gameView.synchronizeTime
+    }
+
+    override fun run() {
         while (keepRunning) {
-            synchronized (gameView.mainLock) {
+            synchronized(gameView.mainLock) {
                 // for application's (Main activity) synchronizing
                 while (!gameView.isGameVisible) {
                     try {
-                        gameView.mainLock.wait();
-                    } catch (InterruptedException e) {
-                        LogUtil.e(TAG, "run.mainLock.InterruptedException", e);
+                        gameView.mainLock.wait()
+                    } catch (e: InterruptedException) {
+                        LogUtil.e(TAG, "run.mainLock.InterruptedException", e)
                     }
                 }
             }
-            synchronized (gameView.gameLock) {
+            synchronized(gameView.gameLock) {
                 // for GameView's synchronizing
                 while (gameView.isPausedByUser) {
                     try {
-                        gameView.gameLock.wait();
-                    } catch (InterruptedException e) {
-                        LogUtil.e(TAG, "run.gameLock.InterruptedException", e);
+                        gameView.gameLock.wait()
+                    } catch (e: InterruptedException) {
+                        LogUtil.e(TAG, "run.gameLock.InterruptedException", e)
                     }
                 }
             }
             // start drawing
-            Canvas c;
-            c = null;
+            var c: Canvas?
+            c = null
             // lock the whole canvas. high requirement on memory, do not use null advised
-            try {
-                c = surfaceHolder.lockCanvas(null);
-                if (c != null) {
-                    // synchronized (gView.surfaceHolder) {
-                    synchronized (surfaceHolder) {
-                        gameView.doDraw(c); // draw
+            surfaceHolder?.let { sHolder ->
+                try {
+                    c = sHolder.lockCanvas(null)
+                    if (c != null) {
+                        // synchronized (gView.surfaceHolder) {
+                        synchronized(sHolder) {
+                            gameView.doDraw(c) // draw
+                        }
+                    } else {
+                        LogUtil.d(TAG, "run.lockCanvas.Canvas = null.")
                     }
-                } else {
-                    LogUtil.d(TAG, "run.lockCanvas.Canvas = null.");
-                }
-            } finally {
-                if (c != null) {
-                    // fresh the screen
-                    surfaceHolder.unlockCanvasAndPost(c);
+                } finally {
+                    if (c != null) {
+                        // fresh the screen
+                        sHolder.unlockCanvasAndPost(c)
+                    }
                 }
             }
-            SystemClock.sleep(synchronizeTime);
+            SystemClock.sleep(synchronizeTime.toLong())
         }
     }
 
-    public void setKeepRunning(boolean keepRunning) {
-        this.keepRunning = keepRunning;
+    fun setKeepRunning(keepRunning: Boolean) {
+        this.keepRunning = keepRunning
     }
 }
