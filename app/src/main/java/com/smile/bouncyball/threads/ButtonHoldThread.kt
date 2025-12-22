@@ -1,79 +1,87 @@
-package com.smile.bouncyball.threads;
+package com.smile.bouncyball.threads
 
-import android.os.SystemClock;
-
-import com.smile.bouncyball.GameView;
-import com.smile.bouncyball.models.Banner;
-import com.smile.bouncyball.tools.LogUtil;
+import android.os.SystemClock
+import com.smile.bouncyball.GameView
+import com.smile.bouncyball.models.Banner
+import com.smile.bouncyball.tools.LogUtil
+import kotlin.concurrent.Volatile
 
 /**
  * Created by Chao Lee on 2017-11-18.
  */
+class ButtonHoldThread(private val gameView: GameView) : Thread() {
 
-public class ButtonHoldThread extends Thread {
-    private final static String TAG = "ButtonHoldThread";
 
-    private GameView gameView = null;
-    private volatile boolean keepRunning = true;
-    private Banner banner = null;
-    private volatile boolean isButtonHold = false;
-    private int bannerMoveSpeed = 0;
-
-    public ButtonHoldThread(GameView gameView) {
-        this.gameView = gameView;
-        this.banner = this.gameView.getBanner();
-        this.keepRunning = true;
-        this.isButtonHold = false;
-        this.bannerMoveSpeed = 0;
+    companion object {
+        private const val TAG = "ButtonHoldThread"
     }
 
-    public void setKeepRunning(boolean keepRunning) {
-        this.keepRunning = keepRunning;
-    }
-    public void setIsButtonHold(boolean isButtonHold) {
-        this.isButtonHold = isButtonHold;
-    }
-    public void setBannerMoveSpeed(int bannerMoveSpeed) {
-        this.bannerMoveSpeed = bannerMoveSpeed;
+    private var banner: Banner? = null
+    @Volatile
+    private var keepRunning = true
+    @Volatile
+    private var isButtonHold = false
+    @Volatile
+    private var bannerMoveSpeed = 0
+
+    init {
+        banner = gameView.banner
+        keepRunning = true
+        isButtonHold = false
+        bannerMoveSpeed = 0
     }
 
-    public void run() {
-        while(keepRunning) {
-            synchronized (gameView.mainLock) {
+    fun setKeepRunning(keepRunning: Boolean) {
+        this.keepRunning = keepRunning
+    }
+
+    fun setIsButtonHold(isButtonHold: Boolean) {
+        this.isButtonHold = isButtonHold
+    }
+
+    fun setBannerMoveSpeed(bannerMoveSpeed: Int) {
+        this.bannerMoveSpeed = bannerMoveSpeed
+    }
+
+    override fun run() {
+        while (keepRunning) {
+            synchronized(gameView.mainLock) {
                 // for application's (Main activity) synchronizing
                 while (!gameView.isGameVisible) {
                     try {
-                        gameView.mainLock.wait();
-                    } catch (InterruptedException ex) {
-                        LogUtil.e(TAG, "run.mainLock.InterruptedException", ex);
+                        gameView.mainLock.wait()
+                    } catch (ex: InterruptedException) {
+                        LogUtil.e(TAG, "run.mainLock.InterruptedException", ex)
                     }
                 }
             }
-            synchronized (gameView.gameLock) {
+            synchronized(gameView.gameLock) {
                 // for GameView's synchronizing
                 while (gameView.isPausedByUser) {
                     try {
-                        gameView.gameLock.wait();
-                    } catch (InterruptedException ex) {
-                        LogUtil.e(TAG, "run.gameLock.InterruptedException", ex);
+                        gameView.gameLock.wait()
+                    } catch (ex: InterruptedException) {
+                        LogUtil.e(TAG, "run.gameLock.InterruptedException", ex)
                     }
                 }
             }
             // do the work of holding button
             while (isButtonHold) {
-                int bannerX = banner.getBannerX();
-                bannerX += bannerMoveSpeed;
-                if (bannerX < 0) {
-                    bannerX = 0;
+                banner?.let {
+                    var bannerX = it.bannerX
+                    bannerX += bannerMoveSpeed
+                    if (bannerX < 0) {
+                        bannerX = 0
+                    }
+                    if (bannerX > gameView.gameViewWidth) {
+                        bannerX = gameView.gameViewWidth
+                    }
+                    // set position of banner
+                    it.bannerX = bannerX
                 }
-                if (bannerX > gameView.getGameViewWidth()) {
-                    bannerX = gameView.getGameViewWidth();
-                }
-                // set position of banner
-                banner.setBannerX(bannerX);
-                SystemClock.sleep(20);
+                SystemClock.sleep(20)
             }
-            SystemClock.sleep(2);
+            SystemClock.sleep(2)
         }
     }
 }

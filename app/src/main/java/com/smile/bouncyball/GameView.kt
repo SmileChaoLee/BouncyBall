@@ -195,7 +195,7 @@ class GameView(private val mainActivity: MainActivity)
         LogUtil.d(TAG, "GameView created")
     }
 
-    fun initBitmapAndModels() {
+    private fun initBitmapAndModels() {
         LogUtil.d(TAG, "initBitmapAndModels() is called")
         iScore[0] = BitmapFactory.decodeResource(resources, R.drawable.d0)
         iScore[1] = BitmapFactory.decodeResource(resources, R.drawable.d1)
@@ -285,7 +285,7 @@ class GameView(private val mainActivity: MainActivity)
         banner = Banner(bannerX, bannerY, bannerWidth, bannerHeight, iBanner)
     }
 
-    fun initBallAndBanner() {
+    private fun initBallAndBanner() {
         // initialize the coordinates of the ball
         // (ballX,ballY) is the center of the circle
 
