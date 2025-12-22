@@ -112,10 +112,14 @@ class MainActivity : AppCompatActivity() {
         LogUtil.d(TAG, "onRestart")
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        LogUtil.d(TAG, "onSaveInstanceState")
+        super.onSaveInstanceState(outState)
+    }
+
     override fun onDestroy() {
         LogUtil.d(TAG, "onDestroy")
         finishApplication()
-
         super.onDestroy()
     }
 

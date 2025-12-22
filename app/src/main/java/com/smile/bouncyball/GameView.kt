@@ -39,7 +39,7 @@ class GameView(private val mainActivity: MainActivity)
     : SurfaceView(mainActivity),
     SurfaceHolder.Callback {
     companion object {
-        private const val TAG = "BouncyBall.GameVew"
+        private const val TAG = "GameVew"
         // public properties
         const val FAILED_STATUS: Int = -1
         const val START_STATUS: Int = 0
@@ -64,16 +64,10 @@ class GameView(private val mainActivity: MainActivity)
         private const val BANNER_HEIGHT_RATIO = 1.0f / 10.0f
     }
 
-
-    @JvmField
     val mainLock = Object()
-    @JvmField
     val gameLock = Object() // for synchronizing
-    @JvmField
     val synchronizeTime = 70
-    @JvmField
     var isGameVisible = true
-    @JvmField
     var isPausedByUser = false
     // for running a thread when arrow button (left arrow or right arrow) is held
     var buttonHoldThread: ButtonHoldThread? = null
@@ -118,13 +112,12 @@ class GameView(private val mainActivity: MainActivity)
     private var resumeStr = ""
     private var beginStr = ""
     private var gameOverStr = ""
-    var surfaceHolder: SurfaceHolder? = null
-        private set
-
     private var status = START_STATUS
     private var score = 0 //  score that user got
     private var highestScore = 0
-
+    private var isGameJustCreated = true
+    var surfaceHolder: SurfaceHolder? = null
+        private set
     var gameViewWidth: Int = 0
         private set
     var gameViewHeight: Int = 0
@@ -146,6 +139,7 @@ class GameView(private val mainActivity: MainActivity)
 
     init {
         val textFontSize = ScreenUtil.getPxTextFontSizeNeeded(mainActivity)
+        isGameJustCreated = true
         isGameVisible = true
         val actionBar = mainActivity.supportActionBar
         // actionBar.setDisplayShowTitleEnabled(false);
@@ -542,30 +536,28 @@ class GameView(private val mainActivity: MainActivity)
         // Draw the first screen when surface view has been created
         LogUtil.d(TAG, "surfaceCreated.width = $width")
         LogUtil.d(TAG, "surfaceCreated.height = $height")
-        gameViewWidth = width
-        gameViewHeight = height
+        LogUtil.d(TAG, "surfaceCreated.isGameJustCreated = $isGameJustCreated")
+        if (isGameJustCreated) {
+            gameViewWidth = width
+            gameViewHeight = height
 
-        // the followings were moved from constructor
-        initBitmapAndModels()
-        // obstacleThreads must be created before ballGoThread
-        obstacleThreads = Vector<ObstacleThread>()
-        // ballGoThread must be created before other threads except obstacleThreads
-        ballGoThread = BallGoThread(this)
-        gameViewDrawThread = GameViewDrawThread(this)
-        buttonHoldThread = ButtonHoldThread(this)
-        buttonHoldThread!!.start()
-
-        //
+            // the followings were moved from constructor
+            initBitmapAndModels()
+            // obstacleThreads must be created before ballGoThread
+            obstacleThreads = Vector<ObstacleThread>()
+            // ballGoThread must be created before other threads except obstacleThreads
+            ballGoThread = BallGoThread(this)
+            gameViewDrawThread = GameViewDrawThread(this)
+            buttonHoldThread = ButtonHoldThread(this)
+            buttonHoldThread!!.start()
+            isGameJustCreated = false
+        }
         drawGameScreen()
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         // destroy and release the process
         LogUtil.d(TAG, "SurfaceView being destroyed")
-    }
-
-    fun newGame() {
-        renewGame()
     }
 
     fun gameBecomeInvisible() {
