@@ -1,7 +1,8 @@
-package com.smile.bouncyball;
+package com.smile.bouncyball.threads;
 
 import android.os.SystemClock;
 
+import com.smile.bouncyball.GameView;
 import com.smile.bouncyball.models.Banner;
 import com.smile.bouncyball.tools.LogUtil;
 

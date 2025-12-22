@@ -1,9 +1,10 @@
-package com.smile.bouncyball;
+package com.smile.bouncyball.threads;
 
 import android.graphics.Canvas;
 import android.os.SystemClock;
 import android.view.SurfaceHolder;
 
+import com.smile.bouncyball.GameView;
 import com.smile.bouncyball.tools.LogUtil;
 
 public class GameViewDrawThread extends Thread {
