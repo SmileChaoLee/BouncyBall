@@ -18,44 +18,45 @@
         android:gravity="center"
         android:text=""
         android:textColor="@android:color/holo_red_dark"
-        android:layout_weight="3"/>
-
+        android:layout_weight="3">
+    </TextView>
     <ImageView
         android:id="@+id/notUsed"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:background="@android:color/darker_gray"
+        android:contentDescription="@string/emptyString"
         android:layout_margin="0dp"
         android:padding="0dp"
         android:layout_weight="0.5"/>
-
     <ImageView
         android:id="@+id/scoreView2"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:background="#00FF00"
+        android:contentDescription="@string/emptyString"
         android:layout_margin="0dp"
         android:padding="0dp"
         android:layout_weight="1"/>
-
     <ImageView
         android:id="@+id/scoreView1"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:background="#00FF00"
+        android:contentDescription="@string/emptyString"
         android:layout_margin="0dp"
         android:padding="0dp"
         android:layout_weight="1"/>
-
     <ImageView
         android:id="@+id/scoreView0"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:background="#00FF00"
+        android:contentDescription="@string/emptyString"
         android:layout_margin="0dp"
         android:padding="0dp"
         android:layout_weight="1"/>

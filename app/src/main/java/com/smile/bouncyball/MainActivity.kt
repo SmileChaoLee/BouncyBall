@@ -130,7 +130,9 @@ class MainActivity : AppCompatActivity() {
             R.style.menu_text_style)
         // according to the above explanations, the following statement will fit every situation
         val fontScale = ScreenUtil.getPxFontScale(this@MainActivity)
-        ScreenUtil.resizeMenuTextIconSize(wrapper, menu, fontScale * 1.5f)
+        val ratio = if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+            1.3f else 1.0f
+        ScreenUtil.resizeMenuTextIconSize(wrapper, menu, fontScale * ratio)
         return true
     }
 

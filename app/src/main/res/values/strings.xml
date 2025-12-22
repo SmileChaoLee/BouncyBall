@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">BouncyBall</string>
-
     <string-array name="stageLevels">
         <item>Start</item>
         <item>Stage 1</item>
@@ -10,7 +8,7 @@
         <item>Stage 3</item>
         <item>Stage 4</item>
     </string-array>
-
+    <string name="emptyString">""</string>
     <string name="start_string">Start</string>
     <string name="pause_string">Pause</string>
     <string name="resume_string">Resume</string>
@@ -18,22 +16,19 @@
     <string name="quit_string">Quit</string>
     <string name="okStr">OK</string>
     <string name="begin_string">Start button to begin</string>
-    <string name="gameOver_string">Game Over.</string>
+    <string name="gameOver_string">Game Over</string>
     <string name="win_string">You won.\nReplay?</string>
     <string name="cancelStr">Cancel</string>
     <string name="submitStr">Send</string>
     <string name="nameStr">Input your name</string>
     <string name="yesStr">YES</string>
     <string name="noStr">NO</string>
-    <string name="loadingString">Loading ...</string>
-
+    <string name="loadingString">Loading …</string>
     <string name="local_top10_string">Top 10</string>
     <string name="global_top10_string">Global Top 10</string>
-
     <string name="local_top_10_score_str">Top 10 scores</string>              <!-- for menu item -->
     <string name="activity_top_10_score">Top10ScoreActivity</string>    <!-- for activity name -->
     <string name="local_top_10_score_title">Top 10 Scores</string>
     <string name="global_top_10_score_title">Global Top 10 Scores</string>
-
     <string name="google_AdMobAppID">ca-app-pub-8354869049759576~7223507458</string>
 </resources>

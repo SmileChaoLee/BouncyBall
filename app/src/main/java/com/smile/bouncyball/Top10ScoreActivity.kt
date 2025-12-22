@@ -70,7 +70,7 @@ class Top10ScoreActivity : AppCompatActivity() {
             top10Scores.clear()
             for (p in players) {
                 p.score?.let {
-                    val name = if (p.playerName.isNullOrEmpty()) "No Name" else p.playerName!!
+                    val name = if (p.playerName.isNullOrEmpty()) "" else p.playerName!!
                     top10Players.add(name)
                     top10Scores.add(it)
                 }

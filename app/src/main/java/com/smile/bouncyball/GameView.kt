@@ -1,6 +1,7 @@
 package com.smile.bouncyball
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -61,7 +62,8 @@ class GameView(private val mainActivity: MainActivity)
         private const val BUTTON_WIDTH_RATIO = 1.0f / 4.0f
         private const val BUTTON_HEIGHT_RATIO = 1.0f / 12.0f
         private const val BANNER_WIDTH_RATIO = 1.0f / 4.0f
-        private const val BANNER_HEIGHT_RATIO = 1.0f / 10.0f
+        private const val BANNER_HEIGHT_RATIO = 1.0f / 20.0f
+        private const val GAP_RATIO_BET_BANNER_START = 1.0f / 10.0f
     }
 
     val mainLock = Object()
@@ -151,7 +153,9 @@ class GameView(private val mainActivity: MainActivity)
             val actionBarView = abIt.customView
             actionBarView?.let { abV ->
                 highestTextView = abV.findViewById<TextView?>(R.id.highestTextView)
-                ScreenUtil.resizeTextSize(highestTextView, textFontSize * 1.5f)
+                val ratio = if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+                    1.3f else 1f
+                ScreenUtil.resizeTextSize(highestTextView, textFontSize * ratio)
                 scoreImage0 = abV.findViewById(R.id.scoreView0)
                 scoreImage1 = abV.findViewById(R.id.scoreView1)
                 scoreImage2 = abV.findViewById(R.id.scoreView2)
@@ -259,10 +263,10 @@ class GameView(private val mainActivity: MainActivity)
             sPoint.y + rightArrowHeight
         )
 
-        bottomY = gameViewHeight - bannerHeight - startHeight - gameViewHeight / 20
-
-        val numB = (bottomY / ballSize) // removed on 2018-07-08
-        bottomY = numB * ballSize
+        val gapRatio = if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+            1f/10f else 1f/6f
+        bottomY = gameViewHeight - bannerHeight - startHeight - (gameViewHeight * gapRatio).toInt()
+        bottomY = (bottomY / ballSize) * ballSize
 
         sPoint.set((gameViewWidth - beginWidth) / 2, (bottomY - beginHeight) / 2)
         iBeginRect.set(sPoint.x, sPoint.y, sPoint.x + beginWidth, sPoint.y + beginHeight)
@@ -270,11 +274,11 @@ class GameView(private val mainActivity: MainActivity)
 
         val ballSpan = ballRadius
         // initialize the coordinates of the ball and the banner
-        val ballX: Int = gameViewWidth / 2 //  coordinate (x-axis) of the ball
+        val ballX = gameViewWidth / 2 //  coordinate (x-axis) of the ball
         val ballY = bottomY - ballRadius
         bouncyBall = BouncyBall(ballX, ballY, ballSize, ballSpan, iBall)
 
-        val bannerX: Int = gameViewWidth / 2 //  the coordinate (x-axis) of the banner
+        val bannerX = gameViewWidth / 2 //  the coordinate (x-axis) of the banner
         val bannerY = bottomY + (bannerHeight / 2)
         banner = Banner(bannerX, bannerY, bannerWidth, bannerHeight, iBanner)
     }

@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">弹跳球</string>
-
     <string-array name="stageLevels">
         <item>开始</item>
         <item>第一关</item>
@@ -10,7 +8,7 @@
         <item>第三关</item>
         <item>第四关</item>
     </string-array>
-
+    <string name="emptyString">""</string>
     <string name="start_string">开始</string>
     <string name="pause_string">暂停</string>
     <string name="resume_string">恢复</string>
@@ -25,15 +23,12 @@
     <string name="nameStr">输入你的名字</string>
     <string name="yesStr">是</string>
     <string name="noStr">否</string>
-    <string name="loadingString">下载中 ...</string>
-
+    <string name="loadingString">下载中 …</string>
     <string name="local_top10_string">前10名</string>
     <string name="global_top10_string">全球前10名</string>
-
     <string name="local_top_10_score_str">前10名最高分</string>        <!-- for menu item -->
     <string name="activity_top_10_score">前10名最高分</string>   <!-- for activity name -->
     <string name="local_top_10_score_title">前10名最高分</string>      <!-- for title of list view -->
     <string name="global_top_10_score_title">全球前10名最高分</string>      <!-- for title of list view -->
-
     <string name="google_AdMobAppID">ca-app-pub-8354869049759576~7223507458</string>
 </resources>
