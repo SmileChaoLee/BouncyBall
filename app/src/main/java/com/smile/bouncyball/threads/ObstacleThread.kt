@@ -1,174 +1,162 @@
-package com.smile.bouncyball.threads;
+package com.smile.bouncyball.threads
 
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Point;
-import android.graphics.Rect;
-import android.os.SystemClock;
-
-import com.smile.bouncyball.GameView;
-import com.smile.bouncyball.models.Banner;
-import com.smile.bouncyball.models.BouncyBall;
-import com.smile.bouncyball.tools.LogUtil;
-
-import java.util.Random;
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Point
+import android.graphics.Rect
+import android.os.SystemClock
+import com.smile.bouncyball.GameView
+import com.smile.bouncyball.models.Banner
+import com.smile.bouncyball.models.BouncyBall
+import com.smile.bouncyball.tools.LogUtil.e
+import java.util.Random
+import kotlin.concurrent.Volatile
 
 /**
  * Created by Chao Lee on 2017-11-14.
  */
+class ObstacleThread(private val gameView: GameView,
+                     private val stageNo: Int) : Thread() {
 
-public class ObstacleThread extends Thread {
+    companion object {
+        private const val TAG = "ObstacleThread"
+    }
 
-    private final static String TAG = "ObstacleThread";
-    private final int[] obsColor = {Color.BLACK, Color.DKGRAY, Color.RED, Color.GREEN, Color.MAGENTA,Color.CYAN};
-    private int obstacleWidth = 100;
-    private int obstacleHeight = 20;
-    private GameView gameView = null;
-    private int synchronizeTime = 70;
+    private val obsColor =
+        intArrayOf(Color.BLACK, Color.DKGRAY, Color.RED, Color.GREEN, Color.MAGENTA, Color.CYAN)
+    var obstacleWidth: Int = 100
+        private set
+    var obstacleHeight: Int = 20
+        private set
+    private var synchronizeTime = 70
+
     // keepRunning = true -> loop in run() still going
-    private volatile boolean keepRunning = true;
-    private int direction = 1;  // 1->left, 2->right, 3->up, 4->down
-    private int speed = 0;  // no moving, moving speed (left, right, up, or down)
-    private int color = Color.BLACK;    // the color of obstacle
-    private Point position = null;  // the position of the center of this obstacle
+    @Volatile
+    private var keepRunning = true
+    private var direction = 1 // 1->left, 2->right, 3->up, 4->down
+    private var speed = 0 // no moving, moving speed (left, right, up, or down)
+    private var color = Color.BLACK // the color of obstacle
+    var obsCenterPos = Point()    // the position of the center of this obstacle
+        private set
 
-    private int xRangeOfObstacle = 0;
-    private int yRangeOfObstacle = 0;
+    private var xRangeOfObstacle = 0
+    private var yRangeOfObstacle = 0
+    private val random = Random(System.currentTimeMillis())
+    private var bouncyBall: BouncyBall? = null
+    private var banner: Banner? = null
 
-    private BouncyBall bouncyBall = null;
-    private Banner banner = null;
-
-    private Random random = null;
-
-    public ObstacleThread(GameView gView, int stageNo) {
-
-        gameView = gView;
-        synchronizeTime  = gView.synchronizeTime;
-        xRangeOfObstacle = gameView.getGameViewWidth();
-        yRangeOfObstacle = gameView.getGameViewHeight() / 3;    // one-third of the height of Game View
-        bouncyBall = gameView.getBouncyBall();
-        obstacleHeight = bouncyBall.getBallRadius();
-        banner = gameView.getBanner();
-        obstacleWidth = banner.getBannerWidth();
-
-        this.position = new Point();
-        this.random = new Random();
-        random = new Random(System.currentTimeMillis());
-
-        initializeObstacle(stageNo);
-
+    init {
+        synchronizeTime = gameView.synchronizeTime
+        xRangeOfObstacle = gameView.gameViewWidth
+        // one-third of the height of Game View
+        yRangeOfObstacle = gameView.gameViewHeight / 3
+        bouncyBall = gameView.bouncyBall
+        obstacleHeight = bouncyBall?.ballRadius ?: 0
+        banner = gameView.banner
+        obstacleWidth = banner?.bannerWidth ?: 0
+        initializeObstacle()
     }
 
-    public void setKeepRunning(boolean keepRunning) {
-        this.keepRunning = keepRunning;
-    }
-    public Point getPosition() {
-        return this.position;
-    }
-    public int getObstacleWidth() {
-        return this.obstacleWidth;
-    }
-    public int getObstacleHeight() {
-        return this.obstacleHeight;
+    fun setKeepRunning(keepRunning: Boolean) {
+        this.keepRunning = keepRunning
     }
 
-    public void run () {
+    override fun run() {
         while (keepRunning) {
-            synchronized (gameView.mainLock) {
+            synchronized(gameView.mainLock) {
                 // for application's (Main activity) synchronizing
                 while (!gameView.isGameVisible) {
                     try {
-                        gameView.mainLock.wait();
-                    } catch (InterruptedException ex) {
-                        LogUtil.e(TAG, "run.mainLock.InterruptedException", ex);
+                        gameView.mainLock.wait()
+                    } catch (ex: InterruptedException) {
+                        e(TAG, "run.mainLock.InterruptedException", ex)
                     }
                 }
             }
-            synchronized (gameView.gameLock) {
+            synchronized(gameView.gameLock) {
                 // for GameView's synchronizing
                 while (gameView.isPausedByUser) {
                     try {
-                        gameView.gameLock.wait();
-                    } catch (InterruptedException ex) {
-                        LogUtil.e(TAG, "run.gameLock.InterruptedException", ex);
+                        gameView.gameLock.wait()
+                    } catch (ex: InterruptedException) {
+                        e(TAG, "run.gameLock.InterruptedException", ex)
                     }
                 }
             }
             // move the obstacle
-            moveObstacle();
-            SystemClock.sleep(synchronizeTime);
+            moveObstacle()
+            SystemClock.sleep(synchronizeTime.toLong())
         }
     }
 
-    private void initializeObstacle(int stageNo) {
-        float dr = random.nextFloat();
+    private fun initializeObstacle() {
+        val dr = random.nextFloat()
         // only left and right for now
-        if (dr <= 0.5) {
-            direction = 1;  // left
+        direction = if (dr <= 0.5) {
+            1 // left
         } else {
-            direction = 2;  // right
+            2 // right
         }
-        speed = 5 + (int) (random.nextFloat() * 10.0f); // 5 ~ 15
-        int col = (int) (random.nextFloat() * 5.0f);  // 0 ~ 5
-        color = obsColor[col];
-        float x = random.nextFloat();   // 0.0 ~ 1.0
-        x *= xRangeOfObstacle;
-        float y = bouncyBall.getBallSize() * stageNo * 2;
-        position.set((int)x,(int)y);    // position of the center
+        speed = 5 + (random.nextFloat() * 10.0f).toInt() // 5 ~ 15
+        val col = (random.nextFloat() * 5.0f).toInt() // 0 ~ 5
+        color = obsColor[col]
+        var x = random.nextFloat() // 0.0 ~ 1.0
+        x *= xRangeOfObstacle.toFloat()
+        val y = ((bouncyBall?.ballSize ?: 0) * stageNo * 2).toFloat()
+        obsCenterPos.set(x.toInt(), y.toInt()) // position of the center
     }
 
-    private void moveObstacle() {
-        int x = position.x;
-        int y = position.y;
+    private fun moveObstacle() {
+        var x = obsCenterPos.x
+        var y = obsCenterPos.y
         if (direction == 1) {
             // left
-            x -= speed;
-            if (x<0) {
-                x = 0;
+            x -= speed
+            if (x < 0) {
+                x = 0
                 // left then change to right
-                direction = 2;
+                direction = 2
             }
         } else if (direction == 2) {
             // right
-            x += speed;
-            if (x>xRangeOfObstacle) {
-                x = xRangeOfObstacle;
+            x += speed
+            if (x > xRangeOfObstacle) {
+                x = xRangeOfObstacle
                 // right then change to left
-                direction = 1;
+                direction = 1
             }
         } else if (direction == 3) {
             // up
-            y -= speed;
+            y -= speed
             if (y < 0) {
-                y = 0;
+                y = 0
                 // up then change to down
-                direction = 4;
+                direction = 4
             }
         } else {
             // down
-            y += speed;
+            y += speed
             if (y > yRangeOfObstacle) {
-                y = yRangeOfObstacle;
+                y = yRangeOfObstacle
                 // down then change to up
-                direction = 3;
+                direction = 3
             }
         }
-        position.set(x,y);
+        obsCenterPos.set(x, y)
     }
 
-    public void drawObstacle(Canvas canvas) {
+    fun drawObstacle(canvas: Canvas) {
+        val left = obsCenterPos.x - obstacleWidth / 2
+        val right = obsCenterPos.x + obstacleWidth / 2
+        val top = obsCenterPos.y - obstacleHeight / 2
+        val bottom = obsCenterPos.y + obstacleHeight / 2
 
-        int left = position.x - obstacleWidth / 2;
-        int right = position.x + obstacleWidth / 2;
-        int top = position.y - obstacleHeight / 2;
-        int bottom = position.y + obstacleHeight / 2;
+        val rect = Rect(left, top, right, bottom)
+        val paint = Paint()
 
-        Rect rect = new Rect(left, top, right, bottom);
-        Paint paint = new Paint();
+        paint.setColor(color)
 
-        paint.setColor(color);
-
-        canvas.drawRect(rect,paint);
+        canvas.drawRect(rect, paint)
     }
 }
