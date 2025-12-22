@@ -340,6 +340,8 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         }
         // draw the bouncy ball
         val rect2 = Rect(sPoint.x, sPoint.y, tempX, tempY)
-        canvas.drawBitmap(bBall.bitmap, null, rect2, null)
+        bBall.bitmap?.let { bm ->
+            canvas.drawBitmap(bm, null, rect2, null)
+        }
     }
 }
