@@ -49,9 +49,9 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         bouncyBall = gameView.bouncyBall
         banner = gameView.banner
         //   0 or 1  multiple 3 ------>0 or 3
-        val direction = random.nextInt(2) * 3
+        // val direction = random.nextInt(2) * 3
         // direction of bouncy ball
-        bouncyBall?.direction = direction
+        // bouncyBall?.direction = direction
 
         score = 0
         status = GameView.START_STATUS
@@ -111,15 +111,12 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         when (direction) {
             GameView.BB_RIGHT_TOP -> {
                 // going to right top
-                bBall.ballX = tempX + bBall.ballSpan
-                bBall.ballY = tempY - bBall.ballSpan
+                bBall.ballX = tempX + bBall.ballRadius
+                bBall.ballY = tempY - bBall.ballRadius
 
-                // ballX = ballX + gView.ballSpan;
-                // ballY = ballY - gView.ballSpan;
                 if ((bBall.ballX + bBall.ballRadius) > gameViewWidth) {
                     if ((tempX > (gameViewWidth - bBall.ballRadius)) && (tempX < gameViewWidth)) {
                         bBall.ballX = gameViewWidth - bBall.ballRadius
-                        // ballX = gameViewWidth - ballRadius;
                     } else {
                         // hit the right wall
                         bBall.direction = GameView.BB_LEFT_TOP
@@ -127,7 +124,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                 } else if ((bBall.ballY - bBall.ballRadius) < 0) {
                     if ((tempY < bBall.ballRadius) && (tempY > 0)) {
                         bBall.ballY = bBall.ballRadius
-                        // ballY = ballRadius;
                     } else {
                         // hit the top wall
                         bBall.direction = GameView.BB_RIGHT_BOTTOM
@@ -137,14 +133,12 @@ class BallGoThread(private val gameView: GameView) : Thread() {
 
             GameView.BB_LEFT_TOP -> {
                 // going to left top
-                bBall.ballX = tempX - bBall.ballSpan
-                // ballX = ballX - gView.ballSpan;
-                bBall.ballY = tempY - bBall.ballSpan
+                bBall.ballX = tempX - bBall.ballRadius
+                bBall.ballY = tempY - bBall.ballRadius
                 // ballY = ballY - gView.ballSpan;
                 if ((bBall.ballX - bBall.ballRadius) < 0) {
                     if ((tempX < bBall.ballRadius) && (tempX > 0)) {
                         bBall.ballX = bBall.ballRadius
-                        // ballX = ballRadius;
                     } else {
                         // hit the left wall
                         bBall.direction = GameView.BB_RIGHT_TOP
@@ -152,7 +146,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                 } else if ((bBall.ballY - bBall.ballRadius) < 0) {
                     if ((tempY < bBall.ballRadius) && (tempY > 0)) {
                         bBall.ballY = bBall.ballRadius
-                        // ballY = ballRadius;
                     } else {
                         // hit the top wall
                         bBall.direction = GameView.BB_LEFT_BOTTOM
@@ -162,15 +155,13 @@ class BallGoThread(private val gameView: GameView) : Thread() {
 
             GameView.BB_RIGHT_BOTTOM -> {
                 // going to right bottom
-                bBall.ballX = tempX + bBall.ballSpan
-                // ballX = ballX + gView.ballSpan;
-                bBall.ballY = tempY + bBall.ballSpan
+                bBall.ballX = tempX + bBall.ballRadius
+                bBall.ballY = tempY + bBall.ballRadius
 
                 // ballY = ballY + gView.ballSpan;
                 if ((bBall.ballY + bBall.ballRadius) > bottomY) {
                     if ((tempY > (bottomY - bBall.ballRadius)) && (tempY < bottomY)) {
                         bBall.ballY = bottomY - bBall.ballRadius
-                        // ballY = bottomY - ballRadius;
                     } else {
                         // hit the bottom wall
                         checkHitBanner(GameView.BB_RIGHT_BOTTOM)
@@ -178,7 +169,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                 } else if ((bBall.ballX + bBall.ballRadius) > gameViewWidth) {
                     if ((tempX > (gameViewWidth - bBall.ballRadius)) && (tempX < gameViewWidth)) {
                         bBall.ballX = gameViewWidth - bBall.ballRadius
-                        // ballX = gameViewWidth - ballRadius;
                     } else {
                         //hit the right wall
                         bBall.direction = GameView.BB_LEFT_BOTTOM
@@ -188,15 +178,13 @@ class BallGoThread(private val gameView: GameView) : Thread() {
 
             GameView.BB_LEFT_BOTTOM -> {
                 // going to left bottom
-                bBall.ballX = tempX - bBall.ballSpan
-                // ballX = ballX - gView.ballSpan;
-                bBall.ballY = tempY + bBall.ballSpan
+                bBall.ballX = tempX - bBall.ballRadius
+                bBall.ballY = tempY + bBall.ballRadius
 
                 // ballY = ballY + gView.ballSpan;
                 if ((bBall.ballY + bBall.ballRadius) > bottomY) {
                     if ((tempY > (bottomY - bBall.ballRadius)) && (tempY < bottomY)) {
                         bBall.ballY = bottomY - bBall.ballRadius
-                        // ballY = bottomY - ballRadius;
                     } else {
                         // hit the bottom wall
                         checkHitBanner(GameView.BB_LEFT_BOTTOM)
@@ -204,7 +192,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                 } else if ((bBall.ballX - bBall.ballRadius) < 0) {
                     if ((tempX < bBall.ballRadius) && (tempX > 0)) {
                         bBall.ballX = bBall.ballRadius
-                        // ballX = ballRadius;
                     } else {
                         // hit the left wall
                         bBall.direction = GameView.BB_RIGHT_BOTTOM
@@ -341,8 +328,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         }
         // draw the bouncy ball
         val rect2 = Rect(sPoint.x, sPoint.y, tempX, tempY)
-        bBall.bitmap?.let { bm ->
-            canvas.drawBitmap(bm, null, rect2, null)
-        }
+        bBall.draw(canvas, rect2)
     }
 }

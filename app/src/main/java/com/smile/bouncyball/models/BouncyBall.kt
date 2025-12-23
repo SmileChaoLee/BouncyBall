@@ -1,23 +1,30 @@
 package com.smile.bouncyball.models
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Rect
 
 /**
  * Created by Chao Lee on 2017-11-15.
  */
 class BouncyBall(
     //  coordinate (x-axis) of the ball
-    var ballX: Int,
+    var ballX: Int = 0,
     //  coordinate (y-axis) of the ball
-    var ballY: Int,
-    var ballSize: Int,
-    var ballSpan: Int,
-    var bitmap: Bitmap?) {
+    var ballY: Int = 0,
+    var ballSize: Int = 0,
+    var bitmap: Bitmap? = null) {
     var ballRadius: Int
         private set
     var direction: Int = 0
 
     init {
         ballRadius = this.ballSize / 2
+    }
+
+    fun draw(canvas: Canvas, rect: Rect) {
+        bitmap?.let { bm ->
+            canvas.drawBitmap(bm, null, rect, null)
+        }
     }
 }
