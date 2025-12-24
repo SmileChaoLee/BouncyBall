@@ -25,6 +25,7 @@ import java.util.Vector
 import androidx.core.graphics.drawable.toDrawable
 import androidx.lifecycle.lifecycleScope
 import com.smile.bouncyball.models.RectBitmap
+import com.smile.bouncyball.models.ThreePoints
 import com.smile.bouncyball.models.Triangle
 import com.smile.bouncyball.threads.BallGoThread
 import com.smile.bouncyball.threads.ButtonHoldThread
@@ -35,6 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.*
 
 @SuppressLint("ViewConstructor")
 class GameView(private val mainActivity: MainActivity)
@@ -68,13 +70,14 @@ class GameView(private val mainActivity: MainActivity)
 
     val mainLock = Object()
     val gameLock = Object() // for synchronizing
-    val synchronizeTime = 70
-    var isGameVisible = true
-    var isPausedByUser = false
     // for running a thread when arrow button (left arrow or right arrow) is held
-    var buttonHoldThread: ButtonHoldThread? = null
-    var bottomY: Int = 0
+    var ballGoThread: BallGoThread? = null //BallGoThread
         private set
+    var obstacleThreads: Vector<ObstacleThread>? = null
+        private set
+    var buttonHoldThread: ButtonHoldThread? = null
+    private var gameViewDrawThread: GameViewDrawThread? = null
+
     private val backgroundRect = RectBitmap() // rectangle area for hint to start
     private val beginRect = RectBitmap() // rectangle area for hint to start
     private val startRect = RectBitmap() // rectangle area for start game
@@ -99,9 +102,15 @@ class GameView(private val mainActivity: MainActivity)
     private val scoreSQLiteDB = ScoreSQLite(mainActivity,
         BouncyBallApp.DATABASE_NAME)
     private var isGameJustCreated = true
-    private var oldMotionX: Int = 0
+    private var mThreeP: ThreePoints? = null
+    private var mOldPosX = 0f
 
+    val synchronizeTime = 70
+    var isGameVisible = true
+    var isPausedByUser = false
     var surfaceHolder: SurfaceHolder? = null
+        private set
+    var bottomY: Int = 0
         private set
     var gameViewWidth: Int = 0
         private set
@@ -110,11 +119,6 @@ class GameView(private val mainActivity: MainActivity)
     var bouncyBall: BouncyBall? = null
         private set
     var banner: Banner? = null
-        private set
-    var ballGoThread: BallGoThread? = null //BallGoThread
-        private set
-    private var gameViewDrawThread: GameViewDrawThread? = null
-    var obstacleThreads: Vector<ObstacleThread>? = null
         private set
 
     init {
@@ -289,10 +293,11 @@ class GameView(private val mainActivity: MainActivity)
         bouncyBall?.let {
             it.ballX = gameViewWidth / 2
             it.ballY = bottomY - it.ballRadius
-            shootArrow.setX(it.ballX.toFloat())
-            shootArrow.setY(it.ballY.toFloat() - it.ballRadius)
-            shootArrow.setWidth(it.ballRadius.toFloat())
-            shootArrow.setHeight(it.ballRadius.toFloat())
+            val triWidth = it.ballRadius.toFloat() * 2f
+            shootArrow.x = it.ballX.toFloat()
+            shootArrow.y = it.ballY.toFloat() - triWidth
+            shootArrow.width = triWidth
+            shootArrow.height = triWidth
         }
         // initialize the coordinates of the banner
         // (bannerX,bannerY) is the center of banner
@@ -310,48 +315,19 @@ class GameView(private val mainActivity: MainActivity)
     fun doDraw(canvas: Canvas) {
         LogUtil.d(TAG, "doDraw")
         // clear the background
-        val sPoint = Point(0, 0)
-        val rect2 = Rect(0, 0, 0, 0)
-        // val rectF = RectF(0f, 0f, gameViewWidth.toFloat(), gameViewHeight.toFloat())
-        // iBack?.let {
-        //     canvas.drawBitmap(it, null, rectF, null)
-        // }
         backgroundRect.draw(canvas)
-        // draw the banner
-        banner?.apply {
-            sPoint.set(
-                bannerX - bannerWidth / 2,
-                bannerY - bannerHeight / 2
-            )
-            rect2.set(
-                sPoint.x,
-                sPoint.y,
-                sPoint.x + bannerWidth,
-                sPoint.y + bannerHeight
-            )
+        if (status == START_STATUS) {
+            shootArrow.drawTriangle(canvas)
         }
-        // iBanner?.let {
-        //     canvas.drawBitmap(it, null, rect2, null)
-        // }
-        banner?.draw(canvas, rect2)
-        ballGoThread?.drawBouncyBall(canvas)
-        shootArrow.canvas = canvas
-        shootArrow.drawTriangle()
+        drawBanner(canvas)
+        drawBouncyBall(canvas)
         // draw obstacles
         obstacleThreads?.let {
             for (obstacleThread in it) {
                 obstacleThread.drawObstacle(canvas)
             }
         }
-        // draw left arrow button
-        // iLeftArrow?.let {
-        //     canvas.drawBitmap(it, null, leftArrowRect, null)
-        // }
         leftArrowRect.draw(canvas)
-        // draw right Arrow button
-        // iRightArrow?.let {
-        //     canvas.drawBitmap(it, null, rightArrowRect, null)
-        // }
         rightArrowRect.draw(canvas)
         // verifying score and status
         ballGoThread?.let {
@@ -373,30 +349,14 @@ class GameView(private val mainActivity: MainActivity)
             scoreImage2?.setImageBitmap(iScore[tempScore])
         }
         if (status == START_STATUS) {
-            // draw the hint of beginning
-            // iBegin?.let {
-            //     canvas.drawBitmap(it, null, iBeginRect, null)
-            // }
             beginRect.draw(canvas)
-            // start button
-            // iStart?.let {
-            //     canvas.drawBitmap(it, null, startRect, null)
-            // }
             startRect.draw(canvas)
             // direction of bouncy ball
             bouncyBall?.direction = 3   // 0 or 3
         } else {
             if (isPausedByUser) {
-                // under pause status. show resume button
-                // iResume?.let {
-                //     canvas.drawBitmap(it, null, startRect, null)
-                // }
                 resumeRect.draw(canvas)
             } else {
-                // under playing status, show pause button
-                // iPause?.let {
-                //     canvas.drawBitmap(it, null, startRect, null)
-                // }
                 pauseRect.draw(canvas)
             }
             if ((status >= SECOND_STAGE) && (status <= FINAL_STAGE)) {
@@ -423,10 +383,6 @@ class GameView(private val mainActivity: MainActivity)
                     }
                     it.clear()
                 }
-                // iGameOver?.let {
-                //     LogUtil.d(TAG, "doDraw.iGameOver.iGOverRect")
-                //     canvas.drawBitmap(it, null, gameOverRect, null)
-                // }
                 gameOverRect.draw(canvas)
                 mainActivity.let { act ->
                     act.lifecycleScope.launch(Dispatchers.IO) {
@@ -450,6 +406,47 @@ class GameView(private val mainActivity: MainActivity)
         }
     }
 
+    private fun drawBanner(canvas: Canvas) {
+        banner?.apply {
+            val ax = bannerX - bannerWidth / 2
+            val ay = bannerY - bannerHeight / 2
+            val rect2 = Rect(ax, ay, ax + bannerWidth, ay + bannerHeight)
+            draw(canvas, rect2)
+        }
+    }
+
+    private fun drawBouncyBall(canvas: Canvas) {
+        bouncyBall?.let { bBall ->
+            var tempX = bBall.ballX - bBall.ballRadius
+            if (tempX < 0) {
+                tempX = 0
+                bBall.ballX = bBall.ballRadius
+            }
+            var tempY = bBall.ballY - bBall.ballRadius
+            if (tempY < 0) {
+                tempY = 0
+                bBall.ballY = bBall.ballRadius
+            }
+            val sPoint = Point(tempX, tempY)
+
+            tempX = sPoint.x + bBall.ballSize
+            if (tempX > gameViewWidth) {
+                tempX = gameViewWidth
+                sPoint.x = tempX - bBall.ballSize
+                bBall.ballX = tempX - bBall.ballRadius
+            }
+            tempY = sPoint.y + bBall.ballSize
+            if (tempY > bottomY) {
+                tempY = bottomY
+                sPoint.y = tempY - bBall.ballSize
+                bBall.ballY = tempY - bBall.ballRadius
+            }
+            // draw the bouncy ball
+            val rect2 = Rect(sPoint.x, sPoint.y, tempX, tempY)
+            bBall.draw(canvas, rect2)
+        }
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val posX = event.x.toInt()
@@ -459,9 +456,25 @@ class GameView(private val mainActivity: MainActivity)
         when (action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_MOVE ->
                 if (status == START_STATUS) {
+                    val bBal = bouncyBall ?: return false
                     LogUtil.d(TAG, "onTouchEvent.posX = $posX")
-                    LogUtil.d(TAG, "onTouchEvent.oldMotionX = $oldMotionX")
-                    val rotateDegree: Float = (posX - oldMotionX).toFloat() / gameViewWidth.toFloat()
+                    val dg = atan((event.x - mOldPosX) / gameViewWidth)
+                    LogUtil.d(TAG, "onTouchEvent.dg = $dg")
+                    mThreeP?.let {
+                        val centerX = bBal.ballX.toFloat()
+                        val centerY = bBal.ballY.toFloat()
+                        val tempThree = it.rotate(dg, centerX, centerY)
+                        val ax = tempThree.topX - shootArrow.x
+                        val by = tempThree.topY - shootArrow.y
+                        val slope = abs(ax / by)
+                        val angle = atan(slope.toDouble())
+                        LogUtil.d(TAG, "onTouchEvent.angle = $angle")
+                        val maxAngle = PI / (180f / 70f)    // 70 degree
+                        if (angle < maxAngle) {
+                            shootArrow.threeP = tempThree
+                            drawGameScreen()
+                        }
+                    }
                 } else {
                     if ((status >= FIRST_STAGE) && (status < FINISHED_STATUS)) {
                         val bn = banner ?: return false
@@ -476,7 +489,8 @@ class GameView(private val mainActivity: MainActivity)
             MotionEvent.ACTION_BUTTON_PRESS, MotionEvent.ACTION_DOWN -> if (status == START_STATUS) {
                 LogUtil.d(TAG, "onTouchEvent.MotionEvent.ACTION_DOWN")
                 // start button to continue
-                oldMotionX = posX
+                mThreeP = shootArrow.threeP.copy()
+                mOldPosX = event.x
                 if (startRect.contains(posX, posY)) {
                     // start button was pressed
                     // start playing
@@ -753,7 +767,7 @@ class GameView(private val mainActivity: MainActivity)
         return bm
     }
 
-    private fun drawGameScreen() {
+    fun drawGameScreen() {
         // Draw the screen of the game view
         surfaceHolder?.let {
             var canvas: Canvas? = null

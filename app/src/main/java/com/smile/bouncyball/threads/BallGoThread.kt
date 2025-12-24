@@ -1,14 +1,10 @@
 package com.smile.bouncyball.threads
 
-import android.graphics.Canvas
-import android.graphics.Point
-import android.graphics.Rect
 import android.os.SystemClock
 import com.smile.bouncyball.GameView
 import com.smile.bouncyball.models.Banner
 import com.smile.bouncyball.models.BouncyBall
-import com.smile.bouncyball.tools.LogUtil.e
-import java.util.Random
+import com.smile.bouncyball.tools.LogUtil
 import java.util.Vector
 import kotlin.concurrent.Volatile
 
@@ -18,15 +14,12 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         private const val TAG = "BallGoThread"
     }
 
-    private var gameViewWidth = 0
     private var synchronizeTime = 70
     @Volatile
     var flag = true // flag = true -> move ball
     // keepRunning = true -> loop in run() still going
     @Volatile
     private var keepRunning = true
-    private val random = Random(System.currentTimeMillis())
-    private var bottomY = 0
     private val stageScore = intArrayOf(0, 10, 30, 60, 100) // hits for each stage
     var score: Int = 0 //  score that user got
         private set
@@ -43,16 +36,9 @@ class BallGoThread(private val gameView: GameView) : Thread() {
             throw NullPointerException("obstacleThreads must not be null.")
         }
         obstacleThreads = obsThreads
-        gameViewWidth = gameView.gameViewWidth
         synchronizeTime = gameView.synchronizeTime
-        bottomY = gameView.bottomY
         bouncyBall = gameView.bouncyBall
         banner = gameView.banner
-        //   0 or 1  multiple 3 ------>0 or 3
-        // val direction = random.nextInt(2) * 3
-        // direction of bouncy ball
-        // bouncyBall?.direction = direction
-
         score = 0
         status = GameView.START_STATUS
     }
@@ -70,7 +56,7 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                     try {
                         gameView.mainLock.wait()
                     } catch (ex: InterruptedException) {
-                        e(TAG, "run.mainLock.InterruptedException", ex)
+                        LogUtil.e(TAG, "run.mainLock.InterruptedException", ex)
                     }
                 }
             }
@@ -80,7 +66,7 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                     try {
                         gameView.gameLock.wait()
                     } catch (ex: InterruptedException) {
-                        e(TAG, "run.gameLock.InterruptedException", ex)
+                        LogUtil.e(TAG, "run.gameLock.InterruptedException", ex)
                     }
                 }
             }
@@ -94,7 +80,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                 } else {
                     // 2017-11-19 morning
                     for (obstacleThread in obstacleThreads) {
-                        // obstacleThread.isHitBouncyBall();    // removed on 2017-11-19
                         isHitObstacle(obstacleThread)
                     }
                 }
@@ -105,6 +90,8 @@ class BallGoThread(private val gameView: GameView) : Thread() {
 
     private fun checkCollision() {
         val bBall = bouncyBall?: return
+        val bottomY = gameView.bottomY
+        val gameViewWidth = gameView.gameViewWidth
         val tempX = bBall.ballX
         val tempY = bBall.ballY
         val direction = bBall.direction
@@ -297,37 +284,5 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         }
 
         return isHit
-    }
-
-    fun drawBouncyBall(canvas: Canvas) {
-        // draw the ball
-        val bBall = bouncyBall?: return
-        var tempX = bBall.ballX - bBall.ballRadius
-        if (tempX < 0) {
-            tempX = 0
-            bBall.ballX = bBall.ballRadius
-        }
-        var tempY = bBall.ballY - bBall.ballRadius
-        if (tempY < 0) {
-            tempY = 0
-            bBall.ballY = bBall.ballRadius
-        }
-        val sPoint = Point(tempX, tempY)
-
-        tempX = sPoint.x + bBall.ballSize
-        if (tempX > gameViewWidth) {
-            tempX = gameViewWidth
-            sPoint.x = tempX - bBall.ballSize
-            bBall.ballX = tempX - bBall.ballRadius
-        }
-        tempY = sPoint.y + bBall.ballSize
-        if (tempY > bottomY) {
-            tempY = bottomY
-            sPoint.y = tempY - bBall.ballSize
-            bBall.ballY = tempY - bBall.ballRadius
-        }
-        // draw the bouncy ball
-        val rect2 = Rect(sPoint.x, sPoint.y, tempX, tempY)
-        bBall.draw(canvas, rect2)
     }
 }

@@ -1,6 +1,5 @@
 package com.smile.bouncyball.threads
 
-import android.graphics.Canvas
 import android.os.SystemClock
 import android.view.SurfaceHolder
 import com.smile.bouncyball.GameView
@@ -47,27 +46,7 @@ class GameViewDrawThread(private val gameView: GameView) : Thread() {
                 }
             }
             // start drawing
-            var c: Canvas?
-            c = null
-            // lock the whole canvas. high requirement on memory, do not use null advised
-            surfaceHolder?.let { sHolder ->
-                try {
-                    c = sHolder.lockCanvas(null)
-                    if (c != null) {
-                        // synchronized (gView.surfaceHolder) {
-                        synchronized(sHolder) {
-                            gameView.doDraw(c) // draw
-                        }
-                    } else {
-                        LogUtil.d(TAG, "run.lockCanvas.Canvas = null.")
-                    }
-                } finally {
-                    if (c != null) {
-                        // fresh the screen
-                        sHolder.unlockCanvasAndPost(c)
-                    }
-                }
-            }
+            gameView.drawGameScreen()
             SystemClock.sleep(synchronizeTime.toLong())
         }
     }
