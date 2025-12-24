@@ -16,10 +16,12 @@ class BouncyBall(
     var bitmap: Bitmap? = null) {
     var ballRadius: Int
         private set
-    var direction: Int = 0
+    var direction = 0
+    var slope = 1.0f
+    var speed = 1.0f
 
     init {
-        ballRadius = this.ballSize / 2
+        ballRadius = ballSize / 2
     }
 
     fun draw(canvas: Canvas, rect: Rect) {

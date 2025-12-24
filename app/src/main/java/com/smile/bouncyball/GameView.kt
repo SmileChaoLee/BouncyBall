@@ -277,11 +277,8 @@ class GameView(private val mainActivity: MainActivity)
             sPoint.y + beginHeight,
             iGameOver)
 
-        shootArrow = Triangle(mColor = Color.RED)
         val iBall = BitmapFactory.decodeResource(resources, R.drawable.ball)
         bouncyBall = BouncyBall(ballSize = ballSize, bitmap = iBall)
-        // val bannerX = gameViewWidth / 2 //  the coordinate (x-axis) of the banner
-        // val bannerY = bottomY + (bannerHeight / 2)
         val iBanner = BitmapFactory.decodeResource(resources, R.drawable.banner)
         banner = Banner(bannerWidth = bannerWidth, bannerHeight = bannerHeight, bitmap = iBanner)
         initBallAndBanner()
@@ -290,14 +287,22 @@ class GameView(private val mainActivity: MainActivity)
     private fun initBallAndBanner() {
         // initialize the coordinates of the ball
         // (ballX,ballY) is the center of the circle
+        shootArrow = Triangle(mColor = Color.RED)
         bouncyBall?.let {
             it.ballX = gameViewWidth / 2
             it.ballY = bottomY - it.ballRadius
+            // direction of bouncy ball
+            it.direction = 0   // 0 or 3
+            it.slope = 1.0f // 45 degree
+            it.speed = 1.0f
             val triWidth = it.ballRadius.toFloat() * 2f
-            shootArrow.x = it.ballX.toFloat()
-            shootArrow.y = it.ballY.toFloat() - triWidth
-            shootArrow.width = triWidth
-            shootArrow.height = triWidth
+            shootArrow.apply {
+                x = it.ballX.toFloat()
+                y = it.ballY.toFloat() - triWidth
+                width = triWidth
+                height = triWidth
+                rotate(atan(it.slope), it.ballX.toFloat(), it.ballY.toFloat())
+            }
         }
         // initialize the coordinates of the banner
         // (bannerX,bannerY) is the center of banner
@@ -316,11 +321,6 @@ class GameView(private val mainActivity: MainActivity)
         LogUtil.d(TAG, "doDraw")
         // clear the background
         backgroundRect.draw(canvas)
-        if (status == START_STATUS) {
-            shootArrow.drawTriangle(canvas)
-        }
-        drawBanner(canvas)
-        drawBouncyBall(canvas)
         // draw obstacles
         obstacleThreads?.let {
             for (obstacleThread in it) {
@@ -348,11 +348,13 @@ class GameView(private val mainActivity: MainActivity)
             tempScore = scoreStr[0].code - '0'.code
             scoreImage2?.setImageBitmap(iScore[tempScore])
         }
+        drawBanner(canvas)
+        drawBouncyBall(canvas)
         if (status == START_STATUS) {
+            LogUtil.d(TAG, "onDraw.START_STATUS")
             beginRect.draw(canvas)
             startRect.draw(canvas)
-            // direction of bouncy ball
-            bouncyBall?.direction = 3   // 0 or 3
+            shootArrow.drawTriangle(canvas)
         } else {
             if (isPausedByUser) {
                 resumeRect.draw(canvas)
@@ -456,25 +458,28 @@ class GameView(private val mainActivity: MainActivity)
         when (action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_MOVE ->
                 if (status == START_STATUS) {
+                    var tempThree = mThreeP ?: return false
                     val bBal = bouncyBall ?: return false
+                    val centerX = bBal.ballX.toFloat()
+                    val centerY = bBal.ballY.toFloat()
                     LogUtil.d(TAG, "onTouchEvent.posX = $posX")
                     val dg = atan((event.x - mOldPosX) / gameViewWidth)
                     LogUtil.d(TAG, "onTouchEvent.dg = $dg")
-                    mThreeP?.let {
-                        val centerX = bBal.ballX.toFloat()
-                        val centerY = bBal.ballY.toFloat()
-                        val tempThree = it.rotate(dg, centerX, centerY)
-                        val ax = tempThree.topX - shootArrow.x
-                        val by = tempThree.topY - shootArrow.y
-                        val slope = abs(ax / by)
+                    tempThree = tempThree.rotate(dg, centerX, centerY)
+                        val ax = tempThree.topX - centerX
+                        val by = centerY - tempThree.topY
+                        val slope = if (ax != 0f) by / ax else Integer.MAX_VALUE.toFloat()
+                        LogUtil.d(TAG, "onTouchEvent.slope = $slope")
                         val angle = atan(slope.toDouble())
                         LogUtil.d(TAG, "onTouchEvent.angle = $angle")
-                        val maxAngle = PI / (180f / 70f)    // 70 degree
-                        if (angle < maxAngle) {
+                        // val maxAngle = PI / (180f / 70f)    // 70 degree
+                        // if (abs(angle) < maxAngle) {
+                            bBal.direction = if (angle > 0) 0 else 3
+                            bBal.slope = slope
+                            bBal.speed = 1.0f
                             shootArrow.threeP = tempThree
                             drawGameScreen()
-                        }
-                    }
+                        // }
                 } else {
                     if ((status >= FIRST_STAGE) && (status < FINISHED_STATUS)) {
                         val bn = banner ?: return false

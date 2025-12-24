@@ -184,20 +184,20 @@ class Triangle(
         setPath()
     }
 
-    fun rotate(angle: Float) {
+    fun rotate(angle: Float, cx: Float = x, cy: Float = y) {
         LogUtil.d(TAG, "rotate")
-        val tx = threeP.topX - x
-        val ty = threeP.topY - y
-        val lx = threeP.leftX - x
-        val ly = threeP.leftY - y
-        val rx = threeP.rightX - x
-        val ry = threeP.rightY - y
-        threeP.topX = x + tx * cos(angle) - ty * sin(angle)
-        threeP.topY = y + tx * sin(angle) + ty * cos(angle)
-        threeP.leftX = x + lx * cos(angle) - ly * sin(angle)
-        threeP.leftY = y + lx * sin(angle) + ly * cos(angle)
-        threeP.rightX = x + rx * cos(angle) - ry * sin(angle)
-        threeP.rightY = y + rx * sin(angle) + ry * cos(angle)
+        val tx = threeP.topX - cx
+        val ty = threeP.topY - cy
+        val lx = threeP.leftX - cx
+        val ly = threeP.leftY - cy
+        val rx = threeP.rightX - cx
+        val ry = threeP.rightY - cy
+        threeP.topX = cx + tx * cos(angle) - ty * sin(angle)
+        threeP.topY = cy + tx * sin(angle) + ty * cos(angle)
+        threeP.leftX = cx + lx * cos(angle) - ly * sin(angle)
+        threeP.leftY = cy + lx * sin(angle) + ly * cos(angle)
+        threeP.rightX = cx + rx * cos(angle) - ry * sin(angle)
+        threeP.rightY = cy + rx * sin(angle) + ry * cos(angle)
         setPath()
     }
 
