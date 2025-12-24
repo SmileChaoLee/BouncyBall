@@ -375,11 +375,11 @@ class GameView(private val mainActivity: MainActivity)
                 }
             } else if ((status == FAILED_STATUS) || (status == FINISHED_STATUS)) {
                 //  game over
-                ballGoThread?.setKeepRunning(false) // stop running the BallGoThread, added on 2017-11-07
-                gameViewDrawThread?.setKeepRunning(false) // added on 2017-11-07
+                ballGoThread?.keepRunning = false // stop running the BallGoThread, added on 2017-11-07
+                gameViewDrawThread?.keepRunning = false // added on 2017-11-07
                 obstacleThreads?.let {
                     for (obstacleThread in it) {
-                        obstacleThread.setKeepRunning(false)
+                        obstacleThread.keepRunning = false
                     }
                     it.clear()
                 }
@@ -527,13 +527,13 @@ class GameView(private val mainActivity: MainActivity)
                     if (rightArrowRect.contains(posX, posY)) {
                         // for new function, right arrow
                         // then move the banner to right
-                        buttonHoldThread?.setBannerMoveSpeed(xSpeed)
-                        buttonHoldThread?.setIsButtonHold(true)
+                        buttonHoldThread?.bannerMoveSpeed = xSpeed
+                        buttonHoldThread?.isButtonHold = true
                     } else if (leftArrowRect.contains(posX, posY)) {
                         // for new function left arrow
                         // then move the banner to left
-                        buttonHoldThread?.setBannerMoveSpeed(-xSpeed)
-                        buttonHoldThread?.setIsButtonHold(true)
+                        buttonHoldThread?.bannerMoveSpeed = -xSpeed
+                        buttonHoldThread?.isButtonHold = true
                     } else {
                         // nothing will happen
                     }
@@ -542,7 +542,7 @@ class GameView(private val mainActivity: MainActivity)
                 // in failed or finished status
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
-                buttonHoldThread?.setIsButtonHold(false)
+                buttonHoldThread?.isButtonHold = false
             else -> {}
         }
 
@@ -623,7 +623,7 @@ class GameView(private val mainActivity: MainActivity)
         ballGoThread?.flag = false // stop moving
         var retry: Boolean
         gameViewDrawThread?.let {
-            it.setKeepRunning(false)
+            it.keepRunning = false
             retry = true
             while (retry) {
                 try {
@@ -640,7 +640,7 @@ class GameView(private val mainActivity: MainActivity)
         obstacleThreads?.let {
             for (obstacleThread in it) {
                 if (obstacleThread != null) {
-                    obstacleThread.setKeepRunning(false)
+                    obstacleThread.keepRunning = false
                     retry = true
                     while (retry) {
                         try {
@@ -658,8 +658,8 @@ class GameView(private val mainActivity: MainActivity)
         LogUtil.d(TAG, "stopThreads.obstacleThreads.stopped")
 
         buttonHoldThread?.let {
-            it.setIsButtonHold(false)
-            it.setKeepRunning(false)
+            it.isButtonHold = false
+            it.keepRunning = false
             retry = true
             while (retry) {
                 try {
@@ -674,7 +674,7 @@ class GameView(private val mainActivity: MainActivity)
         LogUtil.d(TAG, "stopThreads.buttonHoldThread.stopped")
 
         ballGoThread?.let {
-            it.setKeepRunning(false)
+            it.keepRunning = false
             retry = true
             while (retry) {
                 try {
@@ -690,11 +690,11 @@ class GameView(private val mainActivity: MainActivity)
     }
 
     private fun renewGame() {
-        gameViewDrawThread?.setKeepRunning(false)
-        ballGoThread?.setKeepRunning(false)
+        gameViewDrawThread?.keepRunning = false
+        ballGoThread?.keepRunning = false
         obstacleThreads?.let {
             for (obstacleThread in it) {
-                obstacleThread.setKeepRunning(false)
+                obstacleThread.keepRunning = false
             }
             it.clear()
         }

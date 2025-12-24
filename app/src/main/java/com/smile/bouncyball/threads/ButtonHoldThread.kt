@@ -18,29 +18,17 @@ class ButtonHoldThread(private val gameView: GameView) : Thread() {
 
     private var banner: Banner? = null
     @Volatile
-    private var keepRunning = true
+    var keepRunning = true
     @Volatile
-    private var isButtonHold = false
+    var isButtonHold = false
     @Volatile
-    private var bannerMoveSpeed = 0
+    var bannerMoveSpeed = 0
 
     init {
         banner = gameView.banner
         keepRunning = true
         isButtonHold = false
         bannerMoveSpeed = 0
-    }
-
-    fun setKeepRunning(keepRunning: Boolean) {
-        this.keepRunning = keepRunning
-    }
-
-    fun setIsButtonHold(isButtonHold: Boolean) {
-        this.isButtonHold = isButtonHold
-    }
-
-    fun setBannerMoveSpeed(bannerMoveSpeed: Int) {
-        this.bannerMoveSpeed = bannerMoveSpeed
     }
 
     override fun run() {

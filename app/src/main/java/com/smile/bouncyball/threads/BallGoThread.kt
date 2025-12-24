@@ -19,7 +19,7 @@ class BallGoThread(private val gameView: GameView) : Thread() {
     var flag = true // flag = true -> move ball
     // keepRunning = true -> loop in run() still going
     @Volatile
-    private var keepRunning = true
+    var keepRunning = true
     private val stageScore = intArrayOf(0, 10, 30, 60, 100) // hits for each stage
     var score: Int = 0 //  score that user got
         private set
@@ -41,10 +41,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         banner = gameView.banner
         score = 0
         status = GameView.START_STATUS
-    }
-
-    fun setKeepRunning(keepRunning: Boolean) {
-        this.keepRunning = keepRunning
     }
 
     override fun run() {

@@ -1,7 +1,6 @@
 package com.smile.bouncyball.threads
 
 import android.os.SystemClock
-import android.view.SurfaceHolder
 import com.smile.bouncyball.GameView
 import com.smile.bouncyball.tools.LogUtil
 import kotlin.concurrent.Volatile
@@ -14,14 +13,7 @@ class GameViewDrawThread(private val gameView: GameView) : Thread() {
 
     // keepRunning = true -> loop in run() still going
     @Volatile
-    private var keepRunning = true
-    private var surfaceHolder: SurfaceHolder? = null
-    private var synchronizeTime = 70
-
-    init {
-        this.surfaceHolder = gameView.surfaceHolder
-        this.synchronizeTime = gameView.synchronizeTime
-    }
+    var keepRunning = true
 
     override fun run() {
         while (keepRunning) {
@@ -47,11 +39,7 @@ class GameViewDrawThread(private val gameView: GameView) : Thread() {
             }
             // start drawing
             gameView.drawGameScreen()
-            SystemClock.sleep(synchronizeTime.toLong())
+            SystemClock.sleep(gameView.synchronizeTime.toLong())
         }
-    }
-
-    fun setKeepRunning(keepRunning: Boolean) {
-        this.keepRunning = keepRunning
     }
 }

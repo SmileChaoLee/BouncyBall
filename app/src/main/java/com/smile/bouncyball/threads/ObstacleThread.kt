@@ -29,11 +29,10 @@ class ObstacleThread(private val gameView: GameView,
         private set
     var obstacleHeight: Int = 20
         private set
-    private var synchronizeTime = 70
 
     // keepRunning = true -> loop in run() still going
     @Volatile
-    private var keepRunning = true
+    var keepRunning = true
     private var direction = 1 // 1->left, 2->right, 3->up, 4->down
     private var speed = 0 // no moving, moving speed (left, right, up, or down)
     private var color = Color.BLACK // the color of obstacle
@@ -47,7 +46,6 @@ class ObstacleThread(private val gameView: GameView,
     private var banner: Banner? = null
 
     init {
-        synchronizeTime = gameView.synchronizeTime
         xRangeOfObstacle = gameView.gameViewWidth
         // one-third of the height of Game View
         yRangeOfObstacle = gameView.gameViewHeight / 3
@@ -56,10 +54,6 @@ class ObstacleThread(private val gameView: GameView,
         banner = gameView.banner
         obstacleWidth = banner?.bannerWidth ?: 0
         initializeObstacle()
-    }
-
-    fun setKeepRunning(keepRunning: Boolean) {
-        this.keepRunning = keepRunning
     }
 
     override fun run() {
@@ -86,7 +80,7 @@ class ObstacleThread(private val gameView: GameView,
             }
             // move the obstacle
             moveObstacle()
-            SystemClock.sleep(synchronizeTime.toLong())
+            SystemClock.sleep(gameView.synchronizeTime.toLong())
         }
     }
 
