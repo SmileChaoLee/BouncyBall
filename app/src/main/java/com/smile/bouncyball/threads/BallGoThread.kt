@@ -27,7 +27,7 @@ class BallGoThread(private val gameView: GameView) : Thread() {
     private val obstacleThreads: Vector<ObstacleThread>
     private val bottomY = gameView.bottomY
     private val gameViewWidth = gameView.gameViewWidth
-    private var synchronizeTime = gameView.synchronizeTime
+    private var synchronizeTime = gameView.synchronizeTime.toLong()
 
     init {
         val obsThreads = gameView.obstacleThreads
@@ -77,7 +77,7 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                     }
                 }
             }
-            SystemClock.sleep(synchronizeTime.toLong())
+            SystemClock.sleep(synchronizeTime)
         }
     }
 
@@ -88,7 +88,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         LogUtil.d(TAG, "$logStr.bBall.ballX = $tempX")
         val tempY = bBall.ballY
         LogUtil.d(TAG, "$logStr.bBall.ballY = $tempY")
-        val direction = bBall.direction
         val dirV = bBall.dirVector
         LogUtil.d(TAG, "$logStr.dirV = (${dirV.x}, ${dirV.y })")
         val speed = bBall.speed
@@ -110,7 +109,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                     bBall.ballY = bBall.ballRadius
                 } else {
                     // hit the top wall
-                    // bBall.direction = GameView.BB_RIGHT_BOTTOM
                     bBall.dirVector.y = -dirV.y  // going to right bottom
                 }
             }
@@ -121,7 +119,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                     bBall.ballX = bBall.ballRadius
                 } else {
                     // hit the left wall
-                    // bBall.direction = GameView.BB_RIGHT_TOP
                     bBall.dirVector.x = -bBall.dirVector.x  // going to right top
                 }
             } else if ((bBall.ballY - bBall.ballRadius) < 0) {
@@ -129,7 +126,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                     bBall.ballY = bBall.ballRadius
                 } else {
                     // hit the top wall
-                    // bBall.direction = GameView.BB_LEFT_BOTTOM
                     bBall.dirVector.y = -dirV.y  // going to left bottom
                 }
             }
@@ -148,7 +144,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                     bBall.ballX = gameViewWidth - bBall.ballRadius
                 } else {
                     //hit the right wall
-                    // bBall.direction = GameView.BB_LEFT_BOTTOM
                     bBall.dirVector.x = -dirV.x  // going to left bottom
                 }
             }
@@ -167,7 +162,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
                     bBall.ballX = bBall.ballRadius
                 } else {
                     // hit the left wall
-                    // bBall.direction = GameView.BB_RIGHT_BOTTOM
                     bBall.dirVector.x = -dirV.x  // going to right bottom
                 }
             }
@@ -221,6 +215,7 @@ class BallGoThread(private val gameView: GameView) : Thread() {
     private fun isHitObstacle(obstacleThread: ObstacleThread): Boolean {
         var isHit = false
         val bBall = bouncyBall?: return isHit
+        val dirV = bBall.dirVector
         val ballCenterX = bBall.ballX
         val ballCenterY = bBall.ballY
         val radius = bBall.ballRadius
@@ -235,34 +230,23 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         val obstacleBottom = position.y + obstacleThread.obstacleHeight / 2
 
         if ((ballRight >= obstacleLeft) && (ballLeft <= obstacleRight)) {
-            // center point is inside the range of the obstacle
-            val ballDirection = bBall.direction
-            when (ballDirection) {
-                GameView.BB_RIGHT_TOP -> if ((ballTop >= obstacleTop) && (ballTop <= obstacleBottom)) {
+            if (dirV.y >= 0) {
+                // going up (to  top)
+                if ((ballTop >= obstacleTop) && (ballTop <= obstacleBottom)) {
                     // hit
-                    bBall.direction = GameView.BB_RIGHT_BOTTOM
                     bBall.ballY = obstacleBottom + radius
                     isHit = true
                 }
-
-                GameView.BB_LEFT_TOP -> if ((ballTop >= obstacleTop) && (ballTop <= obstacleBottom)) {
-                    // hit
-                    bBall.direction = GameView.BB_LEFT_BOTTOM
-                    bBall.ballY = obstacleBottom + radius
-                    isHit = true
-                }
-
-                GameView.BB_RIGHT_BOTTOM -> if ((ballBottom >= obstacleTop) && (ballBottom <= obstacleBottom)) {
-                    bBall.direction = GameView.BB_RIGHT_TOP
+            } else {
+                // (dirV.x >= 0 && dirV.y < 0)
+                // going down (to bottom)
+                if ((ballBottom >= obstacleTop) && (ballBottom <= obstacleBottom)) {
                     bBall.ballY = obstacleTop - radius
                     isHit = true
                 }
-
-                GameView.BB_LEFT_BOTTOM -> if ((ballBottom >= obstacleTop) && (ballBottom <= obstacleBottom)) {
-                    bBall.direction = GameView.BB_LEFT_TOP
-                    bBall.ballY = obstacleTop - radius
-                    isHit = true
-                }
+            }
+            if (isHit) {
+                bBall.dirVector.y = -dirV.y
             }
         }
 

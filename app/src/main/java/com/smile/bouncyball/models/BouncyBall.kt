@@ -17,7 +17,6 @@ class BouncyBall(
     var bitmap: Bitmap? = null) {
     var ballRadius: Int
         private set
-    var direction = 0
     var dirVector = Point(0, 0)
     var speed = 1.0f
 

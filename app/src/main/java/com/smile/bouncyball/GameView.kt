@@ -52,11 +52,6 @@ class GameView(private val mainActivity: MainActivity)
         const val FINAL_STAGE: Int = 4
         const val FINISHED_STATUS: Int = 5
 
-        const val BB_RIGHT_TOP: Int = 0 // going to right top
-        const val BB_LEFT_TOP: Int = 3 // going to left top
-        const val BB_RIGHT_BOTTOM: Int = 1 // going to right bottom
-        const val BB_LEFT_BOTTOM: Int = 2 // going to left bottom
-
         // private properties
         private const val BALL_SIZE_RATIO = 1.0f / 18f
         private const val HINT_WIDTH_RATIO = 1.0f / 1.5f
@@ -290,8 +285,6 @@ class GameView(private val mainActivity: MainActivity)
         bouncyBall?.let {
             it.ballX = gameViewWidth / 2
             it.ballY = bottomY - it.ballRadius
-            // direction of bouncy ball
-            it.direction = 0   // 0 or 3
             it.dirVector = Point(it.ballRadius, it.ballRadius) // 45 degree
             val slope = it.dirVector.y.toFloat() / it.dirVector.x.toFloat()
             it.speed = 1.0f
@@ -483,7 +476,6 @@ class GameView(private val mainActivity: MainActivity)
         }
         val angle = atan(slope.toDouble())
         LogUtil.d(TAG, "$logStr.angle = $angle")
-        bBal.direction = if (angle > 0) 0 else 3
         bBal.dirVector = oneUnitVector(Point(ax.toInt(), by.toInt()), bBal.ballRadius)
         bBal.speed = 1.0f
         shootArrow.threeP = tempThree

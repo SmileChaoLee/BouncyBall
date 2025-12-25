@@ -42,6 +42,7 @@ class ObstacleThread(private val gameView: GameView,
     private val random = Random(System.currentTimeMillis())
     private val bouncyBall = gameView.bouncyBall
     private val banner = gameView.banner
+    private val synchronizeTime = gameView.synchronizeTime.toLong()
 
     init {
         xRangeOfObstacle = gameView.gameViewWidth
@@ -76,7 +77,7 @@ class ObstacleThread(private val gameView: GameView,
             }
             // move the obstacle
             moveObstacle()
-            SystemClock.sleep(gameView.synchronizeTime.toLong())
+            SystemClock.sleep(synchronizeTime)
         }
     }
 
