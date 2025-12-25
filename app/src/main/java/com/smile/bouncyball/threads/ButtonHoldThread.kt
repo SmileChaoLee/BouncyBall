@@ -2,7 +2,6 @@ package com.smile.bouncyball.threads
 
 import android.os.SystemClock
 import com.smile.bouncyball.GameView
-import com.smile.bouncyball.models.Banner
 import com.smile.bouncyball.tools.LogUtil
 import kotlin.concurrent.Volatile
 
@@ -16,16 +15,16 @@ class ButtonHoldThread(private val gameView: GameView) : Thread() {
         private const val TAG = "ButtonHoldThread"
     }
 
-    private var banner: Banner? = null
     @Volatile
     var keepRunning = true
     @Volatile
     var isButtonHold = false
     @Volatile
     var bannerMoveSpeed = 0
+    private val banner = gameView.banner
+    private val gameViewWidth = gameView.gameViewWidth
 
     init {
-        banner = gameView.banner
         keepRunning = true
         isButtonHold = false
         bannerMoveSpeed = 0
@@ -61,8 +60,8 @@ class ButtonHoldThread(private val gameView: GameView) : Thread() {
                     if (bannerX < 0) {
                         bannerX = 0
                     }
-                    if (bannerX > gameView.gameViewWidth) {
-                        bannerX = gameView.gameViewWidth
+                    if (bannerX > gameViewWidth) {
+                        bannerX = gameViewWidth
                     }
                     // set position of banner
                     it.bannerX = bannerX

@@ -11,9 +11,9 @@ class GameViewDrawThread(private val gameView: GameView) : Thread() {
         private const val TAG = "GameViewDrawThread"
     }
 
-    // keepRunning = true -> loop in run() still going
     @Volatile
     var keepRunning = true
+    private val synchronizeTime = gameView.synchronizeTime.toLong()
 
     override fun run() {
         while (keepRunning) {
@@ -39,7 +39,7 @@ class GameViewDrawThread(private val gameView: GameView) : Thread() {
             }
             // start drawing
             gameView.drawGameScreen()
-            SystemClock.sleep(gameView.synchronizeTime.toLong())
+            SystemClock.sleep(synchronizeTime)
         }
     }
 }

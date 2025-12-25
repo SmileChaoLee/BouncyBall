@@ -2,6 +2,7 @@ package com.smile.bouncyball.models
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Point
 import android.graphics.Rect
 
 /**
@@ -17,7 +18,7 @@ class BouncyBall(
     var ballRadius: Int
         private set
     var direction = 0
-    var slope = 1.0f
+    var dirVector = Point(0, 0)
     var speed = 1.0f
 
     init {

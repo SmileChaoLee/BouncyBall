@@ -2,8 +2,6 @@ package com.smile.bouncyball.threads
 
 import android.os.SystemClock
 import com.smile.bouncyball.GameView
-import com.smile.bouncyball.models.Banner
-import com.smile.bouncyball.models.BouncyBall
 import com.smile.bouncyball.tools.LogUtil
 import java.util.Vector
 import kotlin.concurrent.Volatile
@@ -14,7 +12,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         private const val TAG = "BallGoThread"
     }
 
-    private var synchronizeTime = 70
     @Volatile
     var flag = true // flag = true -> move ball
     // keepRunning = true -> loop in run() still going
@@ -25,9 +22,12 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         private set
     var status: Int = GameView.START_STATUS
         private set
-    private var bouncyBall: BouncyBall? = null
-    private var banner: Banner? = null
+    private val bouncyBall = gameView.bouncyBall
+    private val banner = gameView.banner
     private val obstacleThreads: Vector<ObstacleThread>
+    private val bottomY = gameView.bottomY
+    private val gameViewWidth = gameView.gameViewWidth
+    private var synchronizeTime = gameView.synchronizeTime
 
     init {
         val obsThreads = gameView.obstacleThreads
@@ -36,9 +36,6 @@ class BallGoThread(private val gameView: GameView) : Thread() {
             throw NullPointerException("obstacleThreads must not be null.")
         }
         obstacleThreads = obsThreads
-        synchronizeTime = gameView.synchronizeTime
-        bouncyBall = gameView.bouncyBall
-        banner = gameView.banner
         score = 0
         status = GameView.START_STATUS
     }
@@ -84,119 +81,109 @@ class BallGoThread(private val gameView: GameView) : Thread() {
         }
     }
 
-    private fun checkCollision() {
+    private fun  checkCollision() {
+        val logStr = "checkCollision"
         val bBall = bouncyBall?: return
-        val bottomY = gameView.bottomY
-        val gameViewWidth = gameView.gameViewWidth
         val tempX = bBall.ballX
+        LogUtil.d(TAG, "$logStr.bBall.ballX = $tempX")
         val tempY = bBall.ballY
+        LogUtil.d(TAG, "$logStr.bBall.ballY = $tempY")
         val direction = bBall.direction
-        when (direction) {
-            GameView.BB_RIGHT_TOP -> {
-                // going to right top
-                bBall.ballX = tempX + bBall.ballRadius
-                bBall.ballY = tempY - bBall.ballRadius
-
-                if ((bBall.ballX + bBall.ballRadius) > gameViewWidth) {
-                    if ((tempX > (gameViewWidth - bBall.ballRadius)) && (tempX < gameViewWidth)) {
-                        bBall.ballX = gameViewWidth - bBall.ballRadius
-                    } else {
-                        // hit the right wall
-                        bBall.direction = GameView.BB_LEFT_TOP
-                    }
-                } else if ((bBall.ballY - bBall.ballRadius) < 0) {
-                    if ((tempY < bBall.ballRadius) && (tempY > 0)) {
-                        bBall.ballY = bBall.ballRadius
-                    } else {
-                        // hit the top wall
-                        bBall.direction = GameView.BB_RIGHT_BOTTOM
-                    }
+        val dirV = bBall.dirVector
+        LogUtil.d(TAG, "$logStr.dirV = (${dirV.x}, ${dirV.y })")
+        val speed = bBall.speed
+        LogUtil.d(TAG, "$logStr.speed = $speed")
+        bBall.ballX = tempX + dirV.x
+        bBall.ballY = tempY - dirV.y
+        if (dirV.x >= 0 && dirV.y >= 0) {
+            // going to right top
+            if ((bBall.ballX + bBall.ballRadius) > gameViewWidth) {
+                if ((tempX > (gameViewWidth - bBall.ballRadius)) && (tempX < gameViewWidth)) {
+                    bBall.ballX = gameViewWidth - bBall.ballRadius
+                } else {
+                    // hit the right wall
+                    // bBall.direction = GameView.BB_LEFT_TOP
+                    bBall.dirVector.x = -dirV.x  // going to left top
+                }
+            } else if ((bBall.ballY - bBall.ballRadius) < 0) {
+                if ((tempY < bBall.ballRadius) && (tempY > 0)) {
+                    bBall.ballY = bBall.ballRadius
+                } else {
+                    // hit the top wall
+                    // bBall.direction = GameView.BB_RIGHT_BOTTOM
+                    bBall.dirVector.y = -dirV.y  // going to right bottom
                 }
             }
-
-            GameView.BB_LEFT_TOP -> {
-                // going to left top
-                bBall.ballX = tempX - bBall.ballRadius
-                bBall.ballY = tempY - bBall.ballRadius
-                // ballY = ballY - gView.ballSpan;
-                if ((bBall.ballX - bBall.ballRadius) < 0) {
-                    if ((tempX < bBall.ballRadius) && (tempX > 0)) {
-                        bBall.ballX = bBall.ballRadius
-                    } else {
-                        // hit the left wall
-                        bBall.direction = GameView.BB_RIGHT_TOP
-                    }
-                } else if ((bBall.ballY - bBall.ballRadius) < 0) {
-                    if ((tempY < bBall.ballRadius) && (tempY > 0)) {
-                        bBall.ballY = bBall.ballRadius
-                    } else {
-                        // hit the top wall
-                        bBall.direction = GameView.BB_LEFT_BOTTOM
-                    }
+        } else if (dirV.x < 0 && dirV.y >= 0) {
+            // going to left top
+            if ((bBall.ballX - bBall.ballRadius) < 0) {
+                if ((tempX < bBall.ballRadius) && (tempX > 0)) {
+                    bBall.ballX = bBall.ballRadius
+                } else {
+                    // hit the left wall
+                    // bBall.direction = GameView.BB_RIGHT_TOP
+                    bBall.dirVector.x = -bBall.dirVector.x  // going to right top
+                }
+            } else if ((bBall.ballY - bBall.ballRadius) < 0) {
+                if ((tempY < bBall.ballRadius) && (tempY > 0)) {
+                    bBall.ballY = bBall.ballRadius
+                } else {
+                    // hit the top wall
+                    // bBall.direction = GameView.BB_LEFT_BOTTOM
+                    bBall.dirVector.y = -dirV.y  // going to left bottom
                 }
             }
-
-            GameView.BB_RIGHT_BOTTOM -> {
-                // going to right bottom
-                bBall.ballX = tempX + bBall.ballRadius
-                bBall.ballY = tempY + bBall.ballRadius
-
-                // ballY = ballY + gView.ballSpan;
-                if ((bBall.ballY + bBall.ballRadius) > bottomY) {
-                    if ((tempY > (bottomY - bBall.ballRadius)) && (tempY < bottomY)) {
-                        bBall.ballY = bottomY - bBall.ballRadius
-                    } else {
-                        // hit the bottom wall
-                        checkHitBanner(GameView.BB_RIGHT_BOTTOM)
-                    }
-                } else if ((bBall.ballX + bBall.ballRadius) > gameViewWidth) {
-                    if ((tempX > (gameViewWidth - bBall.ballRadius)) && (tempX < gameViewWidth)) {
-                        bBall.ballX = gameViewWidth - bBall.ballRadius
-                    } else {
-                        //hit the right wall
-                        bBall.direction = GameView.BB_LEFT_BOTTOM
-                    }
+        } else if (dirV.x >= 0 && dirV.y < 0) {
+            // (dirV.x >= 0 && dirV.y < 0)
+            // going to right bottom
+            if ((bBall.ballY + bBall.ballRadius) > bottomY) {
+                if ((tempY > (bottomY - bBall.ballRadius)) && (tempY < bottomY)) {
+                    bBall.ballY = bottomY - bBall.ballRadius
+                } else {
+                    // hit the bottom wall
+                    checkHitBanner()
+                }
+            } else if ((bBall.ballX + bBall.ballRadius) > gameViewWidth) {
+                if ((tempX > (gameViewWidth - bBall.ballRadius)) && (tempX < gameViewWidth)) {
+                    bBall.ballX = gameViewWidth - bBall.ballRadius
+                } else {
+                    //hit the right wall
+                    // bBall.direction = GameView.BB_LEFT_BOTTOM
+                    bBall.dirVector.x = -dirV.x  // going to left bottom
                 }
             }
-
-            GameView.BB_LEFT_BOTTOM -> {
-                // going to left bottom
-                bBall.ballX = tempX - bBall.ballRadius
-                bBall.ballY = tempY + bBall.ballRadius
-
-                // ballY = ballY + gView.ballSpan;
-                if ((bBall.ballY + bBall.ballRadius) > bottomY) {
-                    if ((tempY > (bottomY - bBall.ballRadius)) && (tempY < bottomY)) {
-                        bBall.ballY = bottomY - bBall.ballRadius
-                    } else {
-                        // hit the bottom wall
-                        checkHitBanner(GameView.BB_LEFT_BOTTOM)
-                    }
-                } else if ((bBall.ballX - bBall.ballRadius) < 0) {
-                    if ((tempX < bBall.ballRadius) && (tempX > 0)) {
-                        bBall.ballX = bBall.ballRadius
-                    } else {
-                        // hit the left wall
-                        bBall.direction = GameView.BB_RIGHT_BOTTOM
-                    }
+        } else {
+            // (dirV.x < 0 && dirV.y < 0)
+            // going to left bottom
+            if ((bBall.ballY + bBall.ballRadius) > bottomY) {
+                if ((tempY > (bottomY - bBall.ballRadius)) && (tempY < bottomY)) {
+                    bBall.ballY = bottomY - bBall.ballRadius
+                } else {
+                    // hit the bottom wall
+                    checkHitBanner()
+                }
+            } else if ((bBall.ballX - bBall.ballRadius) < 0) {
+                if ((tempX < bBall.ballRadius) && (tempX > 0)) {
+                    bBall.ballX = bBall.ballRadius
+                } else {
+                    // hit the left wall
+                    // bBall.direction = GameView.BB_RIGHT_BOTTOM
+                    bBall.dirVector.x = -dirV.x  // going to right bottom
                 }
             }
         }
     }
 
-    private fun checkHitBanner(direction: Int): Boolean {
+    private fun checkHitBanner(): Boolean {
         var isHit = false
         val bBall = bouncyBall?: return isHit
         val ban = banner?: return isHit
         val bannerX1 = ban.bannerX - ban.bannerWidth / 2
         val bannerX2 = ban.bannerX + ban.bannerWidth / 2
-        // (gView.bannerX,gView.bannerY) is the center of the banner
-        if (((bBall.ballX + bBall.ballRadius) >= bannerX1) && ((bBall.ballX - bBall.ballRadius) <= bannerX2)) {
-            // hit the banner
-            when (direction) {
-                1 -> bBall.direction = GameView.BB_RIGHT_TOP
-                2 -> bBall.direction = GameView.BB_LEFT_TOP
-            }
+        if (((bBall.ballX + bBall.ballRadius) >= bannerX1)
+            && ((bBall.ballX - bBall.ballRadius) <= bannerX2)) {
+            // hit the banner, then going up
+            bBall.dirVector.y = -bBall.dirVector.y
             // score policy: add one score when it hit the banner. Added on 2017-11-07
             score++
             isHit = true

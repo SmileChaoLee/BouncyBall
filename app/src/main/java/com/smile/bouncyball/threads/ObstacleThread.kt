@@ -7,8 +7,6 @@ import android.graphics.Point
 import android.graphics.Rect
 import android.os.SystemClock
 import com.smile.bouncyball.GameView
-import com.smile.bouncyball.models.Banner
-import com.smile.bouncyball.models.BouncyBall
 import com.smile.bouncyball.tools.LogUtil.e
 import java.util.Random
 import kotlin.concurrent.Volatile
@@ -42,16 +40,14 @@ class ObstacleThread(private val gameView: GameView,
     private var xRangeOfObstacle = 0
     private var yRangeOfObstacle = 0
     private val random = Random(System.currentTimeMillis())
-    private var bouncyBall: BouncyBall? = null
-    private var banner: Banner? = null
+    private val bouncyBall = gameView.bouncyBall
+    private val banner = gameView.banner
 
     init {
         xRangeOfObstacle = gameView.gameViewWidth
         // one-third of the height of Game View
         yRangeOfObstacle = gameView.gameViewHeight / 3
-        bouncyBall = gameView.bouncyBall
         obstacleHeight = bouncyBall?.ballRadius ?: 0
-        banner = gameView.banner
         obstacleWidth = banner?.bannerWidth ?: 0
         initializeObstacle()
     }
