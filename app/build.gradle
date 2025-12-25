@@ -21,8 +21,8 @@ android {
         targetSdk = 36
         multiDexEnabled true
 
-        versionCode 503
-        versionName "5.03"
+        versionCode 505
+        versionName "5.05"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         signingConfig signingConfigs.config
